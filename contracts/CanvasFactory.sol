@@ -20,6 +20,8 @@ contract CanvasFactory {
     
     Canvas[] artworks;
 
+    event PixelPainted(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color);
+
     modifier onlyReadyAddress(uint32 _canvasId) {
         Canvas storage canvas = artworks[_canvasId];
         require(canvas.addressToReadyTime[msg.sender] < now);
@@ -52,6 +54,8 @@ contract CanvasFactory {
         canvas.pixels[index] = newPixel;
 
         canvas.addressToReadyTime[msg.sender] = now + ADDRESS_COOLDOWN;
+
+        PixelPainted(_artworkId, _x, _y, _color);
     }
 
     function getArtwork(uint32 _artworkId) public view returns(uint8[]) {
