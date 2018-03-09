@@ -2,28 +2,49 @@ pragma solidity 0.4.21;
 
 import './Ownable.sol';
 
+/**
+* @dev This contract takes care of painting on canvases, returning artworks and creating ones. 
+*/
 contract CanvasFactory {
 
     uint8 public constant WIDTH = 100;
     uint8 public constant HEIGHT = 100;
     uint32 public constant PIXEL_COUNT = WIDTH * HEIGHT; 
     uint public constant ADDRESS_COOLDOWN = 3 minutes;
+
+    uint8 public constant MAX_CANVAS_COUNT = 100;
+
+    //After this percent of filled pixels finish time of a canvas is set
+    uint8 public constant FINISH_TIME_TRIGGER = 90;
+    uint public constant CANVAS_FINISH_TIME = 24 hours; 
     
     Canvas[] artworks;
 
-    modifier onlyReadyAddress(uint _canvasId) {
+    modifier onlyReadyAddress(uint32 _canvasId) {
         Canvas storage canvas = artworks[_canvasId];
         require(canvas.addressToReadyTime[msg.sender] < now);
         _;
     }
 
-    function setPixel(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color) public onlyReadyAddress(_artworkId) {
+    modifier notFinished(uint32 _canvasId) {
+        require(!isArtworkFinished(_canvasId));
+        _;
+    }
+
+    modifier finished(uint32 _canvasId) {
+        require(isArtworkFinished(_canvasId));
+        _;
+    }
+
+    function setPixel(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) {
         uint32 index = _getPixelIndex(_x, _y);
         Canvas storage canvas = _getCanvas(_artworkId);        
 
         Pixel storage pixel = canvas.pixels[index];
         if (pixel != 0) {
             canvas.addressToCount[pixel.painter]--;
+        } else {
+            canvas.paintedPixelsCount++;
         }
         canvas.addressToCount[msg.sender]++;
 
@@ -42,6 +63,17 @@ contract CanvasFactory {
         }
 
         return result; 
+    }
+
+    /**
+    * @notice Returns amount of created canvases.
+    */
+    function getArtworksCount() public view returns(uint) {
+        return artworks.length;
+    }
+
+    function isArtworkFinished(uint32 _artworkId) public view returns(bool) {
+        return _getCanvas(_artworkId).paintedPixelsCount == PIXEL_COUNT;
     }
 
     function _getCanvas(uint32 _artworkId) internal view returns(Canvas storage) {
@@ -70,6 +102,17 @@ contract CanvasFactory {
         * Map of all pixels. 
         */
         mapping (uint32 => Pixel) pixels;
+
+        /**
+        * Owner of canvas. Canvas doesn't have an owner until initial bidding ends. 
+        */
+        address owner; 
+
+        /**
+        * Numbers of pixels set. Canvas will be considered finished when all pixels will be set.
+        * Technically it means that setPixelsCount == PIXEL_COUNT
+        */
+        uint32 paintedPixelsCount;
 
         /**
         * How many pixels has given address drawn. 
