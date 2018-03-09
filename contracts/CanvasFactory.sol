@@ -10,45 +10,42 @@ contract CanvasFactory {
     uint public constant ADDRESS_COOLDOWN = 3 minutes;
     
     Canvas[] artworks;
-    mapping (address => uint) addressToReadyTime;
 
-    modifier onlyReadyAddress {
-        require(addressToReadyTime[msg.sender] < now);
+    modifier onlyReadyAddress(uint _canvasId) {
+        Canvas storage canvas = artworks[_canvasId];
+        require(canvas.addressToReadyTime[msg.sender] < now);
         _;
     }
 
-    function setPixel(uint32 _artworkId, uint8 _x, uint8 _y, uint _color) public onlyReadyAddress {
-        require(_x < WIDTH);
-        require(_y < HEIGHT);
-
-        Canvas storage canvas = _getCanvas(_artworkId);
+    function setPixel(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color) public onlyReadyAddress(_artworkId) {
         uint32 index = _getPixelIndex(_x, _y);
+        Canvas storage canvas = _getCanvas(_artworkId);        
 
-        Pixel pixel = canvas.pixels[index];
+        Pixel storage pixel = canvas.pixels[index];
         if (pixel != 0) {
             canvas.addressToCount[pixel.painter]--;
         }
         canvas.addressToCount[msg.sender]++;
 
-        Pixel newPixel = Pixel(_invertColor(_color), msg.sender);
-        canval.pixels[index] = newPixel;
+        Pixel memory newPixel = Pixel(_invertColor(_color), msg.sender);
+        canvas.pixels[index] = newPixel;
 
-        addressToReadyTime[msg.sender] = now + ADDRESS_COOLDOWN;
+        canvas.addressToReadyTime[msg.sender] = now + ADDRESS_COOLDOWN;
     }
 
     function getArtwork(uint32 _artworkId) public view returns(uint8[]) {
-        Canvas canvas = _getCanvas(_artworkId);
-        uint8[] result = new uint8[](PIXEL_COUNT);
+        Canvas storage canvas = _getCanvas(_artworkId);
+        uint8[] memory result = new uint8[](PIXEL_COUNT);
 
-        for (var i = 0; i < PIXEL_COUNT; i++) {
-            result[i] = _invertColor(canvas.pixels[i]);
+        for (uint32 i = 0; i < PIXEL_COUNT; i++) {
+            result[i] = _invertColor(canvas.pixels[i].color);
         }
 
         return result; 
     }
 
-    function _getCanvas(uint32 _artworkId) internal view returns(Canvas) {
-        require(_artworkId < artworks.size);
+    function _getCanvas(uint32 _artworkId) internal view returns(Canvas storage) {
+        require(_artworkId < artworks.length);
         return artworks[_artworkId];
     }
 
@@ -83,5 +80,11 @@ contract CanvasFactory {
         * Mapping that shows if address has been paid for its contribution for artwork.
         */
         mapping (address => bool) addressToIsPaid;
+
+        /**
+        * Time when given addres can paint on that canvas
+        */
+        mapping (address => uint) addressToReadyTime;
+
     }
 }
