@@ -13,14 +13,13 @@ contract CanvasFactory {
     uint public constant ADDRESS_COOLDOWN = 3 minutes;
 
     uint8 public constant MAX_CANVAS_COUNT = 100;
-
-    //After this percent of filled pixels finish time of a canvas is set
-    uint8 public constant FINISH_TIME_TRIGGER = 90;
-    uint public constant CANVAS_FINISH_TIME = 24 hours; 
+    uint8 public constant MAX_ACTIVE_CANVAS = 10;
     
     Canvas[] artworks;
+    uint32 activeCanvasCount = 0;
 
     event PixelPainted(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color);
+    event CanvasCreated(uint _id);
 
     modifier onlyReadyAddress(uint32 _canvasId) {
         Canvas storage canvas = artworks[_canvasId];
@@ -36,6 +35,16 @@ contract CanvasFactory {
     modifier finished(uint32 _canvasId) {
         require(isArtworkFinished(_canvasId));
         _;
+    }
+
+    function createCanvas() public {
+        require(artworks.length <= MAX_CANVAS_COUNT);
+        require(activeCanvasCount <= MAX_ACTIVE_CANVAS);
+
+        uint id = artworks.push(Canvas(0, 0)) - 1;
+
+        CanvasCreated(id);
+        activeCanvasCount++;
     }
 
     function setPixel(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) {
@@ -57,6 +66,10 @@ contract CanvasFactory {
         canvas.pixels[index] = newPixel;
 
         canvas.addressToReadyTime[msg.sender] = now + ADDRESS_COOLDOWN;
+
+        if (_isArtworkFinished(canvas)) {
+            activeCanvasCount--;
+        }
 
         PixelPainted(_artworkId, _x, _y, _color);
     }
@@ -80,7 +93,11 @@ contract CanvasFactory {
     }
 
     function isArtworkFinished(uint32 _artworkId) public view returns(bool) {
-        return _getCanvas(_artworkId).paintedPixelsCount == PIXEL_COUNT;
+        return _isArtworkFinished(_getCanvas(_artworkId));
+    }
+
+    function _isArtworkFinished(Canvas canvas) private pure returns(bool) {
+        return canvas.paintedPixelsCount == PIXEL_COUNT;
     }
 
     function _getCanvas(uint32 _artworkId) internal view returns(Canvas storage) {
