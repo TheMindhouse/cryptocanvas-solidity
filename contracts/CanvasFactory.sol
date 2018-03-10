@@ -5,11 +5,12 @@ import './Ownable.sol';
 /**
 * @dev This contract takes care of painting on canvases, returning artworks and creating ones. 
 */
-contract CanvasFactory {
+contract CanvasFactory is Ownable {
 
-    uint8 public constant WIDTH = 100;
-    uint8 public constant HEIGHT = 100;
-    uint32 public constant PIXEL_COUNT = WIDTH * HEIGHT; 
+    uint8 public constant WIDTH = 64;
+    uint8 public constant HEIGHT = 64;
+    uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
+
     uint public constant ADDRESS_COOLDOWN = 3 minutes;
 
     uint8 public constant MAX_CANVAS_COUNT = 100;
@@ -53,14 +54,11 @@ contract CanvasFactory {
 
         Pixel storage pixel = canvas.pixels[index];
 
-        //pixel always has a painter. If it's equal to address(0) it means 
-        //that pixel hasn't been set.
-        if (pixel.painter != address(0)) {
-            canvas.addressToCount[pixel.painter]--;
-        } else {
+        // pixel always has a painter. If it's equal to address(0) it means 
+        // that pixel hasn't been set.
+        if (pixel.painter == address(0)) {
             canvas.paintedPixelsCount++;
         }
-        canvas.addressToCount[msg.sender]++;
 
         Pixel memory newPixel = Pixel(_invertColor(_color), msg.sender);
         canvas.pixels[index] = newPixel;
@@ -83,6 +81,10 @@ contract CanvasFactory {
         }
 
         return result; 
+    }
+
+    function getPixelCount() public pure returns(uint) {
+        return PIXEL_COUNT;
     }
 
     /**
@@ -137,11 +139,6 @@ contract CanvasFactory {
         * Technically it means that setPixelsCount == PIXEL_COUNT
         */
         uint32 paintedPixelsCount;
-
-        /**
-        * How many pixels has given address drawn. 
-        */
-        mapping (address => uint32) addressToCount;
         
         /**
         * Mapping that shows if address has been paid for its contribution for artwork.
