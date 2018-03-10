@@ -100,7 +100,7 @@ contract CanvasFactory is Ownable {
         return _isArtworkFinished(_getCanvas(_artworkId));
     }
 
-    function _isArtworkFinished(Canvas canvas) private pure returns(bool) {
+    function _isArtworkFinished(Canvas canvas) internal pure returns(bool) {
         return canvas.paintedPixelsCount == PIXEL_COUNT;
     }
 
