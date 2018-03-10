@@ -43,7 +43,10 @@ contract CanvasFactory {
         Canvas storage canvas = _getCanvas(_artworkId);        
 
         Pixel storage pixel = canvas.pixels[index];
-        if (pixel != 0) {
+
+        //pixel always has a painter. If it's equal to address(0) it means 
+        //that pixel hasn't been set.
+        if (pixel.painter != address(0)) {
             canvas.addressToCount[pixel.painter]--;
         } else {
             canvas.paintedPixelsCount++;
