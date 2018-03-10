@@ -81,6 +81,10 @@ contract CanvasFactory is Ownable {
         return result; 
     }
 
+    function getArtworkPaintedPixels(uint32 _artworkId) public view returns(uint32) {
+        return _getCanvas(_artworkId).paintedPixelsCount;
+    }
+
     function getPixelCount() public pure returns(uint) {
         return PIXEL_COUNT;
     }
