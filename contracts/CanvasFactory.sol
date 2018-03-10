@@ -19,7 +19,7 @@ contract CanvasFactory is Ownable {
     Canvas[] artworks;
     uint32 activeCanvasCount = 0;
 
-    event PixelPainted(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color);
+    event PixelPainted(uint32 _artworkId, uint32 _index, uint8 _color);
     event CanvasCreated(uint _id);
 
     modifier onlyReadyAddress(uint32 _canvasId) {
@@ -48,11 +48,9 @@ contract CanvasFactory is Ownable {
         activeCanvasCount++;
     }
 
-    function setPixel(uint32 _artworkId, uint8 _x, uint8 _y, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) {
-        uint32 index = _getPixelIndex(_x, _y);
+    function setPixel(uint32 _artworkId, uint32 _index, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) {
         Canvas storage canvas = _getCanvas(_artworkId);        
-
-        Pixel storage pixel = canvas.pixels[index];
+        Pixel storage pixel = canvas.pixels[_index];
 
         // pixel always has a painter. If it's equal to address(0) it means 
         // that pixel hasn't been set.
@@ -61,7 +59,7 @@ contract CanvasFactory is Ownable {
         }
 
         Pixel memory newPixel = Pixel(_invertColor(_color), msg.sender);
-        canvas.pixels[index] = newPixel;
+        canvas.pixels[_index] = newPixel;
 
         canvas.addressToReadyTime[msg.sender] = now + ADDRESS_COOLDOWN;
 
@@ -69,7 +67,7 @@ contract CanvasFactory is Ownable {
             activeCanvasCount--;
         }
 
-        PixelPainted(_artworkId, _x, _y, _color);
+        PixelPainted(_artworkId, _index, _color);
     }
 
     function getArtwork(uint32 _artworkId) public view returns(uint8[]) {
@@ -105,13 +103,6 @@ contract CanvasFactory is Ownable {
     function _getCanvas(uint32 _artworkId) internal view returns(Canvas storage) {
         require(_artworkId < artworks.length);
         return artworks[_artworkId];
-    }
-
-    function _getPixelIndex(uint32 _x, uint32 _y) internal pure returns(uint32) {
-        require(_x < WIDTH);
-        require(_y < HEIGHT);
-
-        return _y * WIDTH + _x;
     }
 
     function _invertColor(uint8 _color) internal pure returns(uint8) {
