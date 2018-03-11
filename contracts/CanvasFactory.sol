@@ -100,6 +100,19 @@ contract CanvasFactory is Ownable {
         return _isArtworkFinished(_getCanvas(_artworkId));
     }
 
+    function _countPaintedPixels(address _address, uint32 _artworkId) internal view returns(uint32) {
+        Canvas storage canvas = _getCanvas(_artworkId);
+        uint32 count = 0;
+
+        for (uint32 i = 0; i < PIXEL_COUNT; i++) {
+            if (canvas.pixels[i].painter == _address) {
+                count++;
+            }
+        }
+
+        return count; 
+    }
+
     function _isArtworkFinished(Canvas canvas) internal pure returns(bool) {
         return canvas.paintedPixelsCount == PIXEL_COUNT;
     }

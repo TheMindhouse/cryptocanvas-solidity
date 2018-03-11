@@ -22,12 +22,18 @@ contract BiddableCanvas is CanvasFactory {
     uint public constant BIDDING_DURATION = 48 hours;
 
     mapping (uint32 => Bid) bids;
-    uint commision;
 
     event BidPosted(address _bidder, uint _amount, uint _finishTime);
+    event MoneyPaid(address _address, uint _amount);
+    event CommissionPaid(uint _amount);
 
     modifier biddingPossible(uint32 _artworkId) {
         require(getArtworkBiddingState(_artworkId) == BIDDING_ONGOING);
+        _;
+    }
+
+    modifier biddingFinished(uint32 _artworkId) {
+        require(getArtworkBiddingState(_artworkId) == BIDDING_SOLD);
         _;
     }
 
@@ -83,14 +89,41 @@ contract BiddableCanvas is CanvasFactory {
         }
     }
 
-    /**
-    * @dev returns two numbers: first is price per pixel, second is our commission. 
-    */
-    function _calculateMoneyDistribution(uint _totalPrice) private pure returns(uint, uint) {
-        uint commission = _totalPrice / COMMISSION;
-        uint pricePerPixel = (_totalPrice - commission) / PIXEL_COUNT;
+    function withdrawReward(uint32 _artworkId) public biddingFinished(_artworkId) {
+        Bid storage bid = bids[_artworkId];
+        require(bid.amount > 0); //make sure bid was really made, and there is money to distribute 
+        require(!bid.isAddressPaid[msg.sender]);
 
-        return (pricePerPixel, commission);
+        uint32 paintedPixels = _countPaintedPixels(msg.sender, _artworkId);
+        require(paintedPixels > 0); //make sure calling address actually painted something
+
+        uint pricePerPixel = _calculatePricePerPixel(bid.amount);
+        uint toWithdraw = paintedPixels * pricePerPixel; 
+
+        msg.sender.transfer(toWithdraw);
+        bid.isAddressPaid[msg.sender] = true;
+
+        MoneyPaid(msg.sender, toWithdraw);
+    }
+
+    function withdrawCommission(uint32 _artworkId) public onlyOwner biddingFinished(_artworkId) {
+        Bid storage bid = bids[_artworkId];
+        require(bid.amount > 0); //make sure bid was really made, and there is money to distribute 
+        require(!bid.isCommisionPaid);
+
+        uint commission = _calculateCommission(bid.amount);
+        owner.transfer(commission);
+        bid.isCommisionPaid = true;
+
+        CommissionPaid(commission);
+    }
+
+    function _calculatePricePerPixel(uint _totalPrice) private pure returns(uint) {
+        return (_totalPrice - _calculateCommission(_totalPrice)) / PIXEL_COUNT;
+    }
+
+    function _calculateCommission(uint _totalPrice) private pure returns(uint) {
+        return _totalPrice / COMMISSION;
     }
 
     struct Bid {
