@@ -17,14 +17,14 @@ contract BiddableCanvas is CanvasFactory {
     //@dev artwork has been sold, and bidding is not possible. 
     uint8 public constant BIDDING_SOLD = 2;
 
-    uint public constant COMMISION = 20; // 1 / 20 is our commision on every transaction 
+    uint public constant COMMISSION = 20; // 1 / 20 is our commision on every transaction 
     uint public constant MINIMUM_BID_AMOUNT = 0.08 ether;
     uint public constant BIDDING_DURATION = 48 hours;
 
     mapping (uint32 => Bid) bids;
     uint commision;
 
-    event BidPosted(Bid _bid);
+    event BidPosted(address _bidder, uint _amount, uint _finishTime);
 
     modifier biddingPossible(uint32 _artworkId) {
         require(getArtworkBiddingState(_artworkId) == BIDDING_ONGOING);
@@ -54,11 +54,11 @@ contract BiddableCanvas is CanvasFactory {
             finishTime = now + BIDDING_DURATION;
         }
 
-        Bid memory currentBid = Bid(msg.sender, msg.value, finishTime);
+        Bid memory currentBid = Bid(msg.sender, msg.value, finishTime, false);
         bids[_artworkId] = currentBid;
         canvas.owner = msg.sender;
 
-        BidPosted(currentBid);
+        BidPosted(currentBid.bidder, currentBid.amount, currentBid.finishTime);
     }
 
     function getLastBidForArtwork(uint32 _artworkId) public view returns(address, uint, uint) {
@@ -83,6 +83,16 @@ contract BiddableCanvas is CanvasFactory {
         }
     }
 
+    /**
+    * @dev returns two numbers: first is price per pixel, second is our commission. 
+    */
+    function _calculateMoneyDistribution(uint _totalPrice) private pure returns(uint, uint) {
+        uint commission = _totalPrice / COMMISSION;
+        uint pricePerPixel = (_totalPrice - commission) / PIXEL_COUNT;
+
+        return (pricePerPixel, commission);
+    }
+
     struct Bid {
         address bidder;
         uint amount; 
@@ -92,6 +102,13 @@ contract BiddableCanvas is CanvasFactory {
         * canvas has been sold, and it's up to it's owner to sell it or not. 
         */
         uint finishTime; 
+
+        bool isCommisionPaid;
+
+        /**
+        * @dev holds info if an address has been paid for each painted pixel. 
+        */
+        mapping (address => bool) isAddressPaid;
     }
 
 }

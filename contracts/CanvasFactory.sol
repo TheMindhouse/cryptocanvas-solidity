@@ -134,11 +134,6 @@ contract CanvasFactory is Ownable {
         * Technically it means that setPixelsCount == PIXEL_COUNT
         */
         uint32 paintedPixelsCount;
-        
-        /**
-        * Mapping that shows if address has been paid for its contribution for artwork.
-        */
-        mapping (address => bool) addressToIsPaid;
 
         /**
         * Time when given addres can paint on that canvas
