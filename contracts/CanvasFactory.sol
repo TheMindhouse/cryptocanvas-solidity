@@ -38,6 +38,11 @@ contract CanvasFactory is Ownable {
         _;
     }
 
+    modifier validPixelIndex(uint32 _pixelIndex) {
+        require(_pixelIndex < PIXEL_COUNT);
+        _;
+    }
+
     function createCanvas() public {
         require(artworks.length <= MAX_CANVAS_COUNT);
         require(activeCanvasCount <= MAX_ACTIVE_CANVAS);
@@ -48,13 +53,13 @@ contract CanvasFactory is Ownable {
         activeCanvasCount++;
     }
 
-    function setPixel(uint32 _artworkId, uint32 _index, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) {
+    function setPixel(uint32 _artworkId, uint32 _index, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) validPixelIndex(_index) {
         Canvas storage canvas = _getCanvas(_artworkId);        
         Pixel storage pixel = canvas.pixels[_index];
 
         // pixel always has a painter. If it's equal to address(0) it means 
         // that pixel hasn't been set.
-        if (pixel.painter == address(0)) {
+        if (pixel.painter == 0x0) {
             canvas.paintedPixelsCount++;
         }
 
@@ -91,7 +96,7 @@ contract CanvasFactory is Ownable {
         bool[] memory result = new bool[](PIXEL_COUNT);
 
         for (uint32 i = 0; i < PIXEL_COUNT; i++) {
-            if (canvas.pixels[i].painter != address(0)) {
+            if (canvas.pixels[i].painter != 0x0) {
                 result[i] = true;
             }
         }
@@ -116,6 +121,10 @@ contract CanvasFactory is Ownable {
 
     function isArtworkFinished(uint32 _artworkId) public view returns(bool) {
         return _isArtworkFinished(_getCanvas(_artworkId));
+    }
+
+    function getPixelAuthor(uint32 _artworkId, uint32 _pixelIndex) public view validPixelIndex(_pixelIndex) returns(address) {
+        return _getCanvas(_artworkId).pixels[_pixelIndex].painter;
     }
 
     function _countPaintedPixels(address _address, uint32 _artworkId) internal view returns(uint32) {

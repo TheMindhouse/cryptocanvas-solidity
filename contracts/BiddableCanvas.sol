@@ -42,15 +42,13 @@ contract BiddableCanvas is CanvasFactory {
         Bid storage oldBid = bids[_artworkId]; 
 
         if (msg.value < MINIMUM_BID_AMOUNT || msg.value <= oldBid.amount) {
-            //refound bad bidding. 
-            msg.sender.transfer(msg.value);
             revert();
         }
 
         //TODO handle our commission. We can't add it to commssion, as it should be 
         //blocked until bidding finishes... 
 
-        if (oldBid.bidder != address(0) && oldBid.amount > 0) {
+        if (oldBid.bidder != 0x0 && oldBid.amount > 0) {
             //return old bidder his money
             oldBid.bidder.transfer(oldBid.amount);
         }
