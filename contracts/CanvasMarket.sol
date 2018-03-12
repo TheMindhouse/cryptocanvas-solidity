@@ -84,7 +84,7 @@ contract CanvasMarket is BiddableCanvas {
         ArtworkNoLongerForSale(_artworkId);
     }
 
-    function enterBuyOffer(uint32 _artworkId) biddingFinished(_artworkId) public payable {
+    function enterBuyOffer(uint32 _artworkId) public payable biddingFinished(_artworkId) {
         Canvas storage canvas = _getCanvas(_artworkId);
         BuyOffer existing = buyOffers[_artworkId];
 
@@ -101,7 +101,7 @@ contract CanvasMarket is BiddableCanvas {
         BuyOfferMade(_artworkId, msg.sender, msg.value);
     }
 
-    function cancelBuyOffer(uint32 _artworkId) biddingFinished(_artworkId) public {
+    function cancelBuyOffer(uint32 _artworkId) public biddingFinished(_artworkId) {
         BuyOffer storage offer = buyOffers[_artworkId];
         require(offer.buyer == msg.sender);
 
@@ -112,6 +112,29 @@ contract CanvasMarket is BiddableCanvas {
         }
 
         BuyOfferCancelled(_artworkId, offer.buyer, offer.amount);
+    }
+
+    function acceptBuyOffer(uint32 _artworkId, uint _minPrice) public biddingFinished(_artworkId) {
+        Canvas canvas = _getCanvas(_artworkId);
+        require(canvas.owner == msg.sender);
+
+        BuyOffer storage offer = buyOffers[_artworkId];
+        require(offer.amount > 0);
+        require(offer.buyer != 0x0);
+        require(offer.amount > _minPrice);
+
+        uint fee = offer.amount / COMMISSION;
+        uint toTransfer = offer.amount - fee; 
+
+        canvas.owner = offer.buyer; 
+        fees += fee; 
+        msg.sender.transfer(toTransfer);
+
+        buyOffers[_artworkId] = BuyOffer(false, 0x0, 0);
+        artworksForSale[_artworkId] = SaleOffer(false, 0x0, 0, 0x0);
+
+        ArtworkNoLongerForSale(_artworkId);
+        ArtworkSold(_artworkId, msg.value, msg.sender, offer.buyer);
     }
 
     function withdrawFees() public onlyOwner {
