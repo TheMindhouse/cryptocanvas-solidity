@@ -133,7 +133,6 @@ contract CanvasMarket is BiddableCanvas {
         buyOffers[_artworkId] = BuyOffer(false, 0x0, 0);
         artworksForSale[_artworkId] = SaleOffer(false, 0x0, 0, 0x0);
 
-        ArtworkNoLongerForSale(_artworkId);
         ArtworkSold(_artworkId, msg.value, msg.sender, offer.buyer);
     }
 
