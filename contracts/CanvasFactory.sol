@@ -87,9 +87,9 @@ contract CanvasFactory is Ownable {
     }
 
     /**
-    * @notice Functions returns array of booleans. Each boolean corresponds to 
-    *         pixels. True means pixel has been painted by user, false means
-    *         that pixel hasn't been painted by user (it will be white).
+    * @notice   Functions returns array of booleans. Each boolean corresponds to 
+    *           pixels. True means pixel has been painted by user, false means
+    *           that pixel hasn't been painted by user (it will be white).
     */
     function mapPaintedPixels(uint32 _artworkId) public view returns(bool[]) {
         Canvas storage canvas = _getCanvas(_artworkId);
@@ -113,7 +113,7 @@ contract CanvasFactory is Ownable {
     }
 
     /**
-    * @notice Returns amount of created canvases.
+    * @notice   Returns amount of created canvases.
     */
     function getArtworksCount() public view returns(uint) {
         return artworks.length;

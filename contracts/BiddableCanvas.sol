@@ -10,8 +10,8 @@ contract BiddableCanvas is CanvasFactory {
     //@dev It means artwork is not finished yet, and bidding is not possible. 
     uint8 public constant BIDDING_ARTWORK_NOT_FINISHED = 0;
 
-    //@dev there is ongoing bidding and anybody can bid. If there artwork can have 
-    //     assigned owner, but it can change if someone will over-bid him. 
+    //@dev  there is ongoing bidding and anybody can bid. If there artwork can have 
+    //      assigned owner, but it can change if someone will over-bid him. 
     uint8 public constant BIDDING_ONGOING = 1;
 
     //@dev artwork has been sold, and bidding is not possible. 

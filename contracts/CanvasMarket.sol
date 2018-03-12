@@ -3,8 +3,8 @@ pragma solidity 0.4.21;
 import './BiddableCanvas.sol';
 
 /**
-* @dev This contract takes trading our artworks. Trading can happen
-*      if artwork has been initially bought. 
+* @dev  This contract takes trading our artworks. Trading can happen
+*       if artwork has been initially bought. 
 */
 contract CanvasMarket is BiddableCanvas { 
 
@@ -31,6 +31,10 @@ contract CanvasMarket is BiddableCanvas {
         uint amount; 
     }
 
+    /**
+    * @notice   Buy artwork. Artwork has to be put on sale. If buyer has bid before for 
+    *           for that artwork bid will be canceled. 
+    */
     function buyArtwork(uint32 _artworkId) public payable {
         Canvas storage canvas = _getCanvas(_artworkId);
         SaleOffer storage saleOffer = artworksForSale[_artworkId];
