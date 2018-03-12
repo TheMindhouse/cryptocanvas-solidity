@@ -9,13 +9,12 @@ import './BiddableCanvas.sol';
 contract CanvasMarket is BiddableCanvas { 
 
     mapping (uint32 => SaleOffer) artworksForSale; 
+    uint public fees;     
 
     event ArtworkOfferedForSale(uint32 _artworkId, uint _minPrice, address _toAddress);
     event ArtworkNoLongerForSale(uint32 _artworkId);
     event ArtworkSold(uint32 _artworkId, uint _amount, address from, address to);
     event FeeWithdrawn(uint _amount);
-
-    uint public fees; 
 
     struct SaleOffer {
         bool isForSale;
@@ -23,6 +22,13 @@ contract CanvasMarket is BiddableCanvas {
         address seller;
         uint minPrice;         
         address onlySellTo;     // specify to sell only to a specific address
+    }
+
+    struct BuyOffer {
+        bool hasOffer; 
+        uint32 artworkId;
+        address buyer; 
+        uint amount; 
     }
 
     function buyArtwork(uint32 _artworkId) public payable {
