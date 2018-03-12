@@ -13,8 +13,9 @@ contract CanvasMarket is BiddableCanvas {
     event ArtworkOfferedForSale(uint32 _artworkId, uint _minPrice, address _toAddress);
     event ArtworkNoLongerForSale(uint32 _artworkId);
     event ArtworkSold(uint32 _artworkId, uint _amount, address from, address to);
+    event FeeWithdrawn(uint _amount);
 
-    uint fees; 
+    uint public fees; 
 
     struct SaleOffer {
         bool isForSale;
@@ -26,7 +27,7 @@ contract CanvasMarket is BiddableCanvas {
 
     function buyArtwork(uint32 _artworkId) public payable {
         Canvas storage canvas = _getCanvas(_artworkId);
-        SaleOffer saleOffer = artworksForSale[_artworkId];
+        SaleOffer storage saleOffer = artworksForSale[_artworkId];
 
         require(msg.sender != canvas.owner); //don't sell for the owner
         require(saleOffer.isForSale);
@@ -70,6 +71,16 @@ contract CanvasMarket is BiddableCanvas {
 
         artworksForSale[_artworkId] = SaleOffer(false, _artworkId, msg.sender, 0, 0x0);
         ArtworkNoLongerForSale(_artworkId);
+    }
+
+    function withdrawFees() public onlyOwner {
+        require(fees > 0);
+        
+        uint toWithdraw = fees; 
+        fees = 0;
+
+        owner.transfer(toWithdraw);
+        FeeWithdrawn(toWithdraw);
     }
 
 }
