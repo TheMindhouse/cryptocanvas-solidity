@@ -12,6 +12,9 @@ contract CanvasMarket is BiddableCanvas {
 
     event ArtworkOfferedForSale(uint32 _artworkId, uint _minPrice, address _toAddress);
     event ArtworkNoLongerForSale(uint32 _artworkId);
+    event ArtworkSold(uint32 _artworkId, uint _amount, address from, address to);
+
+    uint fees; 
 
     struct SaleOffer {
         bool isForSale;
@@ -19,6 +22,30 @@ contract CanvasMarket is BiddableCanvas {
         address seller;
         uint minPrice;         
         address onlySellTo;     // specify to sell only to a specific address
+    }
+
+    function buyArtwork(uint32 _artworkId) public payable {
+        Canvas storage canvas = _getCanvas(_artworkId);
+        SaleOffer saleOffer = artworksForSale[_artworkId];
+
+        require(msg.sender != canvas.owner); //don't sell for the owner
+        require(saleOffer.isForSale);
+        require(msg.value >= saleOffer.minPrice);
+        require(saleOffer.seller != canvas.owner); //seller is no longer owner 
+        require(saleOffer.onlySellTo == 0x0 || saleOffer.onlySellTo == msg.sender); //protect from selling to unintented address
+
+        uint fee = msg.value / COMMISSION;
+        uint toTransfer = msg.value - fee; 
+
+        saleOffer.seller.transfer(toTransfer);
+        fees += fee; 
+
+        canvas.owner = msg.sender;
+        artworkNoLongerForSale(_artworkId);
+
+        ArtworkSold(_artworkId, msg.value, saleOffer.seller, msg.sender);
+        
+        //TODO make sure you refund all bidding for artwork !!!
     }
 
     function offerArtworkForSale(uint32 _artworkId, uint _minPrice) public biddingFinished(_artworkId) {
@@ -37,7 +64,7 @@ contract CanvasMarket is BiddableCanvas {
         ArtworkOfferedForSale(_artworkId, _minPrice, _receiver);
     }
 
-    function artworkNoLongerForSalw(uint32 _artworkId) public biddingFinished(_artworkId) {
+    function artworkNoLongerForSale(uint32 _artworkId) public biddingFinished(_artworkId) {
         Canvas storage canvas = _getCanvas(_artworkId);
         require(canvas.owner == msg.sender);
 
