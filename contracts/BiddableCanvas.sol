@@ -98,8 +98,8 @@ contract BiddableCanvas is CanvasFactory {
         uint pricePerPixel = _calculatePricePerPixel(bid.amount);
         uint toWithdraw = paintedPixels * pricePerPixel; 
 
-        msg.sender.transfer(toWithdraw);
         bid.isAddressPaid[msg.sender] = true;
+        msg.sender.transfer(toWithdraw);
 
         MoneyPaid(msg.sender, toWithdraw);
     }
@@ -110,8 +110,8 @@ contract BiddableCanvas is CanvasFactory {
         require(!bid.isCommisionPaid);
 
         uint commission = _calculateCommission(bid.amount);
-        owner.transfer(commission);
         bid.isCommisionPaid = true;
+        owner.transfer(commission);
 
         CommissionPaid(commission);
     }
