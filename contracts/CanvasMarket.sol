@@ -9,16 +9,18 @@ import './BiddableCanvas.sol';
 contract CanvasMarket is BiddableCanvas { 
 
     mapping (uint32 => SaleOffer) artworksForSale; 
+    mapping (uint32 => BuyOffer) buyOffers; 
     uint public fees;     
 
-    event ArtworkOfferedForSale(uint32 _artworkId, uint _minPrice, address _toAddress);
+    event ArtworkOfferedForSale(uint32 artworkId, uint minPrice, address toAddress);
     event ArtworkNoLongerForSale(uint32 _artworkId);
-    event ArtworkSold(uint32 _artworkId, uint _amount, address from, address to);
-    event FeeWithdrawn(uint _amount);
+    event ArtworkSold(uint32 artworkId, uint amount, address from, address to);
+    event FeeWithdrawn(uint amount);
+    event BuyOfferMade(uint32 artworkId, address buyer, uint amount);
+    event BuyOfferCancelled(uint32 artworkId, address buyer, uint amount);
 
     struct SaleOffer {
         bool isForSale;
-        uint artworkId;
         address seller;
         uint minPrice;         
         address onlySellTo;     // specify to sell only to a specific address
@@ -26,7 +28,6 @@ contract CanvasMarket is BiddableCanvas {
 
     struct BuyOffer {
         bool hasOffer; 
-        uint32 artworkId;
         address buyer; 
         uint amount; 
     }
@@ -63,7 +64,7 @@ contract CanvasMarket is BiddableCanvas {
         Canvas storage canvas = _getCanvas(_artworkId);
         require(canvas.owner == msg.sender);
 
-        artworksForSale[_artworkId] = SaleOffer(true, _artworkId, msg.sender, _minPrice, 0x0);
+        artworksForSale[_artworkId] = SaleOffer(true, msg.sender, _minPrice, 0x0);
         ArtworkOfferedForSale(_artworkId, _minPrice, 0x0);
     }
 
@@ -71,7 +72,7 @@ contract CanvasMarket is BiddableCanvas {
         Canvas storage canvas = _getCanvas(_artworkId);
         require(canvas.owner == msg.sender);
 
-        artworksForSale[_artworkId] = SaleOffer(true, _artworkId, msg.sender, _minPrice, _receiver);
+        artworksForSale[_artworkId] = SaleOffer(true, msg.sender, _minPrice, _receiver);
         ArtworkOfferedForSale(_artworkId, _minPrice, _receiver);
     }
 
@@ -79,8 +80,38 @@ contract CanvasMarket is BiddableCanvas {
         Canvas storage canvas = _getCanvas(_artworkId);
         require(canvas.owner == msg.sender);
 
-        artworksForSale[_artworkId] = SaleOffer(false, _artworkId, msg.sender, 0, 0x0);
+        artworksForSale[_artworkId] = SaleOffer(false, msg.sender, 0, 0x0);
         ArtworkNoLongerForSale(_artworkId);
+    }
+
+    function enterBuyOffer(uint32 _artworkId) biddingFinished(_artworkId) public payable {
+        Canvas storage canvas = _getCanvas(_artworkId);
+        BuyOffer existing = buyOffers[_artworkId];
+
+        require(canvas.owner != msg.sender);
+        require(canvas.owner != 0x0);
+        require(msg.value > existing.amount);
+        
+        if (existing.amount > 0) {
+            //refund previous buy offer. 
+            existing.buyer.transfer(existing.amount);
+        }
+
+        buyOffers[_artworkId] = BuyOffer(true, msg.sender, msg.value);
+        BuyOfferMade(_artworkId, msg.sender, msg.value);
+    }
+
+    function cancelBuyOffer(uint32 _artworkId) biddingFinished(_artworkId) public {
+        BuyOffer storage offer = buyOffers[_artworkId];
+        require(offer.buyer == msg.sender);
+
+        buyOffers[_artworkId] = BuyOffer(false, 0x0, 0);
+        if (offer.amount > 0) {
+            //refund offer
+            offer.buyer.transfer(offer.amount);
+        }
+
+        BuyOfferCancelled(_artworkId, offer.buyer, offer.amount);
     }
 
     function withdrawFees() public onlyOwner {
