@@ -17,7 +17,7 @@ contract CanvasFactory is Ownable {
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
     
     Canvas[] artworks;
-    uint32 activeCanvasCount = 0;
+    uint32 public activeCanvasCount = 0;
 
     event PixelPainted(uint32 _artworkId, uint32 _index, uint8 _color);
     event CanvasCreated(uint _id);
