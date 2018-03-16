@@ -7,10 +7,14 @@ import './CanvasMarket.sol';
 */
 contract CryptoArt is CanvasMarket { 
 
-    function getCanvasInfo(uint32 _artworkId) public view returns(CanvasInfo) {
+    function getCanvasInfo(uint32 _artworkId) public view returns(
+        uint32 id,
+        uint32 paintedPixels,
+        address owner
+    ) {
         Canvas storage canvas = _getCanvas(_artworkId);
 
-        return CanvasInfo(_artworkId, canvas.paintedPixelsCount, canvas.owner);
+        return (_artworkId, canvas.paintedPixelsCount, canvas.owner);
     }
 
     struct CanvasInfo {
