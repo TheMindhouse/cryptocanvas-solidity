@@ -11,11 +11,12 @@ contract CryptoArt is CanvasMarket {
         uint32 id,
         uint32 paintedPixels,
         bool isFinished,
+        uint8 biddingState,
         address owner
     ) {
         Canvas storage canvas = _getCanvas(_artworkId);
 
-        return (_artworkId, canvas.paintedPixelsCount, _isArtworkFinished(canvas), canvas.owner);
+        return (_artworkId, canvas.paintedPixelsCount, _isArtworkFinished(canvas), getArtworkBiddingState(_artworkId), canvas.owner);
     }
 
     struct CanvasInfo {
