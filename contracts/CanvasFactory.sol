@@ -20,6 +20,7 @@ contract CanvasFactory is Ownable {
     uint32 public activeCanvasCount = 0;
 
     event PixelPainted(uint32 _artworkId, uint32 _index, uint8 _color);
+    event CanvasFinished(uint32 _artworkId);
     event CanvasCreated(uint _id);
 
     modifier onlyReadyAddress(uint32 _canvasId) {
@@ -70,6 +71,7 @@ contract CanvasFactory is Ownable {
 
         if (_isArtworkFinished(canvas)) {
             activeCanvasCount--;
+            CanvasFinished(_artworkId);
         }
 
         PixelPainted(_artworkId, _index, _color);
