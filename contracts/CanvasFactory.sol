@@ -11,7 +11,7 @@ contract CanvasFactory is Ownable {
     uint8 public constant HEIGHT = 64;
     uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
 
-    uint public constant ADDRESS_COOLDOWN = 3 minutes;
+    uint public constant ADDRESS_COOLDOWN = 30 seconds;
 
     uint8 public constant MAX_CANVAS_COUNT = 100;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
