@@ -27,19 +27,19 @@ contract BiddableCanvas is CanvasFactory {
     event MoneyPaid(address _address, uint _amount);
     event CommissionPaid(uint _amount);
 
-    modifier biddingPossible(uint32 _artworkId) {
-        require(getCanvasState(_artworkId) == STATE_INITIAL_BIDDING);
+    modifier biddingPossible(uint32 _canvasId) {
+        require(getCanvasState(_canvasId) == STATE_INITIAL_BIDDING);
         _;
     }
 
-    modifier biddingFinished(uint32 _artworkId) {
-        require(getCanvasState(_artworkId) == STATE_OWNED);
+    modifier biddingFinished(uint32 _canvasId) {
+        require(getCanvasState(_canvasId) == STATE_OWNED);
         _;
     }
 
-    function makeBid(uint32 _artworkId) public payable biddingPossible(_artworkId) {
-        Canvas storage canvas = _getCanvas(_artworkId);
-        Bid storage oldBid = bids[_artworkId];
+    function makeBid(uint32 _canvasId) public payable biddingPossible(_canvasId) {
+        Canvas storage canvas = _getCanvas(_canvasId);
+        Bid storage oldBid = bids[_canvasId];
 
         if (msg.value < MINIMUM_BID_AMOUNT || msg.value <= oldBid.amount) {
             revert();
@@ -59,22 +59,22 @@ contract BiddableCanvas is CanvasFactory {
         }
 
         Bid memory currentBid = Bid(msg.sender, msg.value, finishTime, false);
-        bids[_artworkId] = currentBid;
+        bids[_canvasId] = currentBid;
         canvas.owner = msg.sender;
 
         BidPosted(currentBid.bidder, currentBid.amount, currentBid.finishTime);
     }
 
-    function getLastBidForArtwork(uint32 _artworkId) public view returns (address bidder, uint amount, uint finishTime) {
-        Bid storage bid = bids[_artworkId];
+    function getLastBidForArtwork(uint32 _canvasId) public view returns (address bidder, uint amount, uint finishTime) {
+        Bid storage bid = bids[_canvasId];
         return (bid.bidder, bid.amount, bid.finishTime);
     }
 
-    function getCanvasState(uint32 _artworkId) public view returns (uint8) {
-        Canvas storage canvas = _getCanvas(_artworkId);
+    function getCanvasState(uint32 _canvasId) public view returns (uint8) {
+        Canvas storage canvas = _getCanvas(_canvasId);
 
         if (_isArtworkFinished(canvas)) {
-            uint finishTime = bids[_artworkId].finishTime;
+            uint finishTime = bids[_canvasId].finishTime;
             if (finishTime == 0 || finishTime > now) {
                 return STATE_INITIAL_BIDDING;
 
@@ -87,13 +87,13 @@ contract BiddableCanvas is CanvasFactory {
         }
     }
 
-    function withdrawReward(uint32 _artworkId) public biddingFinished(_artworkId) {
-        Bid storage bid = bids[_artworkId];
+    function withdrawReward(uint32 _canvasId) public biddingFinished(_canvasId) {
+        Bid storage bid = bids[_canvasId];
         require(bid.amount > 0);
         //make sure bid was really made, and there is money to distribute
         require(!bid.isAddressPaid[msg.sender]);
 
-        uint32 paintedPixels = _countPaintedPixels(msg.sender, _artworkId);
+        uint32 paintedPixels = _countPaintedPixels(msg.sender, _canvasId);
         require(paintedPixels > 0);
         //make sure calling address actually painted something
 
@@ -106,8 +106,8 @@ contract BiddableCanvas is CanvasFactory {
         MoneyPaid(msg.sender, toWithdraw);
     }
 
-    function withdrawCommission(uint32 _artworkId) public onlyOwner biddingFinished(_artworkId) {
-        Bid storage bid = bids[_artworkId];
+    function withdrawCommission(uint32 _canvasId) public onlyOwner biddingFinished(_canvasId) {
+        Bid storage bid = bids[_canvasId];
         require(bid.amount > 0);
         //make sure bid was really made, and there is money to distribute
         require(!bid.isCommissionPaid);
