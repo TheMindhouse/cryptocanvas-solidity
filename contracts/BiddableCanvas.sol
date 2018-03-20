@@ -8,14 +8,14 @@ import './CanvasFactory.sol';
 contract BiddableCanvas is CanvasFactory {
 
     //@dev It means artwork is not finished yet, and bidding is not possible. 
-    uint8 public constant BIDDING_ARTWORK_NOT_FINISHED = 0;
+    uint8 public constant STATE_NOT_FINISHED = 0;
 
     //@dev  there is ongoing bidding and anybody can bid. If there artwork can have 
     //      assigned owner, but it can change if someone will over-bid him. 
-    uint8 public constant BIDDING_ONGOING = 1;
+    uint8 public constant STATE_INITIAL_BIDDING = 1;
 
-    //@dev artwork has been sold, and bidding is not possible. 
-    uint8 public constant BIDDING_SOLD = 2;
+    //@dev artwork has been sold, and has the owner
+    uint8 public constant STATE_OWNED = 2;
 
     uint public constant COMMISSION = 20; // 1 / 20 is our commission on every transaction
     uint public constant MINIMUM_BID_AMOUNT = 0.08 ether;
@@ -28,12 +28,12 @@ contract BiddableCanvas is CanvasFactory {
     event CommissionPaid(uint _amount);
 
     modifier biddingPossible(uint32 _artworkId) {
-        require(getArtworkBiddingState(_artworkId) == BIDDING_ONGOING);
+        require(getCanvasState(_artworkId) == STATE_INITIAL_BIDDING);
         _;
     }
 
     modifier biddingFinished(uint32 _artworkId) {
-        require(getArtworkBiddingState(_artworkId) == BIDDING_SOLD);
+        require(getCanvasState(_artworkId) == STATE_OWNED);
         _;
     }
 
@@ -70,20 +70,20 @@ contract BiddableCanvas is CanvasFactory {
         return (bid.bidder, bid.amount, bid.finishTime);
     }
 
-    function getArtworkBiddingState(uint32 _artworkId) public view returns (uint8) {
+    function getCanvasState(uint32 _artworkId) public view returns (uint8) {
         Canvas storage canvas = _getCanvas(_artworkId);
 
         if (_isArtworkFinished(canvas)) {
             uint finishTime = bids[_artworkId].finishTime;
             if (finishTime == 0 || finishTime > now) {
-                return BIDDING_ONGOING;
+                return STATE_INITIAL_BIDDING;
 
             } else {
-                return BIDDING_SOLD;
+                return STATE_OWNED;
             }
 
         } else {
-            return BIDDING_ARTWORK_NOT_FINISHED;
+            return STATE_NOT_FINISHED;
         }
     }
 
