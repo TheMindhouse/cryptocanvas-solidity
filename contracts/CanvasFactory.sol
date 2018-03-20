@@ -67,7 +67,7 @@ contract CanvasFactory is Ownable {
             canvas.paintedPixelsCount++;
         }
 
-        Pixel memory newPixel = Pixel(_invertColor(_color), msg.sender);
+        Pixel memory newPixel = Pixel(_color, msg.sender);
         canvas.pixels[_index] = newPixel;
 
         uint cooldownTime = now + ADDRESS_COOLDOWN;
@@ -87,7 +87,7 @@ contract CanvasFactory is Ownable {
         uint8[] memory result = new uint8[](PIXEL_COUNT);
 
         for (uint32 i = 0; i < PIXEL_COUNT; i++) {
-            result[i] = _invertColor(canvas.pixels[i].color);
+            result[i] = canvas.pixels[i].color;
         }
 
         return result;
@@ -154,10 +154,6 @@ contract CanvasFactory is Ownable {
     function _getCanvas(uint32 _artworkId) internal view returns (Canvas storage) {
         require(_artworkId < artworks.length);
         return artworks[_artworkId];
-    }
-
-    function _invertColor(uint8 _color) internal pure returns (uint8) {
-        return 0xFF - _color;
     }
 
     struct Pixel {
