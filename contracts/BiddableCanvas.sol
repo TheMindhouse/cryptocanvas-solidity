@@ -17,7 +17,7 @@ contract BiddableCanvas is CanvasFactory {
     //@dev artwork has been sold, and bidding is not possible. 
     uint8 public constant BIDDING_SOLD = 2;
 
-    uint public constant COMMISSION = 20; // 1 / 20 is our commision on every transaction 
+    uint public constant COMMISSION = 20; // 1 / 20 is our commission on every transaction
     uint public constant MINIMUM_BID_AMOUNT = 0.08 ether;
     uint public constant BIDDING_DURATION = 48 hours;
 
@@ -110,10 +110,10 @@ contract BiddableCanvas is CanvasFactory {
         Bid storage bid = bids[_artworkId];
         require(bid.amount > 0);
         //make sure bid was really made, and there is money to distribute
-        require(!bid.isCommisionPaid);
+        require(!bid.isCommissionPaid);
 
         uint commission = _calculateCommission(bid.amount);
-        bid.isCommisionPaid = true;
+        bid.isCommissionPaid = true;
         owner.transfer(commission);
 
         CommissionPaid(commission);
@@ -137,7 +137,7 @@ contract BiddableCanvas is CanvasFactory {
         */
         uint finishTime;
 
-        bool isCommisionPaid;
+        bool isCommissionPaid;
 
         /**
         * @dev holds info if an address has been paid for each painted pixel. 
