@@ -58,6 +58,8 @@ contract CanvasFactory is Ownable {
     * @returns  Cooldown of address that called that function
     */
     function setPixel(uint32 _artworkId, uint32 _index, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) validPixelIndex(_index) returns (uint cooldownTime) {
+        require(_color > 0);
+        
         Canvas storage canvas = _getCanvas(_artworkId);
         Pixel storage pixel = canvas.pixels[_index];
 
