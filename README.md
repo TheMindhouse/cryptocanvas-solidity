@@ -1,7 +1,7 @@
 # CryptoCanvas.art Ethereum contract
-CryptoCanvas are distributed and collectible community artworks build on Ethereum blockchain. Visit our website [CryptoCanvas.art][homepage]] if you want to become crypto artist, buy crypto art created by the community, or just enjoy what have been already painted. 
+CryptoCanvas are distributed and collectible community artworks build on Ethereum blockchain. Visit our website [CryptoCanvas.art][homepage] if you want to become a crypto artist, buy crypto art created by the community, or just enjoy what have been already painted. 
 
-This repository hosts solidity code of Ethereum contract. Because of that you can find here technical information about contract itself. If you seek more information about project visit our [website][homepage] or read [whitepapper](https://github.com/TheMindhouse/cryptocanvas-solidity/blob/master/whitepaper.pdf).
+This repository hosts solidity code of Ethereum contract. Because of that, you can find here technical information about the contract itself. If you seek more information about the project visit our [website][homepage] or read [whitepapper](https://github.com/TheMindhouse/cryptocanvas-solidity/blob/master/whitepaper.pdf).
 
 ## Interacting with the contract
 
@@ -9,25 +9,25 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
 * `createCanvas()`, gas cost: xxx (TBD)
 
-    Creates new canvas. Anybody can call this function, but there are some limitations. First of all, number of canvases can't exceed `MAX_CANVAS_COUNT`. Secondly, it's not allowed to create new canvas  when there is more than `MAX_ACTIVE_CANVAS` unfinished canvases. 
+    Creates a new canvas. Anybody can call this function, but there are some limitations. First of all, count of canvases can't exceed `MAX_CANVAS_COUNT`. Secondly, it's not allowed to create new canvas when there is more than `MAX_ACTIVE_CANVAS` unfinished canvases. 
 
 * `function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) returns (uint cooldownTime)`, gas cost: xxx
 
-    Sets the color for specified canvas. Color has to be different than `0`. Address cooldown is defined by `ADDRESS_COOLDOWN`, which means you have to wait that timt to set another pixel. It returns time after which address can set next pixel. Color mapping is descriped in [this](#javascript-palette-array) section.
+    Sets the color for specified canvas. Color has to be different than `0`. Address cooldown is defined by `ADDRESS_COOLDOWN`, which means you have to wait that time to set another pixel. It returns time after which address can set next pixel. Color mapping is described in [this](#javascript-palette-array) section.
 
 * `getArtwork(uint32 _canvasId) returns (uint8[])`, free to call
 
-    Returns the bitmap of canvas. `0` color means that pixel is not set. Color mapping is descriped in [this](#javascript-palette-array) section. 
+    Returns the bitmap of a canvas. `0` color means that pixel is not set. Color mapping is described in [this](#javascript-palette-array) section. 
 
 ## Color palette
-CryptoCanvas, due to technical and estethic reasons, uses custom color palette. Each number corresponds to fixed color. Here is full color palette. 
+CryptoCanvas, due to technical and aesthetic reasons, uses a custom color palette. Each number corresponds to a fixed color. Here is the full-color palette. 
 
-Color `0` represents lack of color. You can think of it as fully transparent pixel. It's not allowed to set pixel's color as `0`.
+Color `0` represents lack of color. You can think of it as a fully transparent pixel. It's not allowed to set pixel's color as `0`.
 
 ![alt text](colour-palette.jpeg "Full color palette")
 
 ### Javascript palette array 
-Here is full pallette represented by Javascript array. For example color `1` is `#FFFF9E`.
+Here is full palette represented by Javascript array. For example color `1` is `#FFFF9E`.
 
 ```Javascript
 var hexPalette = ['#FFFFFF', '#FFFF9E', '#FFE6A3', '#FFD9CE', '#FFC7DF', '#FFB4EF', '#EFB3FF', '#CCD3FF', '#D4D0FF', '#B6ECFF', '#BCF8FF', '#C1FEC9', '#A9FF8C', '#EFFFA0', '#FFF3B7', '#FFD98B', '#F4F4F4', '#FEFF7D', '#FFE48C', '#FFCEC1', '#FFC4CE', '#FFAAEE', '#ECA5FF', '#BECBFF', '#C4C0FF', '#A9E3FF', '#9FF5FF', '#B5FCBE', '#99FF78', '#E3FE5F', '#FFF39F', '#FFCE6F', '#EAEAEA', '#FFFA51', '#FFD479', '#FFBFAF', '#FFB5BC', '#FF9FEB', '#E996FF', '#ACBEFF', '#BCB7FF', '#91D5FF', '#7FF2FF', '#A0FAAC', '#80FF58', '#D6F151', '#FEEE8B', '#FFC854', '#E1E1E1', '#FFF51B', '#FFC45A', '#FFAF99', '#FFA6AB', '#FF96E9', '#E689FF', '#9BB2FF', '#B3AEFF', '#75DCFF', '#68F0FF', '#7BF68E', '#76F94E', '#C8E32A', '#FFE261', '#FFBF49', '#D7D7D7', '#FFE615', '#FFBD30', '#FF9F85', '#FF979B', '#FF84E6', '#E27BFF', '#94A8FF', '#A8A2FF', '#67D5FF', '#40EDFF', '#5BF177', '#6BEF42', '#BDD831', '#FAD846', '#FFB446', '#D0D0D0', '#FFD80F', '#FFB618', '#FF9274', '#FF878B', '#FF73DF', '#DB6DFF', '#8D9FFF', '#9E96FF', '#55CDFF', '#00EAFF', '#50E86D', '#62E738', '#B3CE22', '#F3CD20', '#FFAA43', '#C5C5C5', '#FFCF00', '#FFAA00', '#FF8260', '#FF7479', '#FF66D3', '#D264F9', '#7D8FFF', '#938AFF', '#40CCFF', '#00E5FF', '#43DE63', '#4AD317', '#A6C100', '#ECC60F', '#F99C38', '#B8B8B8', '#FFC300', '#FF9200', '#FF6E47', '#FF6456', '#F55BC8', '#CA5BF1', '#6E81FF', '#8B82FF', '#24B8FF', '#00E0FF', '#00D138', '#2DBE00', '#99B400', '#E4BE00', '#ED8F2D', '#A4A4A4', '#FFA700', '#FF8500', '#FF633C', '#FF523A', '#E74DBA', '#BF50E6', '#6372FF', '#7C74F1', '#20A9F2', '#00D3FA', '#00BD3B', '#19B300', '#86A000', '#D6AF00', '#DB8122', '#8E8E8E', '#FF8A00', '#FF7900', '#F8572F', '#FF3E21', '#DA3FAD', '#B344DA', '#5964FF', '#6E66E3', '#1F9CDF', '#00BFE2', '#00A71A', '#00A800', '#748E00', '#C7A000', '#CA7315', '#757575', '#F37400', '#F36000', '#E34113', '#FF1C00', '#C92C9D', '#A93AD0', '#4E56F5', '#625AD6', '#0087D5', '#00AECE', '#009500', '#009B00', '#678000', '#B08A00', '#C15F0A', '#686868', '#D06200', '#D74700', '#CE2412', '#F20000', '#B9008C', '#9F2FC6', '#4448E7', '#5950CC', '#0071CD', '#009BC3', '#008300', '#008F00', '#5B7200', '#947500', '#B74A02', '#4E4E4E', '#A44B00', '#C12D0C', '#BE1D00', '#D90000', '#A20077', '#850FAD', '#2439DD', '#483FBB', '#005CB2', '#00869F', '#007800', '#007A00', '#465700', '#6F5700', '#973400', '#343434', '#7E3300', '#AC0E12', '#A41F00', '#B60000', '#8B0061', '#6E0096', '#012AD3', '#372EA9', '#094897', '#007086', '#006D00', '#006800', '#405300', '#564500', '#791D00', '#252525', '#5A2600', '#7B1306', '#841B00', '#7B1500', '#6F004D', '#65008D', '#0122AC', '#231794', '#15387A', '#005E70', '#005600', '#005500', '#354500', '#4F3F00', '#5F1A00', '#000000', '#461E00', '#4A1600', '#641903', '#501200', '#500038', '#4F0070', '#011B86', '#0F007E', '#1B295D', '#004C5A', '#004A00', '#004100', '#2A3600', '#483A00', '#451700'];
