@@ -15,7 +15,7 @@ contract CanvasFactory is Ownable {
 
     uint8 public constant MAX_CANVAS_COUNT = 100;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
-    
+
     Canvas[] artworks;
     uint32 public activeCanvasCount = 0;
 
@@ -57,8 +57,8 @@ contract CanvasFactory is Ownable {
     /**
     * @returns  Cooldown of address that called that function
     */
-    function setPixel(uint32 _artworkId, uint32 _index, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) validPixelIndex(_index) returns(uint cooldownTime) {
-        Canvas storage canvas = _getCanvas(_artworkId);        
+    function setPixel(uint32 _artworkId, uint32 _index, uint8 _color) public onlyReadyAddress(_artworkId) notFinished(_artworkId) validPixelIndex(_index) returns (uint cooldownTime) {
+        Canvas storage canvas = _getCanvas(_artworkId);
         Pixel storage pixel = canvas.pixels[_index];
 
         // pixel always has a painter. If it's equal to address(0) it means 
@@ -70,7 +70,7 @@ contract CanvasFactory is Ownable {
         Pixel memory newPixel = Pixel(_invertColor(_color), msg.sender);
         canvas.pixels[_index] = newPixel;
 
-        uint cooldownTime = now + ADDRESS_COOLDOWN; 
+        uint cooldownTime = now + ADDRESS_COOLDOWN;
         canvas.addressToReadyTime[msg.sender] = cooldownTime;
 
         if (_isArtworkFinished(canvas)) {
@@ -82,7 +82,7 @@ contract CanvasFactory is Ownable {
         return cooldownTime;
     }
 
-    function getArtwork(uint32 _artworkId) public view returns(uint8[]) {
+    function getArtwork(uint32 _artworkId) public view returns (uint8[]) {
         Canvas storage canvas = _getCanvas(_artworkId);
         uint8[] memory result = new uint8[](PIXEL_COUNT);
 
@@ -90,7 +90,7 @@ contract CanvasFactory is Ownable {
             result[i] = _invertColor(canvas.pixels[i].color);
         }
 
-        return result; 
+        return result;
     }
 
     /**
@@ -98,7 +98,7 @@ contract CanvasFactory is Ownable {
     *           pixels. True means pixel has been painted by user, false means
     *           that pixel hasn't been painted by user (it will be white).
     */
-    function mapPaintedPixels(uint32 _artworkId) public view returns(bool[]) {
+    function mapPaintedPixels(uint32 _artworkId) public view returns (bool[]) {
         Canvas storage canvas = _getCanvas(_artworkId);
         bool[] memory result = new bool[](PIXEL_COUNT);
 
@@ -108,33 +108,33 @@ contract CanvasFactory is Ownable {
             }
         }
 
-        return result; 
+        return result;
     }
 
-    function getArtworkPaintedPixels(uint32 _artworkId) public view returns(uint32) {
+    function getArtworkPaintedPixels(uint32 _artworkId) public view returns (uint32) {
         return _getCanvas(_artworkId).paintedPixelsCount;
     }
 
-    function getPixelCount() public pure returns(uint) {
+    function getPixelCount() public pure returns (uint) {
         return PIXEL_COUNT;
     }
 
     /**
     * @notice   Returns amount of created canvases.
     */
-    function getArtworksCount() public view returns(uint) {
+    function getArtworksCount() public view returns (uint) {
         return artworks.length;
     }
 
-    function isArtworkFinished(uint32 _artworkId) public view returns(bool) {
+    function isArtworkFinished(uint32 _artworkId) public view returns (bool) {
         return _isArtworkFinished(_getCanvas(_artworkId));
     }
 
-    function getPixelAuthor(uint32 _artworkId, uint32 _pixelIndex) public view validPixelIndex(_pixelIndex) returns(address) {
+    function getPixelAuthor(uint32 _artworkId, uint32 _pixelIndex) public view validPixelIndex(_pixelIndex) returns (address) {
         return _getCanvas(_artworkId).pixels[_pixelIndex].painter;
     }
 
-    function _countPaintedPixels(address _address, uint32 _artworkId) internal view returns(uint32) {
+    function _countPaintedPixels(address _address, uint32 _artworkId) internal view returns (uint32) {
         Canvas storage canvas = _getCanvas(_artworkId);
         uint32 count = 0;
 
@@ -144,24 +144,24 @@ contract CanvasFactory is Ownable {
             }
         }
 
-        return count; 
+        return count;
     }
 
-    function _isArtworkFinished(Canvas canvas) internal pure returns(bool) {
+    function _isArtworkFinished(Canvas canvas) internal pure returns (bool) {
         return canvas.paintedPixelsCount == PIXEL_COUNT;
     }
 
-    function _getCanvas(uint32 _artworkId) internal view returns(Canvas storage) {
+    function _getCanvas(uint32 _artworkId) internal view returns (Canvas storage) {
         require(_artworkId < artworks.length);
         return artworks[_artworkId];
     }
 
-    function _invertColor(uint8 _color) internal pure returns(uint8) {
+    function _invertColor(uint8 _color) internal pure returns (uint8) {
         return 0xFF - _color;
     }
 
     struct Pixel {
-        uint8 color; 
+        uint8 color;
         address painter;
     }
 
@@ -169,12 +169,12 @@ contract CanvasFactory is Ownable {
         /**
         * Map of all pixels. 
         */
-        mapping (uint32 => Pixel) pixels;
+        mapping(uint32 => Pixel) pixels;
 
         /**
         * Owner of canvas. Canvas doesn't have an owner until initial bidding ends. 
         */
-        address owner; 
+        address owner;
 
         /**
         * Numbers of pixels set. Canvas will be considered finished when all pixels will be set.
@@ -185,7 +185,7 @@ contract CanvasFactory is Ownable {
         /**
         * Time when given addres can paint on that canvas
         */
-        mapping (address => uint) addressToReadyTime;
+        mapping(address => uint) addressToReadyTime;
 
     }
 }

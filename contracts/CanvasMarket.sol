@@ -6,11 +6,11 @@ import './BiddableCanvas.sol';
 * @dev  This contract takes trading our artworks. Trading can happen
 *       if artwork has been initially bought. 
 */
-contract CanvasMarket is BiddableCanvas { 
+contract CanvasMarket is BiddableCanvas {
 
-    mapping (uint32 => SaleOffer) artworksForSale; 
-    mapping (uint32 => BuyOffer) buyOffers; 
-    uint public fees;     
+    mapping(uint32 => SaleOffer) artworksForSale;
+    mapping(uint32 => BuyOffer) buyOffers;
+    uint public fees;
 
     event ArtworkOfferedForSale(uint32 artworkId, uint minPrice, address toAddress);
     event ArtworkNoLongerForSale(uint32 _artworkId);
@@ -22,14 +22,14 @@ contract CanvasMarket is BiddableCanvas {
     struct SaleOffer {
         bool isForSale;
         address seller;
-        uint minPrice;         
+        uint minPrice;
         address onlySellTo;     // specify to sell only to a specific address
     }
 
     struct BuyOffer {
-        bool hasOffer; 
-        address buyer; 
-        uint amount; 
+        bool hasOffer;
+        address buyer;
+        uint amount;
     }
 
     /**
@@ -40,23 +40,26 @@ contract CanvasMarket is BiddableCanvas {
         Canvas storage canvas = _getCanvas(_artworkId);
         SaleOffer storage saleOffer = artworksForSale[_artworkId];
 
-        require(msg.sender != canvas.owner); //don't sell for the owner
+        require(msg.sender != canvas.owner);
+        //don't sell for the owner
         require(saleOffer.isForSale);
         require(msg.value >= saleOffer.minPrice);
-        require(saleOffer.seller != canvas.owner); //seller is no longer owner 
-        require(saleOffer.onlySellTo == 0x0 || saleOffer.onlySellTo == msg.sender); //protect from selling to unintented address
+        require(saleOffer.seller != canvas.owner);
+        //seller is no longer owner
+        require(saleOffer.onlySellTo == 0x0 || saleOffer.onlySellTo == msg.sender);
+        //protect from selling to unintented address
 
         uint fee = msg.value / COMMISSION;
-        uint toTransfer = msg.value - fee; 
+        uint toTransfer = msg.value - fee;
 
         saleOffer.seller.transfer(toTransfer);
-        fees += fee; 
+        fees += fee;
 
         canvas.owner = msg.sender;
         artworkNoLongerForSale(_artworkId);
 
         ArtworkSold(_artworkId, msg.value, saleOffer.seller, msg.sender);
-        
+
         //TODO make sure you refund all bidding for artwork !!!
     }
 
@@ -91,7 +94,7 @@ contract CanvasMarket is BiddableCanvas {
         require(canvas.owner != msg.sender);
         require(canvas.owner != 0x0);
         require(msg.value > existing.amount);
-        
+
         if (existing.amount > 0) {
             //refund previous buy offer. 
             existing.buyer.transfer(existing.amount);
@@ -124,10 +127,10 @@ contract CanvasMarket is BiddableCanvas {
         require(offer.amount > _minPrice);
 
         uint fee = offer.amount / COMMISSION;
-        uint toTransfer = offer.amount - fee; 
+        uint toTransfer = offer.amount - fee;
 
-        canvas.owner = offer.buyer; 
-        fees += fee; 
+        canvas.owner = offer.buyer;
+        fees += fee;
         msg.sender.transfer(toTransfer);
 
         buyOffers[_artworkId] = BuyOffer(false, 0x0, 0);
@@ -138,8 +141,8 @@ contract CanvasMarket is BiddableCanvas {
 
     function withdrawFees() public onlyOwner {
         require(fees > 0);
-        
-        uint toWithdraw = fees; 
+
+        uint toWithdraw = fees;
         fees = 0;
 
         owner.transfer(toWithdraw);
