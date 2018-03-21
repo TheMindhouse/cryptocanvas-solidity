@@ -60,7 +60,16 @@ contract CanvasMarket is BiddableCanvas {
 
         ArtworkSold(_canvasId, msg.value, saleOffer.seller, msg.sender);
 
-        //TODO make sure you refund all bidding for artwork !!!
+        //If the buyer have placed buy offer, refound it 
+        BuyOffer offer = buyOffers[_canvasId];
+        if(offer.buyer == msg.sender) {
+            buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
+            if (offer.amount > 0) {
+                //refund offer
+                offer.buyer.transfer(offer.amount);
+            }
+        }
+
     }
 
     function offerArtworkForSale(uint32 _canvasId, uint _minPrice) public stateOwned(_canvasId) {
