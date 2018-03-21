@@ -45,9 +45,6 @@ contract BiddableCanvas is CanvasFactory {
             revert();
         }
 
-        //TODO handle our commission. We can't add it to commssion, as it should be 
-        //blocked until bidding finishes... 
-
         if (oldBid.bidder != 0x0 && oldBid.amount > 0) {
             //return old bidder his money
             oldBid.bidder.transfer(oldBid.amount);
