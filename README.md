@@ -19,12 +19,81 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
     Returns the bitmap of a canvas. `0` color means that pixel is not set. Color mapping is described in [this](#color-palette) section. 
 
+* `getArtworkPaintedPixels(uint32 _canvasId) returns (uint32)`, free to call
+
+    Returns number of pixels that have been already painted.
+
+* `getPixelCount() returns (uint)`, free to call
+
+    Returns total number of pixels in canvas. 
+
+* `getArtworksCount() returns (uint)`, free to call
+
+    Returns the total number of created canvases. 
+
+* `isArtworkFinished(uint32 _canvasId) returns (bool)`, free to call
+
+    Returns `true` if the canvas is finished, `false` otherwise. Canvas is finished when all of its pixels have been set.
+
+* `makeBid(uint32 _canvasId)`, gas cost: xxx
+
+    Use this function to participate in the initial bidding. It's only possible to call this function when the state of the canvas is equal to `STATE_INITIAL_BIDDING`. Amount of ethers has to be higher than greater than `MINIMUM_BID_AMOUNT` and last highest bid.
+
+    If you will be overbid, the contract will send you back money that you paid. 
+
+* `getLastBidForArtwork(uint32 _canvasId) returns (address bidder, uint amount, uint finishTime)`, free to call
+
+    Returns last bid made for canvas. If the state of the canvas is equal to `STATE_OWNED` that simply is the price that this canvas was sold. 
+
+* `getCanvasState(uint32 _canvasId) returns (uint8)`, free to call
+
+    Returns the current state of the canvas. There are 3 states possible: 
+    1. `STATE_NOT_FINISHED = 0` - state when canvas is not yet finished. 
+    2. `STATE_INITIAL_BIDDING = 1` - state when canvas has been already finished, but initial bidding is still in progress. It means everybody can bid right now. 
+    3. `STATE_OWNED = 2` - state after initial bidding is finished. Canvas has its owner who decides when to trade it. 
+
+* `withdrawReward(uint32 _canvasId)`, gas cost: xxx
+
+    Get paid for what you've painted. Only possible when the state is equal to `STATE_OWNED`. It's possible to get paid just once ;)
+
+* `buyArtwork(uint32 _canvasId)`, gas cost: xxx
+
+    Buy the canvas. There has to be sell offer for the artwork. Amount of transferred ethers has to be equal or greater than minimum price set in sell offer. 
+
+* `offerArtworkForSale(uint32 _canvasId, uint _minPrice)`, gas cost: xxx
+
+    Offer your canvas for sale. 
+
+* `function offerArtworkForSaleToAddress(uint32 _canvasId, uint _minPrice, address _receiver)`, gas cost: xxx
+
+    Offer your canvas for sale. Only specified address can buy the canvas. 
+
+* `artworkNoLongerForSale(uint32 _canvasId)`, gas cost: xxx
+
+    Cancels all sell offers. You have to be owner of the canvas. 
+
+* `enterBuyOffer(uint32 _canvasId)`, gas cost: xxx
+
+    Place buy offer for the canvas. Amount of transferred ethers has to be greater than highest buy offer. Owner of the canvas has to accept buy offer. 
+
+* `cancelBuyOffer(uint32 _canvasId)`, gas cost: xxx
+
+    Cancel buy offer that you've previously placed. 
+
+* `acceptBuyOffer(uint32 _canvasId, uint _minPrice)`, gas cost: xxx
+
+    Accept current buy offer for your canvas. To protect you from accidental calls, you have to specify minimum price. 
+
+* `getCanvasInfo(uint32 _canvasId) public view returns (uint32 id, uint32 paintedPixels, bool isFinished, uint8 canvasState, address owner)`, free to call 
+
+    Returns useful information about canvas, all packed in one handy function. 
+
 ## Color palette
 CryptoCanvas, due to technical and aesthetic reasons, uses a custom color palette. Each number corresponds to a fixed color. Here is the full-color palette. 
 
 Color `0` represents lack of color. You can think of it as a fully transparent pixel. It's not allowed to set pixel's color as `0`.
 
-![Full color](colour-palette.jpeg "Full color palette")
+![Full color palette](colour-palette.jpeg "Full color palette")
 
 ### Javascript palette array 
 Here is full palette represented by Javascript array. For example color `1` is `#FFFF9E`.
