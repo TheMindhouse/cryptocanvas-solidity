@@ -101,6 +101,7 @@ contract CanvasFactory is Ownable {
     *           that pixel hasn't been painted by user (it will be white).
     */
     function mapPaintedPixels(uint32 _canvasId) public view returns (bool[]) {
+        //TODO -> delete? I think it's not needed. Consult Kris!
         Canvas storage canvas = _getCanvas(_canvasId);
         bool[] memory result = new bool[](PIXEL_COUNT);
 
