@@ -63,7 +63,7 @@ contract CanvasMarket is BiddableCanvas {
         //TODO make sure you refund all bidding for artwork !!!
     }
 
-    function offerArtworkForSale(uint32 _canvasId, uint _minPrice) public biddingFinished(_canvasId) {
+    function offerArtworkForSale(uint32 _canvasId, uint _minPrice) public stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 
@@ -71,7 +71,7 @@ contract CanvasMarket is BiddableCanvas {
         ArtworkOfferedForSale(_canvasId, _minPrice, 0x0);
     }
 
-    function offerArtworkForSaleToAddress(uint32 _canvasId, uint _minPrice, address _receiver) public biddingFinished(_canvasId) {
+    function offerArtworkForSaleToAddress(uint32 _canvasId, uint _minPrice, address _receiver) public stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 
@@ -79,7 +79,7 @@ contract CanvasMarket is BiddableCanvas {
         ArtworkOfferedForSale(_canvasId, _minPrice, _receiver);
     }
 
-    function artworkNoLongerForSale(uint32 _canvasId) public biddingFinished(_canvasId) {
+    function artworkNoLongerForSale(uint32 _canvasId) public stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 
@@ -87,7 +87,7 @@ contract CanvasMarket is BiddableCanvas {
         ArtworkNoLongerForSale(_canvasId);
     }
 
-    function enterBuyOffer(uint32 _canvasId) public payable biddingFinished(_canvasId) {
+    function enterBuyOffer(uint32 _canvasId) public payable stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         BuyOffer existing = buyOffers[_canvasId];
 
@@ -104,7 +104,7 @@ contract CanvasMarket is BiddableCanvas {
         BuyOfferMade(_canvasId, msg.sender, msg.value);
     }
 
-    function cancelBuyOffer(uint32 _canvasId) public biddingFinished(_canvasId) {
+    function cancelBuyOffer(uint32 _canvasId) public stateOwned(_canvasId) {
         BuyOffer storage offer = buyOffers[_canvasId];
         require(offer.buyer == msg.sender);
 
@@ -117,7 +117,7 @@ contract CanvasMarket is BiddableCanvas {
         BuyOfferCancelled(_canvasId, offer.buyer, offer.amount);
     }
 
-    function acceptBuyOffer(uint32 _canvasId, uint _minPrice) public biddingFinished(_canvasId) {
+    function acceptBuyOffer(uint32 _canvasId, uint _minPrice) public stateOwned(_canvasId) {
         Canvas canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 

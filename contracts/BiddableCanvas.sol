@@ -27,17 +27,17 @@ contract BiddableCanvas is CanvasFactory {
     event MoneyPaid(address _address, uint _amount);
     event CommissionPaid(uint _amount);
 
-    modifier biddingPossible(uint32 _canvasId) {
+    modifier stateBidding(uint32 _canvasId) {
         require(getCanvasState(_canvasId) == STATE_INITIAL_BIDDING);
         _;
     }
 
-    modifier biddingFinished(uint32 _canvasId) {
+    modifier stateOwned(uint32 _canvasId) {
         require(getCanvasState(_canvasId) == STATE_OWNED);
         _;
     }
 
-    function makeBid(uint32 _canvasId) public payable biddingPossible(_canvasId) {
+    function makeBid(uint32 _canvasId) public payable stateBidding(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         Bid storage oldBid = bids[_canvasId];
 
@@ -87,7 +87,7 @@ contract BiddableCanvas is CanvasFactory {
         }
     }
 
-    function withdrawReward(uint32 _canvasId) public biddingFinished(_canvasId) {
+    function withdrawReward(uint32 _canvasId) public stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
         require(bid.amount > 0);
         //make sure bid was really made, and there is money to distribute
@@ -106,7 +106,7 @@ contract BiddableCanvas is CanvasFactory {
         MoneyPaid(msg.sender, toWithdraw);
     }
 
-    function withdrawCommission(uint32 _canvasId) public onlyOwner biddingFinished(_canvasId) {
+    function withdrawCommission(uint32 _canvasId) public onlyOwner stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
         require(bid.amount > 0);
         //make sure bid was really made, and there is money to distribute
