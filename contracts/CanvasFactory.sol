@@ -55,7 +55,7 @@ contract CanvasFactory is Ownable {
     }
 
     /**
-    * @returns  Cooldown of address that called that function
+    * @return  Cooldown of address that called that function
     */
     function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) public onlyReadyAddress(_canvasId) notFinished(_canvasId) validPixelIndex(_index) returns (uint cooldownTime) {
         require(_color > 0);
@@ -72,8 +72,8 @@ contract CanvasFactory is Ownable {
         Pixel memory newPixel = Pixel(_color, msg.sender);
         canvas.pixels[_index] = newPixel;
 
-        uint cooldownTime = now + ADDRESS_COOLDOWN;
-        canvas.addressToReadyTime[msg.sender] = cooldownTime;
+        uint cooldown = now + ADDRESS_COOLDOWN;
+        canvas.addressToReadyTime[msg.sender] = cooldown;
 
         if (_isArtworkFinished(canvas)) {
             activeCanvasCount--;
@@ -81,7 +81,7 @@ contract CanvasFactory is Ownable {
         }
 
         PixelPainted(_canvasId, _index, _color);
-        return cooldownTime;
+        return cooldown;
     }
 
     function getArtwork(uint32 _canvasId) public view returns (uint8[]) {
