@@ -13,18 +13,18 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
 * `function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) returns (uint cooldownTime)`, gas cost: xxx
 
-    Sets the color for specified canvas. Color has to be different than `0`. Address cooldown is defined by `ADDRESS_COOLDOWN`, which means you have to wait that time to set another pixel. It returns time after which address can set next pixel. Color mapping is described in [this](#javascript-palette-array) section.
+    Sets the color for specified canvas. Color has to be different than `0`. Address cooldown is defined by `ADDRESS_COOLDOWN`, which means you have to wait that time to set another pixel. It returns time after which address can set next pixel. Color mapping is described in [this](#color-palette) section.
 
 * `getArtwork(uint32 _canvasId) returns (uint8[])`, free to call
 
-    Returns the bitmap of a canvas. `0` color means that pixel is not set. Color mapping is described in [this](#javascript-palette-array) section. 
+    Returns the bitmap of a canvas. `0` color means that pixel is not set. Color mapping is described in [this](#color-palette) section. 
 
 ## Color palette
 CryptoCanvas, due to technical and aesthetic reasons, uses a custom color palette. Each number corresponds to a fixed color. Here is the full-color palette. 
 
 Color `0` represents lack of color. You can think of it as a fully transparent pixel. It's not allowed to set pixel's color as `0`.
 
-![alt text](colour-palette.jpeg "Full color palette")
+![Full color](colour-palette.jpeg "Full color palette")
 
 ### Javascript palette array 
 Here is full palette represented by Javascript array. For example color `1` is `#FFFF9E`.
