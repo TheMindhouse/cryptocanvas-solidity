@@ -22,6 +22,7 @@ contract BiddableCanvas is CanvasFactory {
     uint public constant BIDDING_DURATION = 48 hours;
 
     mapping(uint32 => Bid) bids;
+    mapping(address => uint32) addressToCount;
 
     event BidPosted(address _bidder, uint _amount, uint _finishTime);
     event MoneyPaid(address _address, uint _amount);
@@ -57,7 +58,12 @@ contract BiddableCanvas is CanvasFactory {
 
         Bid memory currentBid = Bid(msg.sender, msg.value, finishTime, false);
         bids[_canvasId] = currentBid;
+
+        if (canvas.owner != 0x0) {
+            addressToCount[canvas.owner]--;
+        }
         canvas.owner = msg.sender;
+        addressToCount[msg.sender]++;
 
         BidPosted(currentBid.bidder, currentBid.amount, currentBid.finishTime);
     }
@@ -114,6 +120,10 @@ contract BiddableCanvas is CanvasFactory {
         owner.transfer(commission);
 
         CommissionPaid(commission);
+    }
+
+    function balanceOf(address _owner) external returns (uint) {
+        return addressToCount[_owner];
     }
 
     function _calculatePricePerPixel(uint _totalPrice) private pure returns (uint) {

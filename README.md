@@ -56,6 +56,10 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
     Get paid for what you've painted. Only possible when the state is equal to `STATE_OWNED`. It's possible to get paid just once ;)
 
+* `balanceOf(address _owner) returns (uint)` 
+
+    Returns the amount of canvases assigned to the address. 
+
 * `buyArtwork(uint32 _canvasId)`, gas cost: xxx
 
     Buy the canvas. There has to be sell offer for the artwork. Amount of transferred ethers has to be equal or greater than minimum price set in sell offer. 

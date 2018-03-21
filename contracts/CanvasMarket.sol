@@ -55,6 +55,9 @@ contract CanvasMarket is BiddableCanvas {
         saleOffer.seller.transfer(toTransfer);
         fees += fee;
 
+        addressToCount[canvas.owner]--;
+        addressToCount[msg.sender]++;
+
         canvas.owner = msg.sender;
         artworkNoLongerForSale(_canvasId);
 
@@ -137,6 +140,9 @@ contract CanvasMarket is BiddableCanvas {
 
         uint fee = offer.amount / COMMISSION;
         uint toTransfer = offer.amount - fee;
+
+        addressToCount[canvas.owner]--;
+        addressToCount[offer.buyer]++;
 
         canvas.owner = offer.buyer;
         fees += fee;
