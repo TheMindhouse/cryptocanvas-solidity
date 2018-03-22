@@ -1,6 +1,6 @@
 pragma solidity 0.4.21;
 
-import './Ownable.sol';
+import "./Ownable.sol";
 
 /**
 * @dev This contract takes care of painting on canvases, returning artworks and creating ones. 

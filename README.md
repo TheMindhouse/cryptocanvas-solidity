@@ -92,6 +92,17 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
     Returns useful information about canvas, all packed in one handy function. 
 
+* `calculateReward(uint32 _canvasId, address _address) returns (uint32 pixelsCount, uint reward, bool isPaid)`, free to call
+
+    Calculates reward for an address. Returns: 
+    * number of pixels that given address painted 
+    * reward in weis
+    * information if reward has been already paid. 
+
+* `calculateCommision(uint32 _canvasId) public stateOwned(_canvasId) returns (uint comission, bool isPaid)`, free to call
+
+    Returns commision for given cavas and information if it has been already paid.
+
 ## Color palette
 CryptoCanvas, due to technical and aesthetic reasons, uses a custom color palette. Each number corresponds to a fixed color. Here is the full-color palette. 
 
