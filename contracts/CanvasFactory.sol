@@ -95,25 +95,6 @@ contract CanvasFactory is Ownable {
         return result;
     }
 
-    /**
-    * @notice   Functions returns array of booleans. Each boolean corresponds to 
-    *           pixels. True means pixel has been painted by user, false means
-    *           that pixel hasn't been painted by user (it will be white).
-    */
-    function mapPaintedPixels(uint32 _canvasId) public view returns (bool[]) {
-        //TODO -> delete? I think it's not needed. Consult Kris!
-        Canvas storage canvas = _getCanvas(_canvasId);
-        bool[] memory result = new bool[](PIXEL_COUNT);
-
-        for (uint32 i = 0; i < PIXEL_COUNT; i++) {
-            if (canvas.pixels[i].painter != 0x0) {
-                result[i] = true;
-            }
-        }
-
-        return result;
-    }
-
     function getArtworkPaintedPixels(uint32 _canvasId) public view returns (uint32) {
         return _getCanvas(_canvasId).paintedPixelsCount;
     }
