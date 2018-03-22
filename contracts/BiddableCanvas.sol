@@ -1,6 +1,6 @@
 pragma solidity 0.4.21;
 
-import './CanvasFactory.sol';
+import "./CanvasFactory.sol";
 
 /**
 * @dev This contract takes care of innitial bidding. 
@@ -90,18 +90,22 @@ contract BiddableCanvas is CanvasFactory {
         }
     }
 
+    function calculateReward(uint32 _canvasId, address _address) public view stateOwned(_canvasId) returns (uint32 pixelsCount, uint reward, bool isPaid) {
+        Bid storage bid = bids[_canvasId];
+        uint32 paintedPixels = _countPaintedPixels(_address, _canvasId);
+        uint pricePerPixel = _calculatePricePerPixel(bid.amount);
+        uint reward = paintedPixels * pricePerPixel;
+
+        return (paintedPixels, reward, bid.isAddressPaid[_address]);
+    }
+
     function withdrawReward(uint32 _canvasId) public stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
-        require(bid.amount > 0);
-        //make sure bid was really made, and there is money to distribute
-        require(!bid.isAddressPaid[msg.sender]);
 
-        uint32 paintedPixels = _countPaintedPixels(msg.sender, _canvasId);
-        require(paintedPixels > 0);
-        //make sure calling address actually painted something
-
-        uint pricePerPixel = _calculatePricePerPixel(bid.amount);
-        uint toWithdraw = paintedPixels * pricePerPixel;
+        var (pixelCount, reward, isPaid) = calculateReward(_canvasId, msg.caller);
+        require(pixelCount > 0);
+        require(reward > 0);
+        require(!isPaid);
 
         bid.isAddressPaid[msg.sender] = true;
         msg.sender.transfer(toWithdraw);
@@ -109,13 +113,18 @@ contract BiddableCanvas is CanvasFactory {
         MoneyPaid(msg.sender, toWithdraw);
     }
 
+    function calculateCommision(uint32 _canvasId) public stateOwned(_canvasId) returns (uint comission, bool isPaid) {
+        Bid storage bid = bids[_canvasId];
+        return (_calculateCommission(bid.amount), bid.isCommissionPaid);
+    }
+
     function withdrawCommission(uint32 _canvasId) public onlyOwner stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
-        require(bid.amount > 0);
-        //make sure bid was really made, and there is money to distribute
-        require(!bid.isCommissionPaid);
+        var (comission, isPaid) = calculateComission(_canvasId);
 
-        uint commission = _calculateCommission(bid.amount);
+        require(comission > 0);
+        require(!isPaid);
+
         bid.isCommissionPaid = true;
         owner.transfer(commission);
 
