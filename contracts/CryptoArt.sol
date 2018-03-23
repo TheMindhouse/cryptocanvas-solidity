@@ -1,13 +1,13 @@
 pragma solidity 0.4.21;
 
-import './CanvasMarket.sol';
+import "./CanvasMarket.sol";
 
 /**
 * @dev Contract to be placed in blockchain. Contains utility methods. 
 */
 contract CryptoArt is CanvasMarket {
 
-    function getCanvasInfo(uint32 _canvasId) public view returns (
+    function getCanvasInfo(uint32 _canvasId) external view returns (
         uint32 id,
         uint32 paintedPixels,
         bool isFinished,
@@ -18,15 +18,5 @@ contract CryptoArt is CanvasMarket {
 
         return (_canvasId, canvas.paintedPixelsCount, _isArtworkFinished(canvas), getCanvasState(_canvasId), canvas.owner);
     }
-
-    struct CanvasInfo {
-        uint32 id;
-        uint32 paintedPixels;
-
-        /**
-        * @notice   Address can reffer to 0x0 if there is no owner.
-        */
-        address owner;
-    }
-
+    
 } 

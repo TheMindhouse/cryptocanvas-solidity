@@ -44,7 +44,7 @@ contract CanvasFactory is Ownable {
         _;
     }
 
-    function createCanvas() public {
+    function createCanvas() external {
         require(artworks.length <= MAX_CANVAS_COUNT);
         require(activeCanvasCount <= MAX_ACTIVE_CANVAS);
 
@@ -57,7 +57,7 @@ contract CanvasFactory is Ownable {
     /**
     * @return  Cooldown of address that called that function
     */
-    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) public onlyReadyAddress(_canvasId) notFinished(_canvasId) validPixelIndex(_index) returns (uint cooldownTime) {
+    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external onlyReadyAddress(_canvasId) notFinished(_canvasId) validPixelIndex(_index) returns (uint cooldownTime) {
         require(_color > 0);
         
         Canvas storage canvas = _getCanvas(_canvasId);
@@ -84,7 +84,7 @@ contract CanvasFactory is Ownable {
         return cooldown;
     }
 
-    function getArtwork(uint32 _canvasId) public view returns (uint8[]) {
+    function getArtwork(uint32 _canvasId) external view returns (uint8[]) {
         Canvas storage canvas = _getCanvas(_canvasId);
         uint8[] memory result = new uint8[](PIXEL_COUNT);
 
@@ -95,18 +95,19 @@ contract CanvasFactory is Ownable {
         return result;
     }
 
+
     function getArtworkPaintedPixels(uint32 _canvasId) public view returns (uint32) {
         return _getCanvas(_canvasId).paintedPixelsCount;
     }
 
-    function getPixelCount() public pure returns (uint) {
+    function getPixelCount() external pure returns (uint) {
         return PIXEL_COUNT;
     }
 
     /**
     * @notice   Returns amount of created canvases.
     */
-    function getArtworksCount() public view returns (uint) {
+    function getArtworksCount() external view returns (uint) {
         return artworks.length;
     }
 

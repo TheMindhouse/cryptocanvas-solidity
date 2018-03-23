@@ -38,7 +38,7 @@ contract BiddableCanvas is CanvasFactory {
         _;
     }
 
-    function makeBid(uint32 _canvasId) public payable stateBidding(_canvasId) {
+    function makeBid(uint32 _canvasId) external payable stateBidding(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         Bid storage oldBid = bids[_canvasId];
 
@@ -67,7 +67,7 @@ contract BiddableCanvas is CanvasFactory {
         BidPosted(msg.sender, msg.value, finishTime);
     }
 
-    function getLastBidForCavas(uint32 _canvasId) public view returns (address bidder, uint amount, uint finishTime) {
+    function getLastBidForCavas(uint32 _canvasId) external view returns (address bidder, uint amount, uint finishTime) {
         Bid storage bid = bids[_canvasId];
         return (bid.bidder, bid.amount, bid.finishTime);
     }
@@ -98,7 +98,7 @@ contract BiddableCanvas is CanvasFactory {
         return (paintedPixels, _reward, bid.isAddressPaid[_address]);
     }
 
-    function withdrawReward(uint32 _canvasId) public stateOwned(_canvasId) {
+    function withdrawReward(uint32 _canvasId) external stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
 
         uint32 pixelCount; 
@@ -116,12 +116,12 @@ contract BiddableCanvas is CanvasFactory {
         MoneyPaid(msg.sender, reward);
     }
 
-    function calculateCommission(uint32 _canvasId) public stateOwned(_canvasId) returns (uint commission, bool isPaid) {
+    function calculateCommission(uint32 _canvasId) public view stateOwned(_canvasId) returns (uint commission, bool isPaid) {
         Bid storage bid = bids[_canvasId];
         return (_calculateCommission(bid.amount), bid.isCommissionPaid);
     }
 
-    function withdrawCommission(uint32 _canvasId) public onlyOwner stateOwned(_canvasId) {
+    function withdrawCommission(uint32 _canvasId) external onlyOwner stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
         uint commission;
         bool isPaid; 
