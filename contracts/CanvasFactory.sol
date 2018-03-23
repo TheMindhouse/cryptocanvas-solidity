@@ -44,7 +44,7 @@ contract CanvasFactory is Ownable {
         _;
     }
 
-    function createCanvas() external {
+    function createCanvas() external returns(uint canvasId) {
         require(artworks.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
@@ -52,6 +52,8 @@ contract CanvasFactory is Ownable {
 
         CanvasCreated(id);
         activeCanvasCount++;
+
+        return id; 
     }
 
     /**

@@ -9,7 +9,7 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
 * `createCanvas()`, gas cost: xxx (TBD)
 
-    Creates a new canvas. Anybody can call this function, but there are some limitations. First of all, count of canvases can't exceed `MAX_CANVAS_COUNT`. Secondly, it's not allowed to create new canvas when there is more than `MAX_ACTIVE_CANVAS` unfinished canvases. 
+    Creates a new canvas. Anybody can call this function, but there are some limitations. First of all, count of canvases can't exceed `MAX_CANVAS_COUNT`. Secondly, it's not allowed to create new canvas when there is more than `MAX_ACTIVE_CANVAS` unfinished canvases. Returns id of created canvas. 
 
 * `function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) returns (uint cooldownTime)`, gas cost: xxx
 
