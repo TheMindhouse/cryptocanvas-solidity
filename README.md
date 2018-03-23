@@ -31,6 +31,10 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
     Returns the total number of created canvases. 
 
+* `getActiveCanvases() returns (uint32[])`, free to call
+
+    Returns array of ids of active (not finished) canvases. 
+
 * `isArtworkFinished(uint32 _canvasId) returns (bool)`, free to call
 
     Returns `true` if the canvas is finished, `false` otherwise. Canvas is finished when all of its pixels have been set.
