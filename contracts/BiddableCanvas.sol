@@ -56,8 +56,7 @@ contract BiddableCanvas is CanvasFactory {
             finishTime = now + BIDDING_DURATION;
         }
 
-        Bid memory currentBid = Bid(msg.sender, msg.value, finishTime, false);
-        bids[_canvasId] = currentBid;
+        bids[_canvasId] = Bid(msg.sender, msg.value, finishTime, false);
 
         if (canvas.owner != 0x0) {
             addressToCount[canvas.owner]--;
@@ -65,7 +64,7 @@ contract BiddableCanvas is CanvasFactory {
         canvas.owner = msg.sender;
         addressToCount[msg.sender]++;
 
-        BidPosted(currentBid.bidder, currentBid.amount, currentBid.finishTime);
+        BidPosted(msg.sender, msg.value, finishTime);
     }
 
     function getLastBidForCavas(uint32 _canvasId) public view returns (address bidder, uint amount, uint finishTime) {
