@@ -136,7 +136,7 @@ contract BiddableCanvas is CanvasFactory {
         CommissionPaid(commission);
     }
 
-    function balanceOf(address _owner) external returns (uint) {
+    function balanceOf(address _owner) external view returns (uint) {
         return addressToCount[_owner];
     }
 
