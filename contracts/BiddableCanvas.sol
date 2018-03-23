@@ -68,7 +68,7 @@ contract BiddableCanvas is CanvasFactory {
         BidPosted(currentBid.bidder, currentBid.amount, currentBid.finishTime);
     }
 
-    function getLastBidForArtwork(uint32 _canvasId) public view returns (address bidder, uint amount, uint finishTime) {
+    function getLastBidForCavas(uint32 _canvasId) public view returns (address bidder, uint amount, uint finishTime) {
         Bid storage bid = bids[_canvasId];
         return (bid.bidder, bid.amount, bid.finishTime);
     }
