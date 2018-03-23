@@ -64,7 +64,7 @@ contract CanvasMarket is BiddableCanvas {
         ArtworkSold(_canvasId, msg.value, sellOffer.seller, msg.sender);
 
         //If the buyer have placed buy offer, refound it 
-        BuyOffer offer = buyOffers[_canvasId];
+        BuyOffer memory offer = buyOffers[_canvasId];
         if(offer.buyer == msg.sender) {
             buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
             if (offer.amount > 0) {
