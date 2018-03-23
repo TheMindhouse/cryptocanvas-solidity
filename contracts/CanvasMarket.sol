@@ -44,7 +44,7 @@ contract CanvasMarket is BiddableCanvas {
         //don't sell for the owner
         require(sellOffer.isForSale);
         require(msg.value >= sellOffer.minPrice);
-        require(sellOffer.seller != canvas.owner);
+        require(sellOffer.seller == canvas.owner);
         //seller is no longer owner
         require(sellOffer.onlySellTo == 0x0 || sellOffer.onlySellTo == msg.sender);
         //protect from selling to unintented address
