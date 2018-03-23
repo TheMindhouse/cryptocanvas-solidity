@@ -97,10 +97,12 @@ contract CanvasFactory is Ownable {
 
     function getActiveCanvases() external view returns (uint32[]) {
         uint32[] memory result = new uint32[](activeCanvasCount);
+        uint currentIndex = 0;
 
         for (uint32 i = 0; i < artworks.length; i++) {
             if (isArtworkFinished(i)) {
-                result.push(i);
+                result[currentIndex] = i;
+                currentIndex++;
             }
         }
 
