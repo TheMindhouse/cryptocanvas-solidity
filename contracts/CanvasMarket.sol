@@ -91,7 +91,7 @@ contract CanvasMarket is BiddableCanvas {
         ArtworkOfferedForSale(_canvasId, _minPrice, _receiver);
     }
 
-    function artworkNoLongerForSale(uint32 _canvasId) external stateOwned(_canvasId) {
+    function artworkNoLongerForSale(uint32 _canvasId) public stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 

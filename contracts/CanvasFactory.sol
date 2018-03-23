@@ -45,8 +45,8 @@ contract CanvasFactory is Ownable {
     }
 
     function createCanvas() external {
-        require(artworks.length <= MAX_CANVAS_COUNT);
-        require(activeCanvasCount <= MAX_ACTIVE_CANVAS);
+        require(artworks.length < MAX_CANVAS_COUNT);
+        require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
         uint id = artworks.push(Canvas(0, 0)) - 1;
 
@@ -100,7 +100,7 @@ contract CanvasFactory is Ownable {
         uint currentIndex = 0;
 
         for (uint32 i = 0; i < artworks.length; i++) {
-            if (isArtworkFinished(i)) {
+            if (!isArtworkFinished(i)) {
                 result[currentIndex] = i;
                 currentIndex++;
             }
