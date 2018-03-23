@@ -93,35 +93,41 @@ contract BiddableCanvas is CanvasFactory {
         Bid storage bid = bids[_canvasId];
         uint32 paintedPixels = _countPaintedPixels(_address, _canvasId);
         uint pricePerPixel = _calculatePricePerPixel(bid.amount);
-        uint reward = paintedPixels * pricePerPixel;
+        uint _reward = paintedPixels * pricePerPixel;
 
-        return (paintedPixels, reward, bid.isAddressPaid[_address]);
+        return (paintedPixels, _reward, bid.isAddressPaid[_address]);
     }
 
     function withdrawReward(uint32 _canvasId) public stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
 
-        var (pixelCount, reward, isPaid) = calculateReward(_canvasId, msg.caller);
+        uint32 pixelCount; 
+        uint reward;
+        bool isPaid;
+        (pixelCount, reward, isPaid) = calculateReward(_canvasId, msg.sender);
+
         require(pixelCount > 0);
         require(reward > 0);
         require(!isPaid);
 
         bid.isAddressPaid[msg.sender] = true;
-        msg.sender.transfer(toWithdraw);
+        msg.sender.transfer(reward);
 
-        MoneyPaid(msg.sender, toWithdraw);
+        MoneyPaid(msg.sender, reward);
     }
 
-    function calculateCommision(uint32 _canvasId) public stateOwned(_canvasId) returns (uint comission, bool isPaid) {
+    function calculateCommission(uint32 _canvasId) public stateOwned(_canvasId) returns (uint commission, bool isPaid) {
         Bid storage bid = bids[_canvasId];
         return (_calculateCommission(bid.amount), bid.isCommissionPaid);
     }
 
     function withdrawCommission(uint32 _canvasId) public onlyOwner stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
-        var (comission, isPaid) = calculateComission(_canvasId);
+        uint commission;
+        bool isPaid; 
+        (commission, isPaid) = calculateCommission(_canvasId);
 
-        require(comission > 0);
+        require(commission > 0);
         require(!isPaid);
 
         bid.isCommissionPaid = true;

@@ -41,7 +41,7 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
     If you will be overbid, the contract will send you back money that you paid. 
 
-* `getLastBidForArtwork(uint32 _canvasId) returns (address bidder, uint amount, uint finishTime)`, free to call
+* `getLastBidForCanvas(uint32 _canvasId) returns (address bidder, uint amount, uint finishTime)`, free to call
 
     Returns last bid made for canvas. If the state of the canvas is equal to `STATE_OWNED` that simply is the price that this canvas was sold. 
 
@@ -99,7 +99,7 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
     * reward in weis
     * information if reward has been already paid. 
 
-* `calculateCommision(uint32 _canvasId) public stateOwned(_canvasId) returns (uint comission, bool isPaid)`, free to call
+* `calculateCommission(uint32 _canvasId) public stateOwned(_canvasId) returns (uint commission, bool isPaid)`, free to call
 
     Returns commision for given cavas and information if it has been already paid.
 
