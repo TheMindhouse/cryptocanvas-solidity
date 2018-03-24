@@ -105,7 +105,7 @@ CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs.
 
 * `calculateCommission(uint32 _canvasId) public stateOwned(_canvasId) returns (uint commission, bool isPaid)`, free to call
 
-    Returns commision for given cavas and information if it has been already paid.
+    Returns commision for given canvas and information if it has been already paid.
 
 ## Color palette
 CryptoCanvas, due to technical and aesthetic reasons, uses a custom color palette. Each number corresponds to a fixed color. Here is the full-color palette. 
