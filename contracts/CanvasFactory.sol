@@ -11,8 +11,6 @@ contract CanvasFactory is Ownable {
     uint8 public constant HEIGHT = 64;
     uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
 
-    uint public constant ADDRESS_COOLDOWN = 30 seconds;
-
     uint8 public constant MAX_CANVAS_COUNT = 100;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
 
@@ -56,10 +54,7 @@ contract CanvasFactory is Ownable {
         return id; 
     }
 
-    /**
-    * @return  Cooldown of address that called that function
-    */
-    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external onlyReadyAddress(_canvasId) notFinished(_canvasId) validPixelIndex(_index) returns (uint cooldownTime) {
+    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external onlyReadyAddress(_canvasId) notFinished(_canvasId) validPixelIndex(_index) {
         require(_color > 0);
         
         Canvas storage canvas = _getCanvas(_canvasId);
@@ -74,16 +69,12 @@ contract CanvasFactory is Ownable {
         Pixel memory newPixel = Pixel(_color, msg.sender);
         canvas.pixels[_index] = newPixel;
 
-        uint cooldown = now + ADDRESS_COOLDOWN;
-        canvas.addressToReadyTime[msg.sender] = cooldown;
-
         if (_isArtworkFinished(canvas)) {
             activeCanvasCount--;
             CanvasFinished(_canvasId);
         }
 
         PixelPainted(_canvasId, _index, _color);
-        return cooldown;
     }
 
     function getArtwork(uint32 _canvasId) external view returns (uint8[]) {
@@ -177,11 +168,5 @@ contract CanvasFactory is Ownable {
         * Technically it means that setPixelsCount == PIXEL_COUNT
         */
         uint32 paintedPixelsCount;
-
-        /**
-        * Time when given addres can paint on that canvas
-        */
-        mapping(address => uint) addressToReadyTime;
-
     }
 }
