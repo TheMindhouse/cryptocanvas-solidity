@@ -21,12 +21,6 @@ contract CanvasFactory is Ownable {
     event CanvasFinished(uint32 _canvasId);
     event CanvasCreated(uint _id);
 
-    modifier onlyReadyAddress(uint32 _canvasId) {
-        Canvas storage canvas = artworks[_canvasId];
-        require(canvas.addressToReadyTime[msg.sender] < now);
-        _;
-    }
-
     modifier notFinished(uint32 _canvasId) {
         require(!isArtworkFinished(_canvasId));
         _;
@@ -54,7 +48,7 @@ contract CanvasFactory is Ownable {
         return id; 
     }
 
-    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external onlyReadyAddress(_canvasId) notFinished(_canvasId) validPixelIndex(_index) {
+    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external notFinished(_canvasId) validPixelIndex(_index) {
         require(_color > 0);
         
         Canvas storage canvas = _getCanvas(_canvasId);
