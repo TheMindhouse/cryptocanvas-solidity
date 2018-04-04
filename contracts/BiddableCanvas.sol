@@ -7,14 +7,14 @@ import "./CanvasFactory.sol";
 */
 contract BiddableCanvas is CanvasFactory {
 
-    //@dev It means artwork is not finished yet, and bidding is not possible. 
+    //@dev It means canvas is not finished yet, and bidding is not possible. 
     uint8 public constant STATE_NOT_FINISHED = 0;
 
-    //@dev  there is ongoing bidding and anybody can bid. If there artwork can have 
+    //@dev  there is ongoing bidding and anybody can bid. If there canvas can have 
     //      assigned owner, but it can change if someone will over-bid him. 
     uint8 public constant STATE_INITIAL_BIDDING = 1;
 
-    //@dev artwork has been sold, and has the owner
+    //@dev canvas has been sold, and has the owner
     uint8 public constant STATE_OWNED = 2;
 
     uint public constant COMMISSION = 20; // 1 / 20 is our commission on every transaction
