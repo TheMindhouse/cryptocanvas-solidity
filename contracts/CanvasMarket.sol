@@ -151,7 +151,7 @@ contract CanvasMarket is BiddableCanvas {
         buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
         artworksForSale[_canvasId] = SellOffer(false, 0x0, 0, 0x0);
 
-        ArtworkSold(_canvasId, msg.value, msg.sender, offer.buyer);
+        ArtworkSold(_canvasId, offer.amount, msg.sender, offer.buyer);
     }
 
     function getCurrentBuyOffer(uint32 _canvasId) external view returns(bool hasOffer, address buyer, uint amount) {
