@@ -22,12 +22,12 @@ contract CanvasFactory is Ownable {
     event CanvasCreated(uint _id);
 
     modifier notFinished(uint32 _canvasId) {
-        require(!isArtworkFinished(_canvasId));
+        require(!isCanvasFinished(_canvasId));
         _;
     }
 
     modifier finished(uint32 _canvasId) {
-        require(isArtworkFinished(_canvasId));
+        require(isCanvasFinished(_canvasId));
         _;
     }
 
@@ -71,7 +71,7 @@ contract CanvasFactory is Ownable {
         PixelPainted(_canvasId, _index, _color);
     }
 
-    function getArtwork(uint32 _canvasId) external view returns (uint8[]) {
+    function getBitmap(uint32 _canvasId) external view returns (uint8[]) {
         Canvas storage canvas = _getCanvas(_canvasId);
         uint8[] memory result = new uint8[](PIXEL_COUNT);
 
@@ -87,7 +87,7 @@ contract CanvasFactory is Ownable {
         uint currentIndex = 0;
 
         for (uint32 i = 0; i < artworks.length; i++) {
-            if (!isArtworkFinished(i)) {
+            if (!isCanvasFinished(i)) {
                 result[currentIndex] = i;
                 currentIndex++;
             }
@@ -107,11 +107,11 @@ contract CanvasFactory is Ownable {
     /**
     * @notice   Returns amount of created canvases.
     */
-    function getArtworksCount() external view returns (uint) {
+    function getCanvasCount() external view returns (uint) {
         return artworks.length;
     }
 
-    function isArtworkFinished(uint32 _canvasId) public view returns (bool) {
+    function isCanvasFinished(uint32 _canvasId) public view returns (bool) {
         return _isArtworkFinished(_getCanvas(_canvasId));
     }
 
@@ -132,7 +132,7 @@ contract CanvasFactory is Ownable {
         return count;
     }
 
-    function _isArtworkFinished(Canvas canvas) internal pure returns (bool) {
+    function _isCanvasFinished(Canvas canvas) internal pure returns (bool) {
         return canvas.paintedPixelsCount == PIXEL_COUNT;
     }
 
