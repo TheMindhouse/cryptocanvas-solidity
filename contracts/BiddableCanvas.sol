@@ -18,11 +18,12 @@ contract BiddableCanvas is CanvasFactory {
     uint8 public constant STATE_OWNED = 2;
 
     ufixed public constant COMMISSION = 0.039;
-    uint public constant MINIMUM_BID_AMOUNT = 0.08 ether;
     uint public constant BIDDING_DURATION = 48 hours;
 
     mapping(uint32 => Bid) bids;
     mapping(address => uint32) addressToCount;
+
+    uint public constant minimumBidAmount = 0.08 ether;
 
     event BidPosted(address _bidder, uint _amount, uint _finishTime);
     event MoneyPaid(address _address, uint _amount);
@@ -42,7 +43,7 @@ contract BiddableCanvas is CanvasFactory {
         Canvas storage canvas = _getCanvas(_canvasId);
         Bid storage oldBid = bids[_canvasId];
 
-        if (msg.value < MINIMUM_BID_AMOUNT || msg.value <= oldBid.amount) {
+        if (msg.value < minimumBidAmount || msg.value <= oldBid.amount) {
             revert();
         }
 
@@ -101,7 +102,7 @@ contract BiddableCanvas is CanvasFactory {
     function withdrawReward(uint32 _canvasId) external stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
 
-        uint32 pixelCount; 
+        uint32 pixelCount;
         uint reward;
         bool isPaid;
         (pixelCount, reward, isPaid) = calculateReward(_canvasId, msg.sender);
@@ -124,7 +125,7 @@ contract BiddableCanvas is CanvasFactory {
     function withdrawCommission(uint32 _canvasId) external onlyOwner stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
         uint commission;
-        bool isPaid; 
+        bool isPaid;
         (commission, isPaid) = calculateCommission(_canvasId);
 
         require(commission > 0);
@@ -138,6 +139,10 @@ contract BiddableCanvas is CanvasFactory {
 
     function balanceOf(address _owner) external view returns (uint) {
         return addressToCount[_owner];
+    }
+
+    function setMinimumBidAmount(uint _amount) external onlyOwner {
+        minimumBidAmount = _amount;
     }
 
     function _calculatePricePerPixel(uint _totalPrice) private pure returns (uint) {
