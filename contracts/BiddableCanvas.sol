@@ -91,7 +91,7 @@ contract BiddableCanvas is CanvasFactory {
 
     function calculateReward(uint32 _canvasId, address _address) public view stateOwned(_canvasId) returns (uint32 pixelsCount, uint reward, bool isPaid) {
         Bid storage bid = bids[_canvasId];
-        uint32 paintedPixels = _countPaintedPixels(_address, _canvasId);
+        uint32 paintedPixels = countPaintedPixelsByAddress(_address, _canvasId);
         uint pricePerPixel = _calculatePricePerPixel(bid.amount);
         uint _reward = paintedPixels * pricePerPixel;
 

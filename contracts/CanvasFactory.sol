@@ -36,7 +36,7 @@ contract CanvasFactory is Ownable {
         _;
     }
 
-    function createCanvas() external returns(uint canvasId) {
+    function createCanvas() external returns (uint canvasId) {
         require(artworks.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
@@ -45,12 +45,12 @@ contract CanvasFactory is Ownable {
         CanvasCreated(id);
         activeCanvasCount++;
 
-        return id; 
+        return id;
     }
 
     function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external notFinished(_canvasId) validPixelIndex(_index) {
         require(_color > 0);
-        
+
         Canvas storage canvas = _getCanvas(_canvasId);
         Pixel storage pixel = canvas.pixels[_index];
 
@@ -96,7 +96,7 @@ contract CanvasFactory is Ownable {
         return result;
     }
 
-    function getArtworkPaintedPixels(uint32 _canvasId) public view returns (uint32) {
+    function getCanvasPaintedPixels(uint32 _canvasId) public view returns (uint32) {
         return _getCanvas(_canvasId).paintedPixelsCount;
     }
 
@@ -119,7 +119,7 @@ contract CanvasFactory is Ownable {
         return _getCanvas(_canvasId).pixels[_pixelIndex].painter;
     }
 
-    function _countPaintedPixels(address _address, uint32 _canvasId) internal view returns (uint32) {
+    function countPaintedPixelsByAddress(address _address, uint32 _canvasId) public view returns (uint32) {
         Canvas storage canvas = _getCanvas(_canvasId);
         uint32 count = 0;
 
