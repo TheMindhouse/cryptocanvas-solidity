@@ -47,7 +47,7 @@ contract('Drawing on canvas suite', async (accounts) => {
         });
 
         let bitmap = await instance.getBitmap(0);
-        bitmap = bitmap.map(it => parseInt(it.toString()));
+        bitmap = bitmap.map(it => parseInt(it));
         const drawn = bitmap.slice(0, toBeDrawn.length);
 
         drawn.should.be.equalTo(toBeDrawn);
@@ -73,7 +73,7 @@ contract('Drawing on canvas suite', async (accounts) => {
             await instance.setPixel(0, i * 3, 10, {from: accounts[2]});
         }
 
-        const count = parseInt((await instance.countPaintedPixelsByAddress(accounts[2], 0)).toString());
+        const count = parseInt((await instance.countPaintedPixelsByAddress(accounts[2], 0)));
         count.should.be.eq(pixelsToSet)
     });
 
@@ -86,7 +86,7 @@ contract('Drawing on canvas suite', async (accounts) => {
             await instance.setPixel(1, i * 3, 10, {from: accounts[2]});
         }
 
-        const paintedPixels = parseInt((await instance.getCanvasPaintedPixels(1)).toString());
+        const paintedPixels = parseInt((await instance.getCanvasPaintedPixels(1)));
         paintedPixels.should.be.eq(pixelsToSet);
     });
 

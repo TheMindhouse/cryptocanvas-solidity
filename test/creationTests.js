@@ -43,7 +43,7 @@ contract('Simple canvas creation', async (accounts) => {
     it('should have created canvases active', async () => {
         const instance = await TestableArt.deployed();
         let active = await instance.getActiveCanvases();
-        active = active.map(it => parseInt(it.toString()));
+        active = active.map(it => parseInt(it));
 
         active.should.be.equalTo([0, 1]);
     });
@@ -53,8 +53,8 @@ contract('Simple canvas creation', async (accounts) => {
 
         let activeCount = await instance.activeCanvasCount();
         let count = await instance.getCanvasCount();
-        activeCount = parseInt(activeCount.toString());
-        count = parseInt(count.toString());
+        activeCount = parseInt(activeCount);
+        count = parseInt(count);
 
         activeCount.should.be.lte(count);
     });
@@ -86,7 +86,7 @@ contract('Canvas creation limit', async (accounts) => {
     it('should have all canvases active', async () => {
         const instance = await TestableArt.deployed();
         let active = await instance.getActiveCanvases();
-        active = active.map(it => parseInt(it.toString()));
+        active = active.map(it => parseInt(it));
 
         active.should.be.equalTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
@@ -107,7 +107,7 @@ contract('Canvas creation limit', async (accounts) => {
     it('shouldn\'t have canvas 1 active', async () => {
         const instance = await TestableArt.deployed();
         let active = await instance.getActiveCanvases();
-        active = active.map(it => parseInt(it.toString()));
+        active = active.map(it => parseInt(it));
 
         active.should.not.to.be.containing(1);
     });
