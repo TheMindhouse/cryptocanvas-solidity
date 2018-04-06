@@ -17,13 +17,21 @@ contract BiddableCanvas is CanvasFactory {
     //@dev canvas has been sold, and has the owner
     uint8 public constant STATE_OWNED = 2;
 
-    ufixed public constant COMMISSION = 0.039;
+    /**
+    * As it's hard to operate on floating numbers, each fee will be calculated like this:
+    * PRICE * COMMISSION / COMMISSION_DIVIDER. It's impossible to keep float number here.
+    *
+    * ufixed COMMISSION = 0.039; may seem useful, but it's not possible to multiply ufixed * uint.
+    */
+    uint public constant COMMISSION = 390;
+    uint public constant COMMISSION_DIVIDER = 1000;
+
     uint public constant BIDDING_DURATION = 48 hours;
 
     mapping(uint32 => Bid) bids;
     mapping(address => uint32) addressToCount;
 
-    uint public constant minimumBidAmount = 0.08 ether;
+    uint public minimumBidAmount = 0.08 ether;
 
     event BidPosted(address _bidder, uint _amount, uint _finishTime);
     event MoneyPaid(address _address, uint _amount);
@@ -54,7 +62,7 @@ contract BiddableCanvas is CanvasFactory {
 
         uint finishTime = oldBid.finishTime;
         if (finishTime == 0) {
-            finishTime = now + BIDDING_DURATION;
+            finishTime = getTime() + BIDDING_DURATION;
         }
 
         bids[_canvasId] = Bid(msg.sender, msg.value, finishTime, false);
@@ -78,7 +86,7 @@ contract BiddableCanvas is CanvasFactory {
 
         if (_isCanvasFinished(canvas)) {
             uint finishTime = bids[_canvasId].finishTime;
-            if (finishTime == 0 || finishTime > now) {
+            if (finishTime == 0 || finishTime > getTime()) {
                 return STATE_INITIAL_BIDDING;
 
             } else {
@@ -149,8 +157,8 @@ contract BiddableCanvas is CanvasFactory {
         return (_totalPrice - _calculateCommission(_totalPrice)) / PIXEL_COUNT;
     }
 
-    function _calculateCommission(uint _totalPrice) private pure returns (uint) {
-        return _totalPrice * COMMISSION;
+    function _calculateCommission(uint _amount) private pure returns (uint) {
+        return (_amount * COMMISSION) / COMMISSION_DIVIDER;
     }
 
     struct Bid {

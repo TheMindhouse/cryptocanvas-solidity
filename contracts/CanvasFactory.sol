@@ -1,11 +1,11 @@
 pragma solidity 0.4.21;
 
-import "./Ownable.sol";
+import "./TimeAware.sol";
 
 /**
 * @dev This contract takes care of painting on canvases, returning artworks and creating ones. 
 */
-contract CanvasFactory is Ownable {
+contract CanvasFactory is TimeAware {
 
     uint8 public constant WIDTH = 64;
     uint8 public constant HEIGHT = 64;
