@@ -75,7 +75,7 @@ contract BiddableCanvas is CanvasFactory {
     function getCanvasState(uint32 _canvasId) public view returns (uint8) {
         Canvas storage canvas = _getCanvas(_canvasId);
 
-        if (_isArtworkFinished(canvas)) {
+        if (_isCanvasFinished(canvas)) {
             uint finishTime = bids[_canvasId].finishTime;
             if (finishTime == 0 || finishTime > now) {
                 return STATE_INITIAL_BIDDING;

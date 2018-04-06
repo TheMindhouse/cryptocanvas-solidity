@@ -16,7 +16,7 @@ contract CryptoArt is CanvasMarket {
     ) {
         Canvas storage canvas = _getCanvas(_canvasId);
 
-        return (_canvasId, canvas.paintedPixelsCount, _isArtworkFinished(canvas), getCanvasState(_canvasId), canvas.owner);
+        return (_canvasId, canvas.paintedPixelsCount, _isCanvasFinished(canvas), getCanvasState(_canvasId), canvas.owner);
     }
     
 } 

@@ -63,7 +63,7 @@ contract CanvasFactory is Ownable {
         Pixel memory newPixel = Pixel(_color, msg.sender);
         canvas.pixels[_index] = newPixel;
 
-        if (_isArtworkFinished(canvas)) {
+        if (_isCanvasFinished(canvas)) {
             activeCanvasCount--;
             CanvasFinished(_canvasId);
         }
@@ -112,7 +112,7 @@ contract CanvasFactory is Ownable {
     }
 
     function isCanvasFinished(uint32 _canvasId) public view returns (bool) {
-        return _isArtworkFinished(_getCanvas(_canvasId));
+        return _isCanvasFinished(_getCanvas(_canvasId));
     }
 
     function getPixelAuthor(uint32 _canvasId, uint32 _pixelIndex) public view validPixelIndex(_pixelIndex) returns (address) {
