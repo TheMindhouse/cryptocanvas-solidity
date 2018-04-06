@@ -1,12 +1,12 @@
 import {fillWholeCanvas} from "./utils";
 
-require('chai')
-    .use(require('chai-as-promised'))
-    .should();
+const chai = require('chai');
+chai.use(require('chai-as-promised')).should();
+chai.use(require('chai-arrays')).should();
 
 const CryptoArt = artifacts.require("CryptoArt");
 
-contract('Canvas creation suite', async (accounts) => {
+contract('Simple canvas creation', async (accounts) => {
 
     it("should be empty when deployed", async () => {
         const instance = await CryptoArt.deployed();
@@ -25,22 +25,38 @@ contract('Canvas creation suite', async (accounts) => {
 
         const activeCount = await instance.activeCanvasCount();
         const count = await instance.getCanvasCount();
-        assert.equal(activeCount.valueOf(), 2);
-        assert.equal(count.valueOf(), 2);
+
+        activeCount.valueOf().should.be.equal('2');
+        count.valueOf().should.be.equal('2');
+    });
+
+    it('shouldn\'t have created canvases finished', async () => {
+        const instance = await CryptoArt.deployed();
 
         const isFinished0 = await instance.isCanvasFinished(0);
         const isFinished1 = await instance.isCanvasFinished(1);
-        assert.isFalse(isFinished0);
-        assert.isFalse(isFinished1);
+
+        isFinished0.should.be.false;
+        isFinished1.should.be.false;
+    });
+
+    it('should have created canvases active', async () => {
+        const instance = await CryptoArt.deployed();
+        let active = await instance.getActiveCanvases();
+        active = active.map(it => parseInt(it.toString()));
+
+        active.should.be.equalTo([0, 1]);
     });
 
     afterEach(async () => {
         const instance = await CryptoArt.deployed();
 
-        const activeCount = await instance.activeCanvasCount();
-        const count = await instance.getCanvasCount();
+        let activeCount = await instance.activeCanvasCount();
+        let count = await instance.getCanvasCount();
+        activeCount = parseInt(activeCount.toString());
+        count = parseInt(count.toString());
 
-        assert.isAtMost(activeCount, count);
+        activeCount.should.be.lte(count);
     });
 
 });
@@ -67,6 +83,14 @@ contract('Canvas creation limit', async (accounts) => {
         return instance.createCanvas().should.be.rejected;
     });
 
+    it('should have all canvases active', async () => {
+        const instance = await CryptoArt.deployed();
+        let active = await instance.getActiveCanvases();
+        active = active.map(it => parseInt(it.toString()));
+
+        active.should.be.equalTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+
     it('should decrement activeCount after filling canvas', async () => {
         const instance = await CryptoArt.deployed();
 
@@ -78,6 +102,14 @@ contract('Canvas creation limit', async (accounts) => {
 
         assert.equal(activeCount.valueOf(), count.valueOf() - 1);
         assert.isTrue(isFinished, "Filled canvas has to be finished")
+    });
+
+    it('shouldn\'t have canvas 1 active', async () => {
+        const instance = await CryptoArt.deployed();
+        let active = await instance.getActiveCanvases();
+        active = active.map(it => parseInt(it.toString()));
+
+        active.should.not.to.be.containing(1);
     });
 
     it('should create additional canvas', async () => {
