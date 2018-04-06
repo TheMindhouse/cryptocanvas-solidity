@@ -2,44 +2,44 @@ const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
 chai.use(require('chai-arrays')).should();
 
-const CryptoArt = artifacts.require("CryptoArt");
+const TestableArt = artifacts.require("TestableArt");
 
 contract('Drawing on canvas suite', async (accounts) => {
 
     it("shouldn't allow to draw on non existing canvas", async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         return instance.setPixel(0, 1, 10).should.be.rejected;
     });
 
     it('should disallow to set pixel with color 0', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         await instance.createCanvas();
 
         return instance.setPixel(0, 0, 0).should.be.rejected;
     });
 
     it('should disallow to set pixel with color bigger that 255', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         return instance.setPixel(0, 0, 256).should.be.rejected;
     });
 
     it('should disallow to set pixel with invalid index', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         return instance.setPixel(0, 5000, 10).should.be.rejected;
     });
 
     it('should disallow to set pixel on invalid canvas', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         return instance.setPixel(10, 10, 10).should.be.rejected;
     });
 
     it('should fail if asked about bitmap of invalid canvas', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         return instance.getBitmap(2).should.be.rejected;
     });
 
     it('should set pixels', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         const toBeDrawn = [10, 250, 230, 110];
 
         await toBeDrawn.forEach(async (value, index) => {
@@ -59,7 +59,7 @@ contract('Drawing on canvas suite', async (accounts) => {
     });
 
     it('should remember pixel\'s author', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         instance.setPixel(0, 0, 10, {from: accounts[1]});
 
         const author = (await instance.getPixelAuthor(0, 0)).toString();
@@ -67,7 +67,7 @@ contract('Drawing on canvas suite', async (accounts) => {
     });
 
     it('should count address\' pixels', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         const pixelsToSet = 5;
         for (let i = 0; i < pixelsToSet; i++) {
             await instance.setPixel(0, i * 3, 10, {from: accounts[2]});
@@ -78,7 +78,7 @@ contract('Drawing on canvas suite', async (accounts) => {
     });
 
     it('should count canvas painted pixels', async function () {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         await instance.createCanvas();
 
         const pixelsToSet = 6;

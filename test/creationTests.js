@@ -4,12 +4,12 @@ const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
 chai.use(require('chai-arrays')).should();
 
-const CryptoArt = artifacts.require("CryptoArt");
+const TestableArt = artifacts.require("TestableArt");
 
 contract('Simple canvas creation', async (accounts) => {
 
     it("should be empty when deployed", async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
 
         const activeCount = await instance.activeCanvasCount();
         const count = await instance.getCanvasCount();
@@ -19,7 +19,7 @@ contract('Simple canvas creation', async (accounts) => {
     });
 
     it("should create contracts", async () => {
-        let instance = await CryptoArt.deployed();
+        let instance = await TestableArt.deployed();
         await instance.createCanvas();
         await instance.createCanvas();
 
@@ -31,7 +31,7 @@ contract('Simple canvas creation', async (accounts) => {
     });
 
     it('shouldn\'t have created canvases finished', async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
 
         const isFinished0 = await instance.isCanvasFinished(0);
         const isFinished1 = await instance.isCanvasFinished(1);
@@ -41,7 +41,7 @@ contract('Simple canvas creation', async (accounts) => {
     });
 
     it('should have created canvases active', async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         let active = await instance.getActiveCanvases();
         active = active.map(it => parseInt(it.toString()));
 
@@ -49,7 +49,7 @@ contract('Simple canvas creation', async (accounts) => {
     });
 
     afterEach(async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
 
         let activeCount = await instance.activeCanvasCount();
         let count = await instance.getCanvasCount();
@@ -64,7 +64,7 @@ contract('Simple canvas creation', async (accounts) => {
 contract('Canvas creation limit', async (accounts) => {
 
     it("should create maximum amount active canvas", async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         const maxActiveCount = await instance.MAX_ACTIVE_CANVAS();
 
         for (let i = 0; i < maxActiveCount; i++) {
@@ -79,12 +79,12 @@ contract('Canvas creation limit', async (accounts) => {
     });
 
     it('should fail to create new canvas when too many active ones', async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         return instance.createCanvas().should.be.rejected;
     });
 
     it('should have all canvases active', async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         let active = await instance.getActiveCanvases();
         active = active.map(it => parseInt(it.toString()));
 
@@ -92,7 +92,7 @@ contract('Canvas creation limit', async (accounts) => {
     });
 
     it('should decrement activeCount after filling canvas', async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
 
         await fillWholeCanvas(instance, 1);
 
@@ -105,7 +105,7 @@ contract('Canvas creation limit', async (accounts) => {
     });
 
     it('shouldn\'t have canvas 1 active', async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         let active = await instance.getActiveCanvases();
         active = active.map(it => parseInt(it.toString()));
 
@@ -113,7 +113,7 @@ contract('Canvas creation limit', async (accounts) => {
     });
 
     it('should create additional canvas', async () => {
-        const instance = await CryptoArt.deployed();
+        const instance = await TestableArt.deployed();
         await instance.createCanvas();
 
         const activeCount = await instance.activeCanvasCount();
