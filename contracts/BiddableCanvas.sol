@@ -17,7 +17,7 @@ contract BiddableCanvas is CanvasFactory {
     //@dev canvas has been sold, and has the owner
     uint8 public constant STATE_OWNED = 2;
 
-    uint public constant COMMISSION = 20; // 1 / 20 is our commission on every transaction
+    ufixed public constant COMMISSION = 0.039;
     uint public constant MINIMUM_BID_AMOUNT = 0.08 ether;
     uint public constant BIDDING_DURATION = 48 hours;
 
@@ -145,7 +145,7 @@ contract BiddableCanvas is CanvasFactory {
     }
 
     function _calculateCommission(uint _totalPrice) private pure returns (uint) {
-        return _totalPrice / COMMISSION;
+        return _totalPrice * COMMISSION;
     }
 
     struct Bid {
