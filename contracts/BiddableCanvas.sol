@@ -33,9 +33,9 @@ contract BiddableCanvas is CanvasFactory {
 
     uint public minimumBidAmount = 0.08 ether;
 
-    event BidPosted(address _bidder, uint _amount, uint _finishTime);
-    event MoneyPaid(address _address, uint _amount);
-    event CommissionPaid(uint _amount);
+    event BidPosted(uint32 indexed canvasId, address bidder, uint amount, uint finishTime);
+    event MoneyPaid(uint32 indexed canvasId, address toAddress, uint amount);
+    event CommissionPaid(uint32 indexed canvasId, uint _amount);
 
     modifier stateBidding(uint32 _canvasId) {
         require(getCanvasState(_canvasId) == STATE_INITIAL_BIDDING);
@@ -73,7 +73,7 @@ contract BiddableCanvas is CanvasFactory {
         canvas.owner = msg.sender;
         addressToCount[msg.sender]++;
 
-        BidPosted(msg.sender, msg.value, finishTime);
+        BidPosted(_canvasId, msg.sender, msg.value, finishTime);
     }
 
     function getLastBidForCanvas(uint32 _canvasId) external view returns (address bidder, uint amount, uint finishTime) {
@@ -122,7 +122,7 @@ contract BiddableCanvas is CanvasFactory {
         bid.isAddressPaid[msg.sender] = true;
         msg.sender.transfer(reward);
 
-        MoneyPaid(msg.sender, reward);
+        MoneyPaid(_canvasId, msg.sender, reward);
     }
 
     function calculateCommission(uint32 _canvasId) public view stateOwned(_canvasId) returns (uint commission, bool isPaid) {
@@ -142,7 +142,7 @@ contract BiddableCanvas is CanvasFactory {
         bid.isCommissionPaid = true;
         owner.transfer(commission);
 
-        CommissionPaid(commission);
+        CommissionPaid(_canvasId, commission);
     }
 
     function balanceOf(address _owner) external view returns (uint) {

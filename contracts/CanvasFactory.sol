@@ -17,9 +17,9 @@ contract CanvasFactory is TimeAware {
     Canvas[] artworks;
     uint32 public activeCanvasCount = 0;
 
-    event PixelPainted(uint32 _canvasId, uint32 _index, uint8 _color);
-    event CanvasFinished(uint32 _canvasId);
-    event CanvasCreated(uint _id);
+    event PixelPainted(uint32 indexed canvasId, uint32 index, uint8 color);
+    event CanvasFinished(uint32 indexed canvasId);
+    event CanvasCreated(uint indexed canvasId);
 
     modifier notFinished(uint32 _canvasId) {
         require(!isCanvasFinished(_canvasId));

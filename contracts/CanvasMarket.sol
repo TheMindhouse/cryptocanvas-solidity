@@ -12,12 +12,12 @@ contract CanvasMarket is BiddableCanvas {
     mapping(uint32 => BuyOffer) buyOffers;
     uint public fees;
 
-    event ArtworkOfferedForSale(uint32 canvasId, uint minPrice, address toAddress);
-    event ArtworkNoLongerForSale(uint32 _canvasId);
-    event ArtworkSold(uint32 canvasId, uint amount, address from, address to);
+    event ArtworkOfferedForSale(uint32 indexed canvasId, uint minPrice, address toAddress);
+    event ArtworkNoLongerForSale(uint32 indexed canvasId);
+    event ArtworkSold(uint32 indexed canvasId, uint amount, address from, address to);
     event FeeWithdrawn(uint amount);
-    event BuyOfferMade(uint32 canvasId, address buyer, uint amount);
-    event BuyOfferCancelled(uint32 canvasId, address buyer, uint amount);
+    event BuyOfferMade(uint32 indexed canvasId, address buyer, uint amount);
+    event BuyOfferCancelled(uint32 indexed canvasId, address buyer, uint amount);
 
     struct SellOffer {
         bool isForSale;
