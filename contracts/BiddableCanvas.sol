@@ -187,6 +187,8 @@ contract BiddableCanvas is CanvasFactory {
     *       Doesn't modify input array.
     */
     function _slice(uint32[] memory _array, uint _start, uint _end) private pure returns (uint32[]) {
+        require(_start <= _end);
+
         if (_start == 0 && _end == _array.length) {
             return _array;
         }
@@ -194,8 +196,8 @@ contract BiddableCanvas is CanvasFactory {
         uint size = _end - _start;
         uint32[] memory sliced = new uint32[](size);
 
-        for (uint i = _start; i < _end; i++) {
-            sliced[i - _start] = _array[i];
+        for (uint i = 0; i < size; i++) {
+            sliced[i] = _array[i + _start];
         }
 
         return sliced;
