@@ -14,8 +14,16 @@ contract('Simple canvas creation', async (accounts) => {
         const activeCount = await instance.activeCanvasCount();
         const count = await instance.canvasCount();
 
-        assert.equal(activeCount.valueOf(), 0);
-        assert.equal(count.valueOf(), 0);
+        const active = await instance.getCanvasByState(0);
+        const initialBidding = await instance.getCanvasByState(1);
+        const owned = await instance.getCanvasByState(2);
+
+        activeCount.should.be.eq(0);
+        count.should.be.eq(0);
+
+        active.should.be.empty;
+        initialBidding.should.be.empty;
+        owned.should.be.empty;
     });
 
     it("should create contracts", async () => {
@@ -26,8 +34,8 @@ contract('Simple canvas creation', async (accounts) => {
         const activeCount = await instance.activeCanvasCount();
         const count = await instance.canvasCount();
 
-        activeCount.valueOf().should.be.equal(2);
-        count.valueOf().should.be.equal(2);
+        activeCount.should.be.equal(2);
+        count.should.be.equal(2);
     });
 
     it('shouldn\'t have created canvases finished', async () => {
@@ -44,17 +52,15 @@ contract('Simple canvas creation', async (accounts) => {
 
     it('should have created canvases active', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const active = await instance.getActiveCanvases();
+        const active = await instance.getCanvasByState(0);
         active.should.be.equalTo([0, 1]);
     });
 
     afterEach(async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
-        let activeCount = await instance.activeCanvasCount();
-        let count = await instance.canvasCount();
-        activeCount = parseInt(activeCount);
-        count = parseInt(count);
+        const activeCount = await instance.activeCanvasCount();
+        const count = await instance.canvasCount();
 
         activeCount.should.be.lte(count);
     });
@@ -74,8 +80,8 @@ contract('Canvas creation limit', async (accounts) => {
         const active = await instance.activeCanvasCount();
         const total = await instance.canvasCount();
 
-        assert.equal(active, maxActiveCount);
-        assert.equal(total, maxActiveCount);
+        active.should.be.eq(maxActiveCount);
+        total.should.be.eq(maxActiveCount);
     });
 
     it('should fail to create new canvas when too many active ones', async () => {
@@ -85,7 +91,7 @@ contract('Canvas creation limit', async (accounts) => {
 
     it('should have all canvases active', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const active = await instance.getActiveCanvases();
+        const active = await instance.getCanvasByState(0);
 
         active.should.be.equalTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
@@ -98,13 +104,13 @@ contract('Canvas creation limit', async (accounts) => {
         const count = await instance.canvasCount();
         const isFinished = await instance.isCanvasFinished(1);
 
-        assert.equal(activeCount, count - 1);
-        assert.isTrue(isFinished, "Filled canvas has to be finished")
+        activeCount.should.be.eq(count - 1);
+        isFinished.should.be.true;
     });
 
     it('shouldn\'t have canvas 1 active', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const active = await instance.getActiveCanvases();
+        const active = await instance.getCanvasByState(0);
 
         active.should.not.to.be.containing(1);
     });
@@ -116,7 +122,7 @@ contract('Canvas creation limit', async (accounts) => {
         const activeCount = await instance.activeCanvasCount();
         const count = await instance.canvasCount();
 
-        assert.equal(activeCount, count - 1);
+        activeCount.should.be.eq(count - 1);
     });
 
 });

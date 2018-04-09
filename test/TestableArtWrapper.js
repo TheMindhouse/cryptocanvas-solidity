@@ -10,7 +10,7 @@ export class TestableArtWrapper {
 
     //Mapping for contract's methods
 
-    MAX_ACTIVE_CANVAS = async () => await this.instance.MAX_ACTIVE_CANVAS();
+    MAX_ACTIVE_CANVAS = async () => parseInt(await this.instance.MAX_ACTIVE_CANVAS());
 
     createCanvas = async () => await this.instance.createCanvas();
 
@@ -28,9 +28,9 @@ export class TestableArtWrapper {
         return await this.instance.isCanvasFinished(canvasId);
     };
 
-    getActiveCanvases = async () => {
-        const active = await this.instance.getActiveCanvases();
-        return active.map(it => parseInt(it));
+    getCanvasByState = async (state) => {
+        const result = await this.instance.getCanvasByState(state);
+        return result.map(it => parseInt(it));
     };
 
     setPixel = async (canvasId, pixelId, color, options = {}) => await this.instance.setPixel(canvasId, pixelId, color, options);
