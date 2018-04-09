@@ -98,6 +98,27 @@ contract BiddableCanvas is CanvasFactory {
         }
     }
 
+    function getCanvasByState(uint8 _state) external view returns (uint32[]) {
+        uint32 size;
+        if (_state == STATE_NOT_FINISHED) {
+            size = activeCanvasCount;
+        } else {
+            size = getCanvasCount() - activeCanvasCount;
+        }
+
+        uint32[] memory result = new uint32[](size);
+        uint currentIndex = 0;
+
+        for (uint32 i = 0; i < artworks.length; i++) {
+            if (getCanvasState(i) == _state) {
+                result[currentIndex] = i;
+                currentIndex++;
+            }
+        }
+
+        return _slice(result, 0, currentIndex);
+    }
+
     function calculateReward(uint32 _canvasId, address _address) public view stateOwned(_canvasId) returns (uint32 pixelsCount, uint reward, bool isPaid) {
         Bid storage bid = bids[_canvasId];
         uint32 paintedPixels = countPaintedPixelsByAddress(_address, _canvasId);
@@ -159,6 +180,25 @@ contract BiddableCanvas is CanvasFactory {
 
     function _calculateCommission(uint _amount) private pure returns (uint) {
         return (_amount * COMMISSION) / COMMISSION_DIVIDER;
+    }
+
+    /**
+    * @dev  Slices array from start (inclusive) to end (exclusive).
+    *       Doesn't modify input array.
+    */
+    function _slice(uint32[] memory _array, uint _start, uint _end) private pure returns (uint[]) {
+        if (_start == 0 && _end == _array.length) {
+            return _array;
+        }
+
+        uint memory size = _end - _start;
+        uint32[] memory sliced = new uint[](size);
+
+        for (uint32 i = _start; i < _end; i++) {
+            sliced[i - _start] = _array[i];
+        }
+
+        return sliced;
     }
 
     struct Bid {

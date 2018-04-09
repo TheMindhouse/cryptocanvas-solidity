@@ -82,20 +82,6 @@ contract CanvasFactory is TimeAware {
         return result;
     }
 
-    function getActiveCanvases() external view returns (uint32[]) {
-        uint32[] memory result = new uint32[](activeCanvasCount);
-        uint currentIndex = 0;
-
-        for (uint32 i = 0; i < artworks.length; i++) {
-            if (!isCanvasFinished(i)) {
-                result[currentIndex] = i;
-                currentIndex++;
-            }
-        }
-
-        return result;
-    }
-
     function getCanvasPaintedPixels(uint32 _canvasId) public view returns (uint32) {
         return _getCanvas(_canvasId).paintedPixelsCount;
     }
