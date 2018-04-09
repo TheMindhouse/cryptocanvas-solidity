@@ -93,7 +93,7 @@ contract CanvasFactory is TimeAware {
     /**
     * @notice   Returns amount of created canvases.
     */
-    function getCanvasCount() external view returns (uint) {
+    function getCanvasCount() public view returns (uint) {
         return artworks.length;
     }
 

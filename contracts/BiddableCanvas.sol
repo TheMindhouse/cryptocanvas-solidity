@@ -99,7 +99,7 @@ contract BiddableCanvas is CanvasFactory {
     }
 
     function getCanvasByState(uint8 _state) external view returns (uint32[]) {
-        uint32 size;
+        uint size;
         if (_state == STATE_NOT_FINISHED) {
             size = activeCanvasCount;
         } else {
@@ -186,15 +186,15 @@ contract BiddableCanvas is CanvasFactory {
     * @dev  Slices array from start (inclusive) to end (exclusive).
     *       Doesn't modify input array.
     */
-    function _slice(uint32[] memory _array, uint _start, uint _end) private pure returns (uint[]) {
+    function _slice(uint32[] memory _array, uint _start, uint _end) private pure returns (uint32[]) {
         if (_start == 0 && _end == _array.length) {
             return _array;
         }
 
-        uint memory size = _end - _start;
-        uint32[] memory sliced = new uint[](size);
+        uint size = _end - _start;
+        uint32[] memory sliced = new uint32[](size);
 
-        for (uint32 i = _start; i < _end; i++) {
+        for (uint i = _start; i < _end; i++) {
             sliced[i - _start] = _array[i];
         }
 
