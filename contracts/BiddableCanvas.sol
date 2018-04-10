@@ -23,7 +23,7 @@ contract BiddableCanvas is CanvasFactory {
     *
     * ufixed COMMISSION = 0.039; may seem useful, but it's not possible to multiply ufixed * uint.
     */
-    uint public constant COMMISSION = 390;
+    uint public constant COMMISSION = 39;
     uint public constant COMMISSION_DIVIDER = 1000;
 
     uint public constant BIDDING_DURATION = 48 hours;

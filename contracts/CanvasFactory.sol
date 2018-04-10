@@ -40,7 +40,7 @@ contract CanvasFactory is TimeAware {
         require(artworks.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
-        uint id = artworks.push(Canvas(0, 0)) - 1;
+        uint id = artworks.push(Canvas(0, 0, false)) - 1;
 
         CanvasCreated(id);
         activeCanvasCount++;
