@@ -44,8 +44,6 @@ contract('Simple canvas creation', async (accounts) => {
         const isFinished0 = await instance.isCanvasFinished(0);
         const isFinished1 = await instance.isCanvasFinished(1);
 
-        console.log(isFinished0);
-
         isFinished0.should.be.false;
         isFinished1.should.be.false;
     });
