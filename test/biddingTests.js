@@ -16,10 +16,10 @@ const COMMISSION = 0.039;
 const MINIMUM_BID_AMOUNT_WEI = bigInt(80000000000000000); //0.08 ether
 const BIDDING_DURATION_HOURS = 48;
 
+const MAX_ALLOWED_GAS_PER_PIXEL = 100000;
 
-const GAS_PRICE = "2000000000";
-// const ACCOUNT_PIXELS = [400, 350, 450, 500, 250, 446, 500, 350, 450, 400];
-const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 3, 1, 1, 2, 5];
+const GAS_PRICE = bigInt("2000000000");
+const ACCOUNT_PIXELS = [400, 350, 450, 500, 350, 546, 500, 450, 550];
 const BIDS = [bigInt("70000000000000000"), bigInt("90000000000000000"), bigInt("80000000000000000"), bigInt("100000000000000000")];
 
 let finishTime = 0;
@@ -48,6 +48,32 @@ contract('Initial bidding suite', async (accounts) => {
     it('should disallow to secure not finished canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         return instance.secure(0).should.be.rejected;
+    });
+
+    it('should not allow to withdraw reward on not finished canvas', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.withdrawReward(0).should.be.rejected;
+    });
+
+    it('should not allow to withdraw commission on not finished canvas', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const owner = accounts[0];
+        return instance.withdrawCommission(0, {from: owner}).should.be.rejected;
+    });
+
+    it(`should have price for setting pixel lower than ${MAX_ALLOWED_GAS_PER_PIXEL} gas`, async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        let result = await instance.setPixel(0, 0, 10, {from: accounts[0]});
+        let gas = parseInt(result.receipt.gasUsed);
+
+        console.log(`Price to set a pixel: ${gas}`);
+        gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
+
+        result = await instance.setPixel(0, 0, 20, {from: accounts[1]});
+        gas = parseInt(result.receipt.gasUsed);
+
+        console.log(`Price to change a pixel: ${gas}`);
+        gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
     });
 
     it('should have 1 state for finished canvas', async function () {
@@ -93,7 +119,7 @@ contract('Initial bidding suite', async (accounts) => {
         const balance = instance.getBalance(accounts[0]);
 
         const response = await instance.makeBid(0, {from: accounts[0], value: amount, gasPrice: GAS_PRICE});
-        const gasUsed = bigInt(GAS_PRICE).multiply(response.receipt.gasUsed);
+        const gasUsed = GAS_PRICE.multiply(response.receipt.gasUsed);
         const newBalance = instance.getBalance(accounts[0]);
 
         balance.minus(amount.plus(gasUsed)).eq(newBalance).should.be.true;
@@ -124,7 +150,7 @@ contract('Initial bidding suite', async (accounts) => {
         const oldBid = await instance.getLastBidForCanvas(0);
 
         const response = await instance.makeBid(0, {from: accounts[1], value: BIDS[3], gasPrice: GAS_PRICE});
-        const gasUsed = bigInt(GAS_PRICE).multiply(response.receipt.gasUsed);
+        const gasUsed = GAS_PRICE.multiply(response.receipt.gasUsed);
         const newBalance0 = instance.getBalance(accounts[0]);
         const newBalance1 = instance.getBalance(accounts[1]);
 
@@ -185,33 +211,127 @@ contract('Initial bidding suite', async (accounts) => {
         }
     });
 
-    it('should withdraw reward', function () {
+
+    it('should not allow to withdraw reward when didn\'t paint any pixels', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        let account = accounts[9];
+        const reward = await instance.calculateReward(0, account);
+
+        reward.reward.should.be.eq(0);
+        return instance.withdrawReward(0, {from: account}).should.be.rejected;
+    });
+
+    it('should withdraw reward', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+
+        let totalGas = bigInt(0);
+
+        for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
+            const account = accounts[i];
+            let reward = await instance.calculateReward(0, account);
+            const balance = await instance.getBalance(account);
+
+            const result = await instance.withdrawReward(0, {from: account, gasPrice: GAS_PRICE});
+            const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
+            const newBalance = await instance.getBalance(account);
+
+            totalGas = totalGas.add(result.receipt.gasUsed);
+
+            balance.plus(reward.reward).minus(gas).eq(newBalance).should.be.true;
+
+            reward = await instance.calculateReward(0, account);
+            reward.isPaid.should.be.true;
+        }
+
+        console.log(`Average gas cost to withdraw: ${totalGas.divide(ACCOUNT_PIXELS.length)}`)
+    });
+
+    it('should not allow to withdraw reward twice', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.withdrawReward(0, {from: accounts[0]}).should.be.rejected;
 
     });
 
-    it('should not allow to withdraw reward twice', function () {
-
+    it('should not allow to withdraw commission when not called by the owner of the contract', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.withdrawCommission(0, {from: accounts[1]}).should.be.rejected;
     });
 
-    it('should withdraw fee', function () {
+    it('should withdraw fee', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
 
+        let owner = accounts[0];
+        const balance = await instance.getBalance(owner);
+        let commission = await instance.calculateCommission(0);
+
+        const result = await instance.withdrawCommission(0, {from: owner, gasPrice: GAS_PRICE});
+        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
+        const newBalance = await instance.getBalance(owner);
+
+        balance.plus(commission.commission).minus(gas).eq(newBalance).should.be.true;
+
+        commission = await instance.calculateCommission(0);
+        commission.isPaid.should.be.true;
     });
 
-    it('should not allow to withdraw fee twice', function () {
-
+    it('should not allow to withdraw fee twice', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        let owner = accounts[0];
+        return instance.withdrawCommission(0, {from: owner}).should.be.rejected;
     });
 
-    it('should disallow to secure canvas when not called by owner', function () {
-
+    it('should not allow to secure not existing canvas', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.secure(10).should.be.rejected;
     });
 
-    it('should secure canvas', function () {
+    it('should not allow to secure canvas when not called by owner of the canvas', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const notOwner = accounts[3];
+
+        return instance.secure(0, {from: notOwner}).should.be.rejected;
+    });
+
+    it('should secure canvas', async () => {
         //after securing canvas, it should be time manipulation proof!
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const owner = accounts[1];
+
+        let info = await instance.getCanvasInfo(0);
+        info.isSecured.should.be.false;
+
+        await instance.secure(0, {from: owner});
+
+        info = await instance.getCanvasInfo(0);
+        info.isSecured.should.be.true;
     });
 
-    it('should disallow to bid when canvas is secured (and went back in time)', function () {
+    it('should disallow to bid when canvas is secured (and went back in time)', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const fakeBid = BIDS[3].multiply(2);
+        const hacker = accounts[5];
 
+        //emulate messing with 'now' -> going back in time
+        await instance.mockTime(0);
+
+        return instance.makeBid(0, {from: hacker, value: fakeBid}).should.be.rejected;
     });
 
+    it('should not allow to change minimum bid amount if not called by the owner of the contract', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const notOwner = accounts[3];
+
+        return instance.setMinimumBidAmount(1, {from: notOwner}).should.be.rejected;
+    });
+
+    it('should change minimum bid amount', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const owner = accounts[0];
+
+        await instance.setMinimumBidAmount(10, {from: owner});
+        const minBidAmount = await instance.minimumBidAmount();
+
+        minBidAmount.should.be.eq(10);
+    });
 
 });

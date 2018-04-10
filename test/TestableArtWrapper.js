@@ -16,6 +16,8 @@ export class TestableArtWrapper {
 
     PIXEL_COUNT = async () => parseInt(await this.instance.PIXEL_COUNT());
 
+    minimumBidAmount = async () => parseInt(await this.instance.minimumBidAmount());
+
     createCanvas = async () => await this.instance.createCanvas();
 
     activeCanvasCount = async () => {
@@ -65,7 +67,7 @@ export class TestableArtWrapper {
 
     balanceOf = async (address) => parseInt(await this.instance.balanceOf(address));
 
-    secure = async (canvasId) => await this.instance.secure(canvasId);
+    secure = async (canvasId, options = {}) => await this.instance.secure(canvasId, options);
 
     calculateCommission = async (canvasId) => {
         const result = await this.instance.calculateCommission(canvasId);
@@ -84,16 +86,22 @@ export class TestableArtWrapper {
         }
     };
 
+    withdrawReward = async (canvasId, options = {}) => await this.instance.withdrawReward(canvasId, options);
+
+    withdrawCommission = async (canvasId, options = {}) => await this.instance.withdrawCommission(canvasId, options);
+
     getCanvasInfo = async (canvasId) => {
         const result = await this.instance.getCanvasInfo(canvasId);
         return {
-            id: result[0],
-            paintedPixels: result[1],
+            id: parseInt(result[0]),
+            paintedPixels: parseInt(result[1]),
             isSecured: result[2],
-            canvasState: result[3],
+            canvasState: parseInt(result[3]),
             owner: result[4]
         };
     };
+
+    setMinimumBidAmount = async (amount, options = {}) => await this.instance.setMinimumBidAmount(amount, options);
 
     //UTILITY
 
