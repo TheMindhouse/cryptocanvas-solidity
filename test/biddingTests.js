@@ -66,13 +66,13 @@ contract('Initial bidding suite', async (accounts) => {
         let result = await instance.setPixel(0, 0, 10, {from: accounts[0]});
         let gas = parseInt(result.receipt.gasUsed);
 
-        console.log(`Price to set a pixel: ${gas}`);
+        // console.log(`Price to set a pixel: ${gas}`);
         gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
 
         result = await instance.setPixel(0, 0, 20, {from: accounts[1]});
         gas = parseInt(result.receipt.gasUsed);
 
-        console.log(`Price to change a pixel: ${gas}`);
+        // console.log(`Price to change a pixel: ${gas}`);
         gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
     });
 
@@ -243,7 +243,7 @@ contract('Initial bidding suite', async (accounts) => {
             reward.isPaid.should.be.true;
         }
 
-        console.log(`Average gas cost to withdraw: ${totalGas.divide(ACCOUNT_PIXELS.length)}`)
+        // console.log(`Average gas cost to withdraw: ${totalGas.divide(ACCOUNT_PIXELS.length)}`)
     });
 
     it('should not allow to withdraw reward twice', async () => {
