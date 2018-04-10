@@ -1,3 +1,5 @@
+const bigInt = require('big-integer');
+
 export class TestableArtWrapper {
 
     /**
@@ -11,6 +13,8 @@ export class TestableArtWrapper {
     //Mapping for contract's methods
 
     MAX_ACTIVE_CANVAS = async () => parseInt(await this.instance.MAX_ACTIVE_CANVAS());
+
+    PIXEL_COUNT = async () => parseInt(await this.instance.PIXEL_COUNT());
 
     createCanvas = async () => await this.instance.createCanvas();
 
@@ -53,9 +57,43 @@ export class TestableArtWrapper {
         return {address: bid[0], amount: parseInt(bid[1]), finishTime: parseInt(bid[2])}
     };
 
+    makeBid = async (canvasId, options) => await this.instance.makeBid(canvasId, options);
+
     getTime = async () => parseInt(await this.instance.getTime());
 
     mockTime = async (time) => await this.instance.mockTime(time);
+
+    balanceOf = async (address) => parseInt(await this.instance.balanceOf(address));
+
+    secure = async (canvasId) => await this.instance.secure(canvasId);
+
+    calculateCommission = async (canvasId) => {
+        const result = await this.instance.calculateCommission(canvasId);
+        return {
+            commission: parseInt(result[0]),
+            isPaid: result[1]
+        }
+    };
+
+    calculateReward = async (canvasId, address) => {
+        const result = await this.instance.calculateReward(canvasId, address);
+        return {
+            pixelCount: parseInt(result[0]),
+            reward: parseInt(result[1]),
+            isPaid: result[2]
+        }
+    };
+
+    getCanvasInfo = async (canvasId) => {
+        const result = await this.instance.getCanvasInfo(canvasId);
+        return {
+            id: result[0],
+            paintedPixels: result[1],
+            isSecured: result[2],
+            canvasState: result[3],
+            owner: result[4]
+        };
+    };
 
     //UTILITY
 
@@ -63,10 +101,10 @@ export class TestableArtWrapper {
      * Calling this function for huge set of pixels causes test failure! Don't call it with default
      * values [0 - 4096>, this set is too large!
      */
-    fillCanvas = (canvasId, firstIndex = 0, lastIndex = 4096, color = 10) => {
+    fillCanvas = (canvasId, firstIndex = 0, lastIndex = 4096, color = 10, options = {}) => {
         const promises = [];
         for (let i = firstIndex; i < lastIndex; i++) {
-            promises.push(this.setPixel(canvasId, i, color));
+            promises.push(this.setPixel(canvasId, i, color, options));
         }
 
         return Promise.all(promises);
@@ -89,10 +127,12 @@ export class TestableArtWrapper {
      * @returns {Promise<void>}
      */
     pushTimeForward = async (hours, minutes = 0, seconds = 0) => {
-        const toForward = hours * 3600; //to seconds
-        const currentTime = this.getTime();
+        const toForward = hours * 3600 + minutes * 60 + seconds;
+        const currentTime = await this.getTime();
 
         await this.mockTime(currentTime + toForward);
-    }
+    };
+
+    getBalance = (address) => bigInt(this.instance.contract._eth.getBalance(address));
 
 }
