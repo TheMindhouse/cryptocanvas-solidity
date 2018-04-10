@@ -51,6 +51,8 @@ contract BiddableCanvas is CanvasFactory {
         Canvas storage canvas = _getCanvas(_canvasId);
         Bid storage oldBid = bids[_canvasId];
 
+        require(!canvas.secured);
+
         if (msg.value < minimumBidAmount || msg.value <= oldBid.amount) {
             revert();
         }
@@ -164,6 +166,20 @@ contract BiddableCanvas is CanvasFactory {
         owner.transfer(commission);
 
         CommissionPaid(_canvasId, commission);
+    }
+
+    /**
+    * Secures canvas. Can be called just once, by the owner of the canvas.
+    * When secured, canvas will be time-manipulation proof. It means that
+    * nobody will be able to "go back in time" and pretend that initial
+    * bidding is still on.
+    */
+    function secure(uint32 _canvasId) external stateOwned(_canvasId) {
+        Canvas storage canvas = _getCanvas(_canvasId);
+        require(canvas.owner == msg.sender);
+        require(!canvas.secured);
+
+        canvas.secured = true;
     }
 
     function balanceOf(address _owner) external view returns (uint) {

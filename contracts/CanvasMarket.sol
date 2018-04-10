@@ -36,7 +36,7 @@ contract CanvasMarket is BiddableCanvas {
     * @notice   Buy artwork. Artwork has to be put on sale. If buyer has bid before for 
     *           for that artwork bid will be canceled. 
     */
-    function buyArtwork(uint32 _canvasId) external payable {
+    function buyArtwork(uint32 _canvasId) external payable stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         SellOffer storage sellOffer = artworksForSale[_canvasId];
 
