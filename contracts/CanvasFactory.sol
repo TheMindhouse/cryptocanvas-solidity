@@ -7,9 +7,9 @@ import "./TimeAware.sol";
 */
 contract CanvasFactory is TimeAware {
 
-    uint8 public constant WIDTH = 5;
-    uint8 public constant HEIGHT = 5;
-    uint32 public constant PIXEL_COUNT = 25; //WIDTH * HEIGHT doesn't work for some reason
+    uint8 public constant WIDTH = 64;
+    uint8 public constant HEIGHT = 64;
+    uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
 
     uint8 public constant MAX_CANVAS_COUNT = 100;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
@@ -58,10 +58,12 @@ contract CanvasFactory is TimeAware {
         // that pixel hasn't been set.
         if (pixel.painter == 0x0) {
             canvas.paintedPixelsCount++;
+        } else {
+            canvas.addressToCount[pixel.painter]--;
         }
 
-        Pixel memory newPixel = Pixel(_color, msg.sender);
-        canvas.pixels[_index] = newPixel;
+        canvas.addressToCount[msg.sender]++;
+        canvas.pixels[_index] = Pixel(_color, msg.sender);
 
         if (_isCanvasFinished(canvas)) {
             activeCanvasCount--;
@@ -107,15 +109,7 @@ contract CanvasFactory is TimeAware {
 
     function countPaintedPixelsByAddress(address _address, uint32 _canvasId) public view returns (uint32) {
         Canvas storage canvas = _getCanvas(_canvasId);
-        uint32 count = 0;
-
-        for (uint32 i = 0; i < PIXEL_COUNT; i++) {
-            if (canvas.pixels[i].painter == _address) {
-                count++;
-            }
-        }
-
-        return count;
+        return canvas.addressToCount[_address];
     }
 
     function _isCanvasFinished(Canvas canvas) internal pure returns (bool) {
@@ -148,6 +142,8 @@ contract CanvasFactory is TimeAware {
         * Technically it means that setPixelsCount == PIXEL_COUNT
         */
         uint32 paintedPixelsCount;
+
+        mapping(address => uint32) addressToCount;
 
         /**
         * Protection against time manipulation.
