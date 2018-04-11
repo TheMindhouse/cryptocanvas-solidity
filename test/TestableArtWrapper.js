@@ -20,6 +20,8 @@ export class TestableArtWrapper {
 
     createCanvas = async () => await this.instance.createCanvas();
 
+    fees = async () => parseInt(await this.instance.fees());
+
     activeCanvasCount = async () => {
         const activeCount = await this.instance.activeCanvasCount();
         return parseInt(activeCount);
@@ -102,6 +104,43 @@ export class TestableArtWrapper {
     };
 
     setMinimumBidAmount = async (amount, options = {}) => await this.instance.setMinimumBidAmount(amount, options);
+
+    //TRADING
+
+    buyCanvas = async (canvasId, options = {}) => await this.instance.buyCanvas(canvasId, options);
+
+    offerCanvasForSale = async (canvasId, minPrice, options = {}) => await this.instance.offerCanvasForSale(canvasId, minPrice, options);
+
+    offerCanvasForSaleToAddress = async (canvasId, minPrice, address, options = {}) => await this.instance.offerCanvasForSaleToAddress(canvasId, minPrice, address, options);
+
+    canvasNoLongerForSale = async (canvasId, options = {}) => await this.instance.canvasNoLongerForSale(canvasId, options);
+
+    enterBuyOffer = async (canvasId, options = {}) => await this.instance.enterBuyOffer(canvasId, options);
+
+    cancelBuyOffer = async (canvasId, options = {}) => await this.instance.cancelBuyOffer(canvasId, options);
+
+    acceptBuyOffer = async (canvasId, minPrice, options = {}) => await this.instance.acceptBuyOffer(canvasId, minPrice, options);
+
+    getCurrentBuyOffer = async (canvasId) => {
+        const result = await this.instance.getCurrentBuyOffer(canvasId);
+        return {
+            hasOffer: result[0],
+            buyer: result[1],
+            amount: parseInt(result[2])
+        }
+    };
+
+    getCurrentSellOffer = async (canvasId) => {
+        const result = await this.instance.getCurrentSellOffer(canvasId);
+        return {
+            isForSale: result[0],
+            seller: result[1],
+            minPrice: parseInt(result[2]),
+            onlySellTo: result[3]
+        }
+    };
+
+    withdrawFees = async (options = {}) => await this.instance.withdrawFees(options);
 
     //UTILITY
 
