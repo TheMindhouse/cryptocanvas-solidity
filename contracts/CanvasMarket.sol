@@ -47,9 +47,9 @@ contract CanvasMarket is BiddableCanvas {
         require(sellOffer.seller == canvas.owner);
         //seller is no longer owner
         require(sellOffer.onlySellTo == 0x0 || sellOffer.onlySellTo == msg.sender);
-        //protect from selling to unintented address
+        //protect from selling to unintended address
 
-        uint fee = msg.value * COMMISSION;
+        uint fee = _calculateCommission(msg.value);
         uint toTransfer = msg.value - fee;
 
         sellOffer.seller.transfer(toTransfer);

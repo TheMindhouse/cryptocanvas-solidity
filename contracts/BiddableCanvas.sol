@@ -194,7 +194,7 @@ contract BiddableCanvas is CanvasFactory {
         return (_totalPrice - _calculateCommission(_totalPrice)) / PIXEL_COUNT;
     }
 
-    function _calculateCommission(uint _amount) private pure returns (uint) {
+    function _calculateCommission(uint _amount) internal pure returns (uint) {
         return (_amount * COMMISSION) / COMMISSION_DIVIDER;
     }
 
