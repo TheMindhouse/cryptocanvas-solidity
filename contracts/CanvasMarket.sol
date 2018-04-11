@@ -86,6 +86,8 @@ contract CanvasMarket is BiddableCanvas {
     function offerCanvasForSaleToAddress(uint32 _canvasId, uint _minPrice, address _receiver) external stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
+        require(_receiver != canvas.owner);
+        require(_receiver != 0x0);
 
         canvasForSale[_canvasId] = SellOffer(true, msg.sender, _minPrice, _receiver);
         CanvasOfferedForSale(_canvasId, _minPrice, _receiver);
