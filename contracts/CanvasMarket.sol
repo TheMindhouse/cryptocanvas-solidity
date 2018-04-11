@@ -128,9 +128,9 @@ contract CanvasMarket is BiddableCanvas {
         BuyOffer storage offer = buyOffers[_canvasId];
         require(offer.amount > 0);
         require(offer.buyer != 0x0);
-        require(offer.amount > _minPrice);
+        require(offer.amount >= _minPrice);
 
-        uint fee = offer.amount * COMMISSION;
+        uint fee = _calculateCommission(offer.amount);
         uint toTransfer = offer.amount - fee;
 
         addressToCount[canvas.owner]--;
