@@ -37,7 +37,7 @@ contract('Drawing on canvas suite', async (accounts) => {
 
     it('should fail if asked about bitmap of invalid canvas', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.getBitmap(2).should.be.rejected;
+        return instance.getCanvasBitmap(2).should.be.rejected;
     });
 
     it('should set pixels', async function () {
@@ -48,7 +48,7 @@ contract('Drawing on canvas suite', async (accounts) => {
             await instance.setPixel(0, index, value);
         });
 
-        const bitmap = await instance.getBitmap(0);
+        const bitmap = await instance.getCanvasBitmap(0);
         const drawn = bitmap.slice(0, toBeDrawn.length);
 
         drawn.should.be.equalTo(toBeDrawn);
@@ -74,7 +74,7 @@ contract('Drawing on canvas suite', async (accounts) => {
             await instance.setPixel(0, i * 3, 10, {from: accounts[2]});
         }
 
-        const count = await instance.countPaintedPixelsByAddress(accounts[2], 0);
+        const count = await instance.getPaintedPixelsCountByAddress(accounts[2], 0);
         count.should.be.eq(pixelsToSet)
     });
 
@@ -87,7 +87,7 @@ contract('Drawing on canvas suite', async (accounts) => {
             await instance.setPixel(1, i * 3, 10, {from: accounts[2]});
         }
 
-        const paintedPixels = await instance.getCanvasPaintedPixels(1);
+        const paintedPixels = await instance.getCanvasPaintedPixelsCount(1);
         paintedPixels.should.be.eq(pixelsToSet);
     });
 

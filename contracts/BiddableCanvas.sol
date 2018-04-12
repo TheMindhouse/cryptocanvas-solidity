@@ -34,8 +34,8 @@ contract BiddableCanvas is CanvasFactory {
     uint public minimumBidAmount = 0.08 ether;
 
     event BidPosted(uint32 indexed canvasId, address bidder, uint amount, uint finishTime);
-    event MoneyPaid(uint32 indexed canvasId, address toAddress, uint amount);
-    event CommissionPaid(uint32 indexed canvasId, uint _amount);
+    event RewardWithdrawn(uint32 indexed canvasId, address toAddress, uint amount);
+    event CommissionWithdrawn(uint32 indexed canvasId, uint amount);
 
     modifier stateBidding(uint32 _canvasId) {
         require(getCanvasState(_canvasId) == STATE_INITIAL_BIDDING);
@@ -111,7 +111,7 @@ contract BiddableCanvas is CanvasFactory {
         uint32[] memory result = new uint32[](size);
         uint currentIndex = 0;
 
-        for (uint32 i = 0; i < artworks.length; i++) {
+        for (uint32 i = 0; i < canvases.length; i++) {
             if (getCanvasState(i) == _state) {
                 result[currentIndex] = i;
                 currentIndex++;
@@ -123,7 +123,7 @@ contract BiddableCanvas is CanvasFactory {
 
     function calculateReward(uint32 _canvasId, address _address) public view stateOwned(_canvasId) returns (uint32 pixelsCount, uint reward, bool isPaid) {
         Bid storage bid = bids[_canvasId];
-        uint32 paintedPixels = countPaintedPixelsByAddress(_address, _canvasId);
+        uint32 paintedPixels = getPaintedPixelsCountByAddress(_address, _canvasId);
         uint pricePerPixel = _calculatePricePerPixel(bid.amount);
         uint _reward = paintedPixels * pricePerPixel;
 
@@ -145,7 +145,7 @@ contract BiddableCanvas is CanvasFactory {
         bid.isAddressPaid[msg.sender] = true;
         msg.sender.transfer(reward);
 
-        MoneyPaid(_canvasId, msg.sender, reward);
+        RewardWithdrawn(_canvasId, msg.sender, reward);
     }
 
     function calculateCommission(uint32 _canvasId) public view stateOwned(_canvasId) returns (uint commission, bool isPaid) {
@@ -165,7 +165,7 @@ contract BiddableCanvas is CanvasFactory {
         bid.isCommissionPaid = true;
         owner.transfer(commission);
 
-        CommissionPaid(_canvasId, commission);
+        CommissionWithdrawn(_canvasId, commission);
     }
 
     /**

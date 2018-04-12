@@ -39,7 +39,7 @@ contract('Canvas trading suite', async (accounts) => {
 
     it("should not allow to buy not finished canvas", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.buyCanvas(0).should.be.rejected;
+        return instance.acceptSellOffer(0).should.be.rejected;
     });
 
     it("should not allow to offer for sale not finished canvas", async () => {
@@ -54,12 +54,12 @@ contract('Canvas trading suite', async (accounts) => {
 
     it("should not allow to cancel sale not finished canvas", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.canvasNoLongerForSale(0).should.be.rejected;
+        return instance.cancelSellOffer(0).should.be.rejected;
     });
 
     it("should not allow to enter buy offer not finished canvas", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.enterBuyOffer(0, {value: 100000}).should.be.rejected;
+        return instance.makeBuyOffer(0, {value: 100000}).should.be.rejected;
     });
 
     it("should not allow to cancel buy offer not finished canvas", async () => {
@@ -99,7 +99,7 @@ contract('Canvas trading suite', async (accounts) => {
 
     it("should not allow to buy when canvas is in initial bidding", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.buyCanvas(0).should.be.rejected;
+        return instance.acceptSellOffer(0).should.be.rejected;
     });
 
     it("should not allow to offer for sale when canvas is in initial bidding", async () => {
@@ -114,12 +114,12 @@ contract('Canvas trading suite', async (accounts) => {
 
     it("should not allow to cancel sale when canvas is in initial bidding", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.canvasNoLongerForSale(0).should.be.rejected;
+        return instance.cancelSellOffer(0).should.be.rejected;
     });
 
     it("should not allow to enter buy offer when canvas is in initial bidding", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.enterBuyOffer(0, {value: 100000}).should.be.rejected;
+        return instance.makeBuyOffer(0, {value: 100000}).should.be.rejected;
     });
 
     it("should not allow to cancel buy offer when canvas is in initial bidding", async () => {
@@ -165,7 +165,7 @@ contract('Canvas trading suite', async (accounts) => {
 
     it('should not allow to buy canvas if it\'s not offered for sale', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.buyCanvas(0, {from: accounts[0], value: 10000000}).should.be.rejected;
+        return instance.acceptSellOffer(0, {from: accounts[0], value: 10000000}).should.be.rejected;
     });
 
     it('should not allow to offer canvas for sale if not called by the owner', async () => {
@@ -194,17 +194,17 @@ contract('Canvas trading suite', async (accounts) => {
 
     it('should not allow to cancel sell offer if not called by the owner', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.canvasNoLongerForSale(0, {from: accounts[8]}).should.be.rejected;
+        return instance.cancelSellOffer(0, {from: accounts[8]}).should.be.rejected;
     });
 
     it('should not allow to buy canvas if sell offer has been cancelled', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        await instance.canvasNoLongerForSale(0, {from: owner});
+        await instance.cancelSellOffer(0, {from: owner});
 
         const sellOffer = await instance.getCurrentSellOffer(0);
         sellOffer.isForSale.should.be.false;
 
-        return instance.buyCanvas(0, {from: accounts[5], value: 20}).should.be.rejected;
+        return instance.acceptSellOffer(0, {from: accounts[5], value: 20}).should.be.rejected;
     });
 
     /**
@@ -223,12 +223,12 @@ contract('Canvas trading suite', async (accounts) => {
 
     it('should not allow to buy a canvas for amount smaller than minimum', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.buyCanvas(0, {from: accounts[0], value: 8}).should.be.rejected;
+        return instance.acceptSellOffer(0, {from: accounts[0], value: 8}).should.be.rejected;
     });
 
     it('should not allow address to buy its canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.buyCanvas(0, {from: owner, value: 50}).should.be.rejected;
+        return instance.acceptSellOffer(0, {from: owner, value: 50}).should.be.rejected;
     });
 
     /**
@@ -243,7 +243,7 @@ contract('Canvas trading suite', async (accounts) => {
         const buyerBalance = await instance.getBalance(buyer);
         const sellerBalance = await instance.getBalance(owner);
 
-        const result = await instance.buyCanvas(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
+        const result = await instance.acceptSellOffer(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
 
         const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
         const info = await instance.getCanvasInfo(0);
@@ -286,7 +286,7 @@ contract('Canvas trading suite', async (accounts) => {
 
     it('should not allow to buy canvas by the address different than specified', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.buyCanvas(0, {from: accounts[8], value: 100}).should.be.rejected;
+        return instance.acceptSellOffer(0, {from: accounts[8], value: 100}).should.be.rejected;
     });
 
     /**
@@ -301,7 +301,7 @@ contract('Canvas trading suite', async (accounts) => {
         const buyerBalance = await instance.getBalance(buyer);
         const sellerBalance = await instance.getBalance(owner);
 
-        const result = await instance.buyCanvas(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
+        const result = await instance.acceptSellOffer(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
 
         const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
         const info = await instance.getCanvasInfo(0);
@@ -333,14 +333,14 @@ contract('Canvas trading suite', async (accounts) => {
         const buyer = accounts[7];
 
         //Enter buy offer and sell offer.
-        await instance.enterBuyOffer(0, {from: buyer, value: buyOffer});
+        await instance.makeBuyOffer(0, {from: buyer, value: buyOffer});
         await instance.offerCanvasForSale(0, 10, {from: owner});
 
         //Balance after posting offers
         const buyerBalance = await instance.getBalance(buyer);
         const sellerBalance = await instance.getBalance(owner);
 
-        const result = await instance.buyCanvas(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
+        const result = await instance.acceptSellOffer(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
 
         const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
         const info = await instance.getCanvasInfo(0);
@@ -367,7 +367,7 @@ contract('Canvas trading suite', async (accounts) => {
 
     it('should not allow to make a buy offer when called by owner', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.enterBuyOffer(0, {from: owner, value: 100}).should.be.rejected;
+        return instance.makeBuyOffer(0, {from: owner, value: 100}).should.be.rejected;
     });
 
     /**
@@ -380,7 +380,7 @@ contract('Canvas trading suite', async (accounts) => {
         const amount = eth;
         const buyerBalance = await instance.getBalance(buyer);
 
-        const result = await instance.enterBuyOffer(0, {from: buyer, value: eth, gasPrice: GAS_PRICE});
+        const result = await instance.makeBuyOffer(0, {from: buyer, value: eth, gasPrice: GAS_PRICE});
         const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
 
         const newBuyerBalance = await instance.getBalance(buyer);
@@ -429,10 +429,10 @@ contract('Canvas trading suite', async (accounts) => {
         const amount1 = eth;
         const amount2 = eth.multiply(2);
 
-        await instance.enterBuyOffer(0, {from: buyer1, value: amount1});
+        await instance.makeBuyOffer(0, {from: buyer1, value: amount1});
         const buyer1Balance = await instance.getBalance(buyer1);
 
-        await instance.enterBuyOffer(0, {from: buyer2, value: amount2});
+        await instance.makeBuyOffer(0, {from: buyer2, value: amount2});
         const newBuyer1Balance = await instance.getBalance(buyer1);
         const buyOffer = await instance.getCurrentBuyOffer(0);
 
@@ -445,7 +445,7 @@ contract('Canvas trading suite', async (accounts) => {
 
     it('should not allow to make buy offer when din\'t send bigger value', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.enterBuyOffer(0, {from: accounts[2], value: eth.multiply(2)}).should.be.rejected;
+        return instance.makeBuyOffer(0, {from: accounts[2], value: eth.multiply(2)}).should.be.rejected;
     });
 
     it('should not allow to accept buy offer if not called by the owner of the canvas', async () => {

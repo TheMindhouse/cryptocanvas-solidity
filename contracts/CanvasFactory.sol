@@ -14,7 +14,7 @@ contract CanvasFactory is TimeAware {
     uint8 public constant MAX_CANVAS_COUNT = 100;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
 
-    Canvas[] artworks;
+    Canvas[] canvases;
     uint32 public activeCanvasCount = 0;
 
     event PixelPainted(uint32 indexed canvasId, uint32 index, uint8 color);
@@ -37,10 +37,10 @@ contract CanvasFactory is TimeAware {
     }
 
     function createCanvas() external returns (uint canvasId) {
-        require(artworks.length < MAX_CANVAS_COUNT);
+        require(canvases.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
-        uint id = artworks.push(Canvas(0, 0, false)) - 1;
+        uint id = canvases.push(Canvas(0, 0, false)) - 1;
 
         CanvasCreated(id);
         activeCanvasCount++;
@@ -73,7 +73,7 @@ contract CanvasFactory is TimeAware {
         PixelPainted(_canvasId, _index, _color);
     }
 
-    function getBitmap(uint32 _canvasId) external view returns (uint8[]) {
+    function getCanvasBitmap(uint32 _canvasId) external view returns (uint8[]) {
         Canvas storage canvas = _getCanvas(_canvasId);
         uint8[] memory result = new uint8[](PIXEL_COUNT);
 
@@ -84,7 +84,7 @@ contract CanvasFactory is TimeAware {
         return result;
     }
 
-    function getCanvasPaintedPixels(uint32 _canvasId) public view returns (uint32) {
+    function getCanvasPaintedPixelsCount(uint32 _canvasId) public view returns (uint32) {
         return _getCanvas(_canvasId).paintedPixelsCount;
     }
 
@@ -96,7 +96,7 @@ contract CanvasFactory is TimeAware {
     * @notice   Returns amount of created canvases.
     */
     function getCanvasCount() public view returns (uint) {
-        return artworks.length;
+        return canvases.length;
     }
 
     function isCanvasFinished(uint32 _canvasId) public view returns (bool) {
@@ -107,7 +107,7 @@ contract CanvasFactory is TimeAware {
         return _getCanvas(_canvasId).pixels[_pixelIndex].painter;
     }
 
-    function countPaintedPixelsByAddress(address _address, uint32 _canvasId) public view returns (uint32) {
+    function getPaintedPixelsCountByAddress(address _address, uint32 _canvasId) public view returns (uint32) {
         Canvas storage canvas = _getCanvas(_canvasId);
         return canvas.addressToCount[_address];
     }
@@ -117,8 +117,8 @@ contract CanvasFactory is TimeAware {
     }
 
     function _getCanvas(uint32 _canvasId) internal view returns (Canvas storage) {
-        require(_canvasId < artworks.length);
-        return artworks[_canvasId];
+        require(_canvasId < canvases.length);
+        return canvases[_canvasId];
     }
 
     struct Pixel {

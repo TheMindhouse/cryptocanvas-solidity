@@ -43,14 +43,14 @@ export class TestableArtWrapper {
 
     setPixel = async (canvasId, pixelId, color, options = {}) => await this.instance.setPixel(canvasId, pixelId, color, options);
 
-    getBitmap = async (canvasId) => {
-        const bitmap = await this.instance.getBitmap(canvasId);
+    getCanvasBitmap = async (canvasId) => {
+        const bitmap = await this.instance.getCanvasBitmap(canvasId);
         return bitmap.map(it => parseInt(it));
     };
 
-    countPaintedPixelsByAddress = async (address, canvasId) => parseInt(await this.instance.countPaintedPixelsByAddress(address, canvasId));
+    getPaintedPixelsCountByAddress = async (address, canvasId) => parseInt(await this.instance.getPaintedPixelsCountByAddress(address, canvasId));
 
-    getCanvasPaintedPixels = async (canvasId) => parseInt(await this.instance.getCanvasPaintedPixels(canvasId));
+    getCanvasPaintedPixelsCount = async (canvasId) => parseInt(await this.instance.getCanvasPaintedPixelsCount(canvasId));
 
     getPixelAuthor = async (canvasId, pixelIndex) => (await this.instance.getPixelAuthor(canvasId, pixelIndex)).toString();
 
@@ -107,15 +107,15 @@ export class TestableArtWrapper {
 
     //TRADING
 
-    buyCanvas = async (canvasId, options = {}) => await this.instance.buyCanvas(canvasId, options);
+    acceptSellOffer = async (canvasId, options = {}) => await this.instance.acceptSellOffer(canvasId, options);
 
     offerCanvasForSale = async (canvasId, minPrice, options = {}) => await this.instance.offerCanvasForSale(canvasId, minPrice, options);
 
     offerCanvasForSaleToAddress = async (canvasId, minPrice, address, options = {}) => await this.instance.offerCanvasForSaleToAddress(canvasId, minPrice, address, options);
 
-    canvasNoLongerForSale = async (canvasId, options = {}) => await this.instance.canvasNoLongerForSale(canvasId, options);
+    cancelSellOffer = async (canvasId, options = {}) => await this.instance.cancelSellOffer(canvasId, options);
 
-    enterBuyOffer = async (canvasId, options = {}) => await this.instance.enterBuyOffer(canvasId, options);
+    makeBuyOffer = async (canvasId, options = {}) => await this.instance.makeBuyOffer(canvasId, options);
 
     cancelBuyOffer = async (canvasId, options = {}) => await this.instance.cancelBuyOffer(canvasId, options);
 
