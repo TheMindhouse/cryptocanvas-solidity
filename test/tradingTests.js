@@ -26,7 +26,6 @@ const calculateFee = (amount) => {
  */
 let expectedFees = bigInt();
 let owner = '0x0';
-let pixelCount = 0;
 
 contract('Canvas trading suite', async (accounts) => {
 
@@ -36,8 +35,6 @@ contract('Canvas trading suite', async (accounts) => {
     it("should create canvas", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await instance.createCanvas();
-
-        pixelCount = await instance.PIXEL_COUNT();
     });
 
     it("should not allow to buy not finished canvas", async () => {
@@ -94,7 +91,7 @@ contract('Canvas trading suite', async (accounts) => {
      */
     it('should fill the canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        await instance.fillCanvas(0, 0, pixelCount); //we don't really care here who is painting
+        await instance.fillWholeCanvas(0); //we don't really care here who is painting
 
         const state = await instance.getCanvasState(0);
         state.should.be.eq(STATE_INITIAL_BIDDING);

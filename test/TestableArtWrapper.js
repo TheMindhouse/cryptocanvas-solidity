@@ -58,7 +58,7 @@ export class TestableArtWrapper {
 
     getLastBidForCanvas = async (canvasId) => {
         const bid = await this.instance.getLastBidForCanvas(canvasId);
-        return {address: bid[0], amount: parseInt(bid[1]), finishTime: parseInt(bid[2])}
+        return {address: bid[1], amount: parseInt(bid[2]), finishTime: parseInt(bid[3])}
     };
 
     makeBid = async (canvasId, options) => await this.instance.makeBid(canvasId, options);
