@@ -93,7 +93,7 @@ contract CanvasMarket is BiddableCanvas {
 
     function enterBuyOffer(uint32 _canvasId) external payable stateOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
-        BuyOffer existing = buyOffers[_canvasId];
+        BuyOffer storage existing = buyOffers[_canvasId];
 
         require(canvas.owner != msg.sender);
         require(canvas.owner != 0x0);
@@ -122,7 +122,7 @@ contract CanvasMarket is BiddableCanvas {
     }
 
     function acceptBuyOffer(uint32 _canvasId, uint _minPrice) external stateOwned(_canvasId) {
-        Canvas canvas = _getCanvas(_canvasId);
+        Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 
         BuyOffer storage offer = buyOffers[_canvasId];
@@ -147,12 +147,12 @@ contract CanvasMarket is BiddableCanvas {
     }
 
     function getCurrentBuyOffer(uint32 _canvasId) external view returns (bool hasOffer, address buyer, uint amount) {
-        BuyOffer offer = buyOffers[_canvasId];
+        BuyOffer storage offer = buyOffers[_canvasId];
         return (offer.hasOffer, offer.buyer, offer.amount);
     }
 
     function getCurrentSellOffer(uint32 _canvasId) external view returns (bool isForSale, address seller, uint minPrice, address onlySellTo) {
-        SellOffer offer = canvasForSale[_canvasId];
+        SellOffer storage offer = canvasForSale[_canvasId];
         return (offer.isForSale, offer.seller, offer.minPrice, offer.onlySellTo);
     }
 
