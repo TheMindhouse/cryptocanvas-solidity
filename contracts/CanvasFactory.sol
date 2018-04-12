@@ -11,7 +11,7 @@ contract CanvasFactory is TimeAware {
     uint8 public constant HEIGHT = 64;
     uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
 
-    uint8 public constant MAX_CANVAS_COUNT = 100;
+    uint8 public constant MAX_CANVAS_COUNT = 1000;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
 
     Canvas[] canvases;
