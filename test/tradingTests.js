@@ -401,7 +401,7 @@ contract('Canvas trading suite', async (accounts) => {
     /**
      * Account 2 cancels buy offer.
      */
-    it('should cancel a buy offer', async () => {
+    it('should cancel a buy offer (and refunds an offer)', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
         const buyer = accounts[2];
