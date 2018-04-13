@@ -27,8 +27,6 @@ export async function checkBalanceConsistency(instance, accounts) {
 
     const toPay = pendingWithdrawals.plus(rewards).plus(commissions).plus(buyOffers).plus(bids);
 
-    console.log(`Balance: ${balanceOfContract.toString()}, toPay: ${toPay.toString()}`);
-
     if (!balanceOfContract.eq(toPay)) {
         assert.fail(null, null, 'Balance of the contract is not equal to all possible withdrawals.\n' +
             `Balance of the contract: ${balanceOfContract}\n` +
