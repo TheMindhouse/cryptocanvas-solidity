@@ -111,17 +111,17 @@ contract('Contract gas calculator', async (accounts) => {
     it('calculate withdraw reward cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
-        let transaction = await instance.withdrawReward(0, {from: accounts[0]});
+        let transaction = await instance.addRewardToPendingWithdrawals(0, {from: accounts[0]});
         let cost = transaction.receipt.gasUsed;
-        gasCosts.push(['withdrawReward() [1 address painted all pixels]', cost]);
+        gasCosts.push(['addRewardToPendingWithdrawals() [1 address painted all pixels]', cost]);
     });
 
     it('calculate withdraw commission cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
-        let transaction = await instance.withdrawCommission(0, {from: accounts[0]});
+        let transaction = await instance.addCommissionToPendingWithdrawals(0, {from: accounts[0]});
         let cost = transaction.receipt.gasUsed;
-        gasCosts.push(['withdrawCommission()', cost]);
+        gasCosts.push(['addCommissionToPendingWithdrawals()', cost]);
     });
 
     it('calculate changing minimum bid amount cost', async () => {

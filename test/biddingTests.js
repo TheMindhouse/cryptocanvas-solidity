@@ -52,13 +52,13 @@ contract('Initial bidding suite', async (accounts) => {
 
     it('should not allow to withdraw reward on not finished canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.withdrawReward(0).should.be.rejected;
+        return instance.addRewardToPendingWithdrawals(0).should.be.rejected;
     });
 
     it('should not allow to withdraw commission on not finished canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const owner = accounts[0];
-        return instance.withdrawCommission(0, {from: owner}).should.be.rejected;
+        return instance.addCommissionToPendingWithdrawals(0, {from: owner}).should.be.rejected;
     });
 
     it(`should have price for setting pixel lower than ${MAX_ALLOWED_GAS_PER_PIXEL} gas`, async () => {
@@ -218,7 +218,7 @@ contract('Initial bidding suite', async (accounts) => {
         const reward = await instance.calculateReward(0, account);
 
         reward.reward.should.be.eq(0);
-        return instance.withdrawReward(0, {from: account}).should.be.rejected;
+        return instance.addRewardToPendingWithdrawals(0, {from: account}).should.be.rejected;
     });
 
     it('should withdraw reward', async () => {
@@ -231,7 +231,7 @@ contract('Initial bidding suite', async (accounts) => {
             let reward = await instance.calculateReward(0, account);
             const balance = await instance.getBalance(account);
 
-            const result = await instance.withdrawReward(0, {from: account, gasPrice: GAS_PRICE});
+            const result = await instance.addRewardToPendingWithdrawals(0, {from: account, gasPrice: GAS_PRICE});
             const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
             const newBalance = await instance.getBalance(account);
 
@@ -248,13 +248,13 @@ contract('Initial bidding suite', async (accounts) => {
 
     it('should not allow to withdraw reward twice', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.withdrawReward(0, {from: accounts[0]}).should.be.rejected;
+        return instance.addRewardToPendingWithdrawals(0, {from: accounts[0]}).should.be.rejected;
 
     });
 
     it('should not allow to withdraw commission when not called by the owner of the contract', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.withdrawCommission(0, {from: accounts[1]}).should.be.rejected;
+        return instance.addCommissionToPendingWithdrawals(0, {from: accounts[1]}).should.be.rejected;
     });
 
     it('should withdraw fee', async () => {
@@ -264,7 +264,7 @@ contract('Initial bidding suite', async (accounts) => {
         const balance = await instance.getBalance(owner);
         let commission = await instance.calculateCommission(0);
 
-        const result = await instance.withdrawCommission(0, {from: owner, gasPrice: GAS_PRICE});
+        const result = await instance.addCommissionToPendingWithdrawals(0, {from: owner, gasPrice: GAS_PRICE});
         const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
         const newBalance = await instance.getBalance(owner);
 
@@ -277,7 +277,7 @@ contract('Initial bidding suite', async (accounts) => {
     it('should not allow to withdraw fee twice', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         let owner = accounts[0];
-        return instance.withdrawCommission(0, {from: owner}).should.be.rejected;
+        return instance.addCommissionToPendingWithdrawals(0, {from: owner}).should.be.rejected;
     });
 
     it('should not allow to secure not existing canvas', async () => {

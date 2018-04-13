@@ -10,12 +10,10 @@ contract CanvasMarket is BiddableCanvas {
 
     mapping(uint32 => SellOffer) canvasForSale;
     mapping(uint32 => BuyOffer) buyOffers;
-    uint public fees;
 
     event CanvasOfferedForSale(uint32 indexed canvasId, uint minPrice, address toAddress);
     event CanvasNoLongerForSale(uint32 indexed canvasId);
     event CanvasSold(uint32 indexed canvasId, uint amount, address from, address to);
-    event FeeWithdrawn(uint amount);
     event BuyOfferMade(uint32 indexed canvasId, address buyer, uint amount);
     event BuyOfferCancelled(uint32 indexed canvasId, address buyer, uint amount);
 
@@ -53,7 +51,7 @@ contract CanvasMarket is BiddableCanvas {
         uint toTransfer = msg.value - fee;
 
         addPendingWithdrawal(sellOffer.seller, toTransfer);
-        fees += fee;
+        addPendingWithdrawal(owner, fee);
 
         addressToCount[canvas.owner]--;
         addressToCount[msg.sender]++;
@@ -137,8 +135,8 @@ contract CanvasMarket is BiddableCanvas {
         addressToCount[offer.buyer]++;
 
         canvas.owner = offer.buyer;
-        fees += fee;
         addPendingWithdrawal(msg.sender, toTransfer);
+        addPendingWithdrawal(owner, fee);
 
         buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
         canvasForSale[_canvasId] = SellOffer(false, 0x0, 0, 0x0);
@@ -154,16 +152,6 @@ contract CanvasMarket is BiddableCanvas {
     function getCurrentSellOffer(uint32 _canvasId) external view returns (bool isForSale, address seller, uint minPrice, address onlySellTo) {
         SellOffer storage offer = canvasForSale[_canvasId];
         return (offer.isForSale, offer.seller, offer.minPrice, offer.onlySellTo);
-    }
-
-    function withdrawFees() external onlyOwner {
-        require(fees > 0);
-
-        uint toWithdraw = fees;
-        fees = 0;
-
-        owner.transfer(toWithdraw);
-        FeeWithdrawn(toWithdraw);
     }
 
     function _offerCanvasForSaleInternal(uint32 _canvasId, uint _minPrice, address _receiver) private stateOwned(_canvasId) {

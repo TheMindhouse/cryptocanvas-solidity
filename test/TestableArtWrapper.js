@@ -88,9 +88,9 @@ export class TestableArtWrapper {
         }
     };
 
-    withdrawReward = async (canvasId, options = {}) => await this.instance.withdrawReward(canvasId, options);
+    addRewardToPendingWithdrawals = async (canvasId, options = {}) => await this.instance.addRewardToPendingWithdrawals(canvasId, options);
 
-    withdrawCommission = async (canvasId, options = {}) => await this.instance.withdrawCommission(canvasId, options);
+    addCommissionToPendingWithdrawals = async (canvasId, options = {}) => await this.instance.addCommissionToPendingWithdrawals(canvasId, options);
 
     getCanvasInfo = async (canvasId) => {
         const result = await this.instance.getCanvasInfo(canvasId);

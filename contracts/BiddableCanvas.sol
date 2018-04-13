@@ -35,8 +35,8 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     uint public minimumBidAmount = 0.08 ether;
 
     event BidPosted(uint32 indexed canvasId, address bidder, uint amount, uint finishTime);
-    event RewardWithdrawn(uint32 indexed canvasId, address toAddress, uint amount);
-    event CommissionWithdrawn(uint32 indexed canvasId, uint amount);
+    event RewardAddedToWithdrawals(uint32 indexed canvasId, address toAddress, uint amount);
+    event CommissionAddedToWithdrawals(uint32 indexed canvasId, uint amount);
 
     modifier stateBidding(uint32 _canvasId) {
         require(getCanvasState(_canvasId) == STATE_INITIAL_BIDDING);
@@ -138,9 +138,9 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     /**
     * Withdraws reward for contributing in canvas. Calculating reward has to be triggered
     * and calculated per canvas. Because of that it is not enough to call function
-    * withdraw(). Caller has to call  withdrawReward() separately.
+    * withdraw(). Caller has to call  addRewardToPendingWithdrawals() separately.
     */
-    function withdrawReward(uint32 _canvasId) external stateOwned(_canvasId) {
+    function addRewardToPendingWithdrawals(uint32 _canvasId) external stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
 
         uint32 pixelCount;
@@ -153,9 +153,9 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         require(!isPaid);
 
         bid.isAddressPaid[msg.sender] = true;
-        msg.sender.transfer(reward);
+        addPendingWithdrawal(msg.sender, reward);
 
-        RewardWithdrawn(_canvasId, msg.sender, reward);
+        RewardAddedToWithdrawals(_canvasId, msg.sender, reward);
     }
 
     function calculateCommission(uint32 _canvasId) public view stateOwned(_canvasId) returns (uint commission, bool isPaid) {
@@ -163,7 +163,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         return (_calculateCommission(bid.amount), bid.isCommissionPaid);
     }
 
-    function withdrawCommission(uint32 _canvasId) external onlyOwner stateOwned(_canvasId) {
+    function addCommissionToPendingWithdrawals(uint32 _canvasId) external onlyOwner stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
         uint commission;
         bool isPaid;
@@ -173,9 +173,9 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         require(!isPaid);
 
         bid.isCommissionPaid = true;
-        owner.transfer(commission);
+        addPendingWithdrawal(owner, commission);
 
-        CommissionWithdrawn(_canvasId, commission);
+        CommissionAddedToWithdrawals(_canvasId, commission);
     }
 
     /**

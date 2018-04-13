@@ -13,7 +13,7 @@ contract Withdrawable {
     /**
     * Returns amount of wei that given address is able to withdraw.
     */
-    function toWithdraw(address _address) public view returns (uint) {
+    function getPendingWithdrawal(address _address) public view returns (uint) {
         return pendingWithdrawals[_address];
     }
 
@@ -34,7 +34,7 @@ contract Withdrawable {
     * Withdraws all pending withdrawals.
     */
     function withdraw() external {
-        uint amount = toWithdraw(msg.sender);
+        uint amount = getPendingWithdrawal(msg.sender);
         require(amount > 0);
 
         pendingWithdrawals[msg.sender] = 0;
