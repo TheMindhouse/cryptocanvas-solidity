@@ -52,7 +52,7 @@ contract CanvasMarket is BiddableCanvas {
         uint fee = _calculateCommission(msg.value);
         uint toTransfer = msg.value - fee;
 
-        sellOffer.seller.transfer(toTransfer);
+        addPendingWithdrawal(sellOffer.seller, toTransfer);
         fees += fee;
 
         addressToCount[canvas.owner]--;
@@ -69,7 +69,7 @@ contract CanvasMarket is BiddableCanvas {
             buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
             if (offer.amount > 0) {
                 //refund offer
-                offer.buyer.transfer(offer.amount);
+                addPendingWithdrawal(offer.buyer, offer.amount);
             }
         }
 
@@ -100,8 +100,8 @@ contract CanvasMarket is BiddableCanvas {
         require(msg.value > existing.amount);
 
         if (existing.amount > 0) {
-            //refund previous buy offer. 
-            existing.buyer.transfer(existing.amount);
+            //refund previous buy offer.
+            addPendingWithdrawal(existing.buyer, existing.amount);
         }
 
         buyOffers[_canvasId] = BuyOffer(true, msg.sender, msg.value);
@@ -115,7 +115,7 @@ contract CanvasMarket is BiddableCanvas {
         buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
         if (offer.amount > 0) {
             //refund offer
-            offer.buyer.transfer(offer.amount);
+            addPendingWithdrawal(offer.buyer, offer.amount);
         }
 
         BuyOfferCancelled(_canvasId, offer.buyer, offer.amount);
@@ -138,7 +138,7 @@ contract CanvasMarket is BiddableCanvas {
 
         canvas.owner = offer.buyer;
         fees += fee;
-        msg.sender.transfer(toTransfer);
+        addPendingWithdrawal(msg.sender, toTransfer);
 
         buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
         canvasForSale[_canvasId] = SellOffer(false, 0x0, 0, 0x0);

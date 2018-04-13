@@ -4,7 +4,7 @@ import "./CanvasFactory.sol";
 import "./Withdrawable.sol";
 
 /**
-* @dev This contract takes care of innitial bidding. 
+* @dev This contract takes care of initial bidding.
 */
 contract BiddableCanvas is CanvasFactory, Withdrawable {
 
