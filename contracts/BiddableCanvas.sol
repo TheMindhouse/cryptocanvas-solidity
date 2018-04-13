@@ -1,11 +1,12 @@
 pragma solidity 0.4.21;
 
 import "./CanvasFactory.sol";
+import "./Withdrawable.sol";
 
 /**
 * @dev This contract takes care of innitial bidding. 
 */
-contract BiddableCanvas is CanvasFactory {
+contract BiddableCanvas is CanvasFactory, Withdrawable {
 
     //@dev It means canvas is not finished yet, and bidding is not possible. 
     uint8 public constant STATE_NOT_FINISHED = 0;
@@ -47,6 +48,10 @@ contract BiddableCanvas is CanvasFactory {
         _;
     }
 
+    /**
+    * Places bid for canvas that is in the state STATE_INITIAL_BIDDING.
+    * If somebody is outbid his pending withdrawals will be to topped up.
+    */
     function makeBid(uint32 _canvasId) external payable stateBidding(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         Bid storage oldBid = bids[_canvasId];
@@ -59,7 +64,7 @@ contract BiddableCanvas is CanvasFactory {
 
         if (oldBid.bidder != 0x0 && oldBid.amount > 0) {
             //return old bidder his money
-            oldBid.bidder.transfer(oldBid.amount);
+            addPendingWithdrawal(oldBid.bidder, oldBid.amount);
         }
 
         uint finishTime = oldBid.finishTime;
@@ -130,6 +135,11 @@ contract BiddableCanvas is CanvasFactory {
         return (paintedPixels, _reward, bid.isAddressPaid[_address]);
     }
 
+    /**
+    * Withdraws reward for contributing in canvas. Calculating reward has to be triggered
+    * and calculated per canvas. Because of that it is not enough to call function
+    * withdraw(). Caller has to call  withdrawReward() separately.
+    */
     function withdrawReward(uint32 _canvasId) external stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
 

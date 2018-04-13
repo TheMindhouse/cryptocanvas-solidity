@@ -7,7 +7,7 @@ contract Withdrawable {
 
     mapping(address => uint) private pendingWithdrawals;
 
-    event Withdrawn(address receiver, uint amount);
+    event Withdrawal(address receiver, uint amount);
     event BalanceChanged(address _address, uint oldBalance, uint newBalance);
 
     /**
@@ -40,7 +40,7 @@ contract Withdrawable {
         pendingWithdrawals[msg.sender] = 0;
         msg.sender.transfer(amount);
 
-        Withdrawn(msg.sender, amount);
+        Withdrawal(msg.sender, amount);
         BalanceChanged(msg.sender, amount, 0);
     }
 
