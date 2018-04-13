@@ -21,7 +21,7 @@ contract Withdrawable {
     * Add pending withdrawal for an address.
     */
     function addPendingWithdrawal(address _address, uint _amount) internal {
-        require(amount > 0);
+        require(_amount > 0);
         require(_address != 0x0);
 
         uint oldBalance = pendingWithdrawals[_address];

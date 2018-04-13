@@ -140,7 +140,9 @@ export class TestableArtWrapper {
         }
     };
 
-    withdrawFees = async (options = {}) => await this.instance.withdrawFees(options);
+    getPendingWithdrawal = async (address) => await this.instance.getPendingWithdrawal(address);
+
+    withdraw = async (options = {}) => await this.instance.withdraw(options);
 
     //UTILITY
 
@@ -181,5 +183,7 @@ export class TestableArtWrapper {
     };
 
     getBalance = (address) => bigInt(this.instance.contract._eth.getBalance(address));
+
+    getBalanceOfContract = () => this.getBalance(this.instance.contract.address);
 
 }
