@@ -44,7 +44,7 @@ async function calculateRewards(instance, accounts) {
         const account = accounts[i];
 
         for (let j = 0; j < canvasCount; j++) {
-            const state = await instance.getCanvasState(0);
+            const state = await instance.getCanvasState(j);
 
             if (state === STATE_OWNED) {
                 const reward = await instance.calculateReward(j, account);
@@ -63,7 +63,7 @@ async function calculateCommissions(instance) {
     const canvasCount = await instance.canvasCount();
 
     for (let i = 0; i < canvasCount; i++) {
-        const state = await instance.getCanvasState(0);
+        const state = await instance.getCanvasState(i);
 
         if (state === STATE_OWNED) {
             const commission = await instance.calculateCommission(i);
