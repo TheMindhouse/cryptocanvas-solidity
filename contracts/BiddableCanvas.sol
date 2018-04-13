@@ -67,12 +67,12 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
             addPendingWithdrawal(oldBid.bidder, oldBid.amount);
         }
 
-        uint finishTime = oldBid.finishTime;
+        uint finishTime = canvas.initialBiddingFinishTime;
         if (finishTime == 0) {
-            finishTime = getTime() + BIDDING_DURATION;
+            canvas.initialBiddingFinishTime = getTime() + BIDDING_DURATION;
         }
 
-        bids[_canvasId] = Bid(msg.sender, msg.value, finishTime, false);
+        bids[_canvasId] = Bid(msg.sender, msg.value);
 
         if (canvas.owner != 0x0) {
             addressToCount[canvas.owner]--;
@@ -80,19 +80,25 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         canvas.owner = msg.sender;
         addressToCount[msg.sender]++;
 
-        BidPosted(_canvasId, msg.sender, msg.value, finishTime);
+        BidPosted(_canvasId, msg.sender, msg.value, canvas.initialBiddingFinishTime);
     }
 
     function getLastBidForCanvas(uint32 _canvasId) external view returns (uint32 canvasId, address bidder, uint amount, uint finishTime) {
         Bid storage bid = bids[_canvasId];
-        return (_canvasId, bid.bidder, bid.amount, bid.finishTime);
+        Canvas storage canvas = _getCanvas(_canvasId);
+
+        return (_canvasId, bid.bidder, bid.amount, canvas.initialBiddingFinishTime);
     }
 
     function getCanvasState(uint32 _canvasId) public view returns (uint8) {
         Canvas storage canvas = _getCanvas(_canvasId);
 
         if (_isCanvasFinished(canvas)) {
-            uint finishTime = bids[_canvasId].finishTime;
+            if (canvas.secured) {
+                return STATE_OWNED;
+            }
+
+            uint finishTime = canvas.initialBiddingFinishTime;
             if (finishTime == 0 || finishTime > getTime()) {
                 return STATE_INITIAL_BIDDING;
 
@@ -128,11 +134,13 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
 
     function calculateReward(uint32 _canvasId, address _address) public view stateOwned(_canvasId) returns (uint32 pixelsCount, uint reward, bool isPaid) {
         Bid storage bid = bids[_canvasId];
+        Canvas storage canvas = _getCanvas(_canvasId);
+
         uint32 paintedPixels = getPaintedPixelsCountByAddress(_address, _canvasId);
         uint pricePerPixel = _calculatePricePerPixel(bid.amount);
         uint _reward = paintedPixels * pricePerPixel;
 
-        return (paintedPixels, _reward, bid.isAddressPaid[_address]);
+        return (paintedPixels, _reward, canvas.isAddressPaid[_address]);
     }
 
     /**
@@ -142,6 +150,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     */
     function addRewardToPendingWithdrawals(uint32 _canvasId) external stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
+        Canvas storage canvas = _getCanvas(_canvasId);
 
         uint32 pixelCount;
         uint reward;
@@ -152,7 +161,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         require(reward > 0);
         require(!isPaid);
 
-        bid.isAddressPaid[msg.sender] = true;
+        canvas.isAddressPaid[msg.sender] = true;
         addPendingWithdrawal(msg.sender, reward);
 
         RewardAddedToWithdrawals(_canvasId, msg.sender, reward);
@@ -160,11 +169,15 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
 
     function calculateCommission(uint32 _canvasId) public view stateOwned(_canvasId) returns (uint commission, bool isPaid) {
         Bid storage bid = bids[_canvasId];
-        return (_calculateCommission(bid.amount), bid.isCommissionPaid);
+        Canvas storage canvas = _getCanvas(_canvasId);
+
+        return (_calculateCommission(bid.amount), canvas.isCommissionPaid);
     }
 
     function addCommissionToPendingWithdrawals(uint32 _canvasId) external onlyOwner stateOwned(_canvasId) {
         Bid storage bid = bids[_canvasId];
+        Canvas storage canvas = _getCanvas(_canvasId);
+
         uint commission;
         bool isPaid;
         (commission, isPaid) = calculateCommission(_canvasId);
@@ -172,7 +185,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         require(commission > 0);
         require(!isPaid);
 
-        bid.isCommissionPaid = true;
+        canvas.isCommissionPaid = true;
         addPendingWithdrawal(owner, commission);
 
         CommissionAddedToWithdrawals(_canvasId, commission);
@@ -232,19 +245,6 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     struct Bid {
         address bidder;
         uint amount;
-
-        /**
-        * Before that time someone else still can over-bid canvas. After that time it means that 
-        * canvas has been sold, and it's up to it's owner to sell it or not. 
-        */
-        uint finishTime;
-
-        bool isCommissionPaid;
-
-        /**
-        * @dev holds info if an address has been paid for each painted pixel. 
-        */
-        mapping(address => bool) isAddressPaid;
     }
 
 }

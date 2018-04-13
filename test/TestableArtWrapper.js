@@ -1,4 +1,4 @@
-const bigInt = require('big-integer');
+const BigNumber = require('bignumber.js');
 
 export class TestableArtWrapper {
 
@@ -144,6 +144,11 @@ export class TestableArtWrapper {
 
     withdraw = async (options = {}) => await this.instance.withdraw(options);
 
+    /**
+     * This has to fail! Critical.
+     */
+    addPendingWithdrawal = async (address, amount) => await this.instance.addPendingWithdrawal(address, amount);
+
     //UTILITY
 
     /**
@@ -182,7 +187,7 @@ export class TestableArtWrapper {
         await this.mockTime(currentTime + toForward);
     };
 
-    getBalance = (address) => bigInt(this.instance.contract._eth.getBalance(address));
+    getBalance = (address) => new BigNumber(this.instance.contract._eth.getBalance(address));
 
     getBalanceOfContract = () => this.getBalance(this.instance.contract.address);
 

@@ -7,9 +7,9 @@ import "./TimeAware.sol";
 */
 contract CanvasFactory is TimeAware {
 
-    uint8 public constant WIDTH = 64;
-    uint8 public constant HEIGHT = 64;
-    uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
+    uint8 public constant WIDTH = 5;
+    uint8 public constant HEIGHT = 5;
+    uint32 public constant PIXEL_COUNT = 25; //WIDTH * HEIGHT doesn't work for some reason
 
     uint32 public constant MAX_CANVAS_COUNT = 1000;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
@@ -40,7 +40,7 @@ contract CanvasFactory is TimeAware {
         require(canvases.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
-        uint id = canvases.push(Canvas(0, 0, false)) - 1;
+        uint id = canvases.push(Canvas(0, 0, 0, false, false)) - 1;
 
         CanvasCreated(id);
         activeCanvasCount++;
@@ -144,6 +144,19 @@ contract CanvasFactory is TimeAware {
         uint32 paintedPixelsCount;
 
         mapping(address => uint32) addressToCount;
+
+
+        /**
+        * Initial bidding finish time.
+        */
+        uint initialBiddingFinishTime;
+
+        bool isCommissionPaid;
+
+        /**
+        * @dev if address has been paid a reward for drawing
+        */
+        mapping(address => bool) isAddressPaid;
 
         /**
         * Protection against time manipulation.

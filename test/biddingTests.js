@@ -1,6 +1,7 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
+import {checkBalanceConsistency} from "./utility";
 
-const bigInt = require('big-integer');
+const BigNumber = require('bignumber.js');
 
 const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
@@ -13,18 +14,25 @@ const STATE_NOT_FINISHED = 0;
 const STATE_INITIAL_BIDDING = 1;
 const STATE_OWNED = 2;
 const COMMISSION = 0.039;
-const MINIMUM_BID_AMOUNT_WEI = bigInt(80000000000000000); //0.08 ether
+const MINIMUM_BID_AMOUNT_WEI = new BigNumber(80000000000000000); //0.08 ether
 const BIDDING_DURATION_HOURS = 48;
 
 const MAX_ALLOWED_GAS_PER_PIXEL = 100000;
 
-const GAS_PRICE = bigInt("2000000000");
-const ACCOUNT_PIXELS = [400, 350, 450, 500, 350, 546, 500, 450, 550];
-const BIDS = [bigInt("70000000000000000"), bigInt("90000000000000000"), bigInt("80000000000000000"), bigInt("100000000000000000")];
+const GAS_PRICE = new BigNumber("2000000000");
+// const ACCOUNT_PIXELS = [400, 350, 450, 500, 350, 546, 500, 450, 550];
+const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
+
+const BIDS = [new BigNumber("70000000000000000"), new BigNumber("90000000000000000"), new BigNumber("80000000000000000"), new BigNumber("100000000000000000")];
 
 let finishTime = 0;
 
 contract('Initial bidding suite', async (accounts) => {
+
+    afterEach(async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        await checkBalanceConsistency(instance, accounts);
+    });
 
     it("should fail to return state of not existing canvas", async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
@@ -66,13 +74,11 @@ contract('Initial bidding suite', async (accounts) => {
         let result = await instance.setPixel(0, 0, 10, {from: accounts[0]});
         let gas = parseInt(result.receipt.gasUsed);
 
-        // console.log(`Price to set a pixel: ${gas}`);
         gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
 
         result = await instance.setPixel(0, 0, 20, {from: accounts[1]});
         gas = parseInt(result.receipt.gasUsed);
 
-        // console.log(`Price to change a pixel: ${gas}`);
         gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
     });
 
@@ -118,8 +124,12 @@ contract('Initial bidding suite', async (accounts) => {
         const amount = BIDS[1];
         const balance = instance.getBalance(accounts[0]);
 
-        const response = await instance.makeBid(0, {from: accounts[0], value: amount, gasPrice: GAS_PRICE});
-        const gasUsed = GAS_PRICE.multiply(response.receipt.gasUsed);
+        const response = await instance.makeBid(0, {
+            from: accounts[0],
+            value: amount.toNumber(),
+            gasPrice: GAS_PRICE.toNumber()
+        });
+        const gasUsed = GAS_PRICE.multipliedBy(response.receipt.gasUsed);
         const newBalance = instance.getBalance(accounts[0]);
 
         balance.minus(amount.plus(gasUsed)).eq(newBalance).should.be.true;
@@ -138,23 +148,27 @@ contract('Initial bidding suite', async (accounts) => {
 
     it('should disallow do bid with value smaller than previous bid', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.makeBid(0, {value: BIDS[2]}).should.be.rejected;
+        return instance.makeBid(0, {value: BIDS[2].toNumber()}).should.be.rejected;
     });
 
     it('should return money when outbid', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const amount = BIDS[3];
 
-        const balance0 = instance.getBalance(accounts[0]);
+        const pending0 = await instance.getPendingWithdrawal(accounts[0]);
         const balance1 = instance.getBalance(accounts[1]);
         const oldBid = await instance.getLastBidForCanvas(0);
 
-        const response = await instance.makeBid(0, {from: accounts[1], value: BIDS[3], gasPrice: GAS_PRICE});
-        const gasUsed = GAS_PRICE.multiply(response.receipt.gasUsed);
-        const newBalance0 = instance.getBalance(accounts[0]);
+        const response = await instance.makeBid(0, {
+            from: accounts[1],
+            value: BIDS[3].toNumber(),
+            gasPrice: GAS_PRICE.toNumber()
+        });
+        const gasUsed = GAS_PRICE.multipliedBy(response.receipt.gasUsed);
+        const newPending0 = await instance.getPendingWithdrawal(accounts[0]);
         const newBalance1 = instance.getBalance(accounts[1]);
 
-        balance0.plus(oldBid.amount).eq(newBalance0).should.be.true;
+        pending0.plus(oldBid.amount).eq(newPending0).should.be.true;
         balance1.minus(amount.plus(gasUsed)).eq(newBalance1).should.be.true;
 
         const bid = await instance.getLastBidForCanvas(0);
@@ -224,26 +238,23 @@ contract('Initial bidding suite', async (accounts) => {
     it('should withdraw reward', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
-        let totalGas = bigInt(0);
-
         for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
             const account = accounts[i];
             let reward = await instance.calculateReward(0, account);
-            const balance = await instance.getBalance(account);
 
-            const result = await instance.addRewardToPendingWithdrawals(0, {from: account, gasPrice: GAS_PRICE});
-            const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
-            const newBalance = await instance.getBalance(account);
+            const pending = await instance.getPendingWithdrawal(account);
 
-            totalGas = totalGas.add(result.receipt.gasUsed);
+            await instance.addRewardToPendingWithdrawals(0, {
+                from: account,
+                gasPrice: GAS_PRICE.toNumber()
+            });
+            const newPending = await instance.getPendingWithdrawal(account);
 
-            balance.plus(reward.reward).minus(gas).eq(newBalance).should.be.true;
+            pending.plus(reward.reward).eq(newPending).should.be.true;
 
             reward = await instance.calculateReward(0, account);
             reward.isPaid.should.be.true;
         }
-
-        // console.log(`Average gas cost to withdraw: ${totalGas.divide(ACCOUNT_PIXELS.length)}`)
     });
 
     it('should not allow to withdraw reward twice', async () => {
@@ -261,14 +272,17 @@ contract('Initial bidding suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
         let owner = accounts[0];
-        const balance = await instance.getBalance(owner);
+        const pending = await instance.getPendingWithdrawal(owner);
         let commission = await instance.calculateCommission(0);
 
-        const result = await instance.addCommissionToPendingWithdrawals(0, {from: owner, gasPrice: GAS_PRICE});
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
-        const newBalance = await instance.getBalance(owner);
+        await instance.addCommissionToPendingWithdrawals(0, {
+            from: owner,
+            gasPrice: GAS_PRICE.toNumber()
+        });
 
-        balance.plus(commission.commission).minus(gas).eq(newBalance).should.be.true;
+        const newPending = await instance.getPendingWithdrawal(owner);
+
+        pending.plus(commission.commission).eq(newPending).should.be.true;
 
         commission = await instance.calculateCommission(0);
         commission.isPaid.should.be.true;
@@ -308,13 +322,13 @@ contract('Initial bidding suite', async (accounts) => {
 
     it('should disallow to bid when canvas is secured (and went back in time)', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const fakeBid = BIDS[3].multiply(2);
+        const fakeBid = BIDS[3].multipliedBy(2);
         const hacker = accounts[5];
 
-        //emulate messing with 'now' -> going back in time
+        // emulate messing with 'now' -> going back in time
         await instance.mockTime(0);
 
-        return instance.makeBid(0, {from: hacker, value: fakeBid}).should.be.rejected;
+        return instance.makeBid(0, {from: hacker, value: fakeBid.toNumber()}).should.be.rejected;
     });
 
     it('should not allow to change minimum bid amount if not called by the owner of the contract', async () => {
