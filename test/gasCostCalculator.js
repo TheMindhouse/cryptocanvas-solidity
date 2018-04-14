@@ -102,10 +102,6 @@ contract('Contract gas calculator', async (accounts) => {
         await instance.pushTimeForward(48);
         const state = await instance.getCanvasState(0);
         state.should.be.eq(STATE_OWNED);
-
-        let transaction = await instance.secure(0, {from: owner});
-        let cost = transaction.receipt.gasUsed;
-        gasCosts.push(['secure()', cost]);
     });
 
     it('calculate withdraw reward cost', async () => {
@@ -152,7 +148,10 @@ contract('Contract gas calculator', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await instance.offerCanvasForSale(0, 10, {from: owner});
 
-        let transaction = await instance.acceptSellOffer(0, {from: accounts[0], value: 10});
+        console.log(await instance.getCurrentSellOffer(0));
+        console.log(await instance.getCanvasInfo(0));
+
+        let transaction = await instance.acceptSellOffer(0, {from: accounts[0], value: 100});
         let cost = transaction.receipt.gasUsed;
         gasCosts.push(['acceptSellOffer()', cost]);
         owner = accounts[0];
@@ -160,7 +159,7 @@ contract('Contract gas calculator', async (accounts) => {
         await instance.offerCanvasForSale(0, 10, {from: owner});
         await instance.makeBuyOffer(0, {from: accounts[1], value: 10});
 
-        transaction = await instance.acceptSellOffer(0, {from: accounts[1], value: 10});
+        transaction = await instance.acceptSellOffer(0, {from: accounts[1], value: 100});
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['acceptSellOffer() [when having buy offer posted]', cost]);
         owner = accounts[1];
@@ -197,12 +196,12 @@ contract('Contract gas calculator', async (accounts) => {
         owner = buyer;
     });
 
-    it('calculate withdraw fees cost', async () => {
+    it('calculate withdraw cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
-        let transaction = await instance.withdrawFees({from: accounts[0]});
+        let transaction = await instance.withdraw({from: accounts[1]});
         let cost = transaction.receipt.gasUsed;
-        gasCosts.push(['withdrawFees()', cost]);
+        gasCosts.push(['withdraw()', cost]);
     });
 
 
