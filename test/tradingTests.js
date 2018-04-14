@@ -97,8 +97,8 @@ contract('Canvas trading suite', async (accounts) => {
      */
     it('should fill the canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        // await instance.fillWholeCanvas(0); //we don't really care here who is painting
-        await instance.fillCanvas(0, 0, 25);
+        await instance.fillWholeCanvas(0); //we don't really care here who is painting
+        // await instance.fillCanvas(0, 0, 25);
 
         const state = await instance.getCanvasState(0);
         state.should.be.eq(STATE_INITIAL_BIDDING);

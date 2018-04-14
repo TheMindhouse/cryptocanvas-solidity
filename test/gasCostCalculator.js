@@ -148,9 +148,6 @@ contract('Contract gas calculator', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await instance.offerCanvasForSale(0, 10, {from: owner});
 
-        console.log(await instance.getCurrentSellOffer(0));
-        console.log(await instance.getCanvasInfo(0));
-
         let transaction = await instance.acceptSellOffer(0, {from: accounts[0], value: 100});
         let cost = transaction.receipt.gasUsed;
         gasCosts.push(['acceptSellOffer()', cost]);
