@@ -8,16 +8,6 @@ import "./Withdrawable.sol";
 */
 contract BiddableCanvas is CanvasFactory, Withdrawable {
 
-    //@dev It means canvas is not finished yet, and bidding is not possible. 
-    uint8 public constant STATE_NOT_FINISHED = 0;
-
-    //@dev  there is ongoing bidding and anybody can bid. If there canvas can have 
-    //      assigned owner, but it can change if someone will over-bid him. 
-    uint8 public constant STATE_INITIAL_BIDDING = 1;
-
-    //@dev canvas has been sold, and has the owner
-    uint8 public constant STATE_OWNED = 2;
-
     /**
     * As it's hard to operate on floating numbers, each fee will be calculated like this:
     * PRICE * COMMISSION / COMMISSION_DIVIDER. It's impossible to keep float number here.
@@ -45,6 +35,23 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
 
     modifier stateOwned(uint32 _canvasId) {
         require(getCanvasState(_canvasId) == STATE_OWNED);
+        _;
+    }
+
+    /**
+    * Ensures that canvas's saved state is STATE_OWNED.
+    *
+    * Because initial bidding is based on current time, we had to find a way to
+    * trigger saving new canvas state. Every transaction (not a call) that
+    * requires state owned should use it modifier as a last one.
+    *
+    * Thank's to that, we can make sure, that canvas state gets updated.
+    */
+    modifier forceOwned(uint32 _canvasId) {
+        Canvas storage canvas = _getCanvas(_canvasId);
+        if (canvas.state != STATE_OWNED) {
+            canvas.state = STATE_OWNED;
+        }
         _;
     }
 
@@ -92,22 +99,22 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
 
     function getCanvasState(uint32 _canvasId) public view returns (uint8) {
         Canvas storage canvas = _getCanvas(_canvasId);
+        if (canvas.state != STATE_INITIAL_BIDDING) {
+            //if state is set to owned, or not finished
+            //it means it doesn't depend on current time -
+            //we don't have to double check
+            return canvas.state;
+        }
 
-        if (_isCanvasFinished(canvas)) {
-            if (canvas.secured) {
-                return STATE_OWNED;
-            }
-
-            uint finishTime = canvas.initialBiddingFinishTime;
-            if (finishTime == 0 || finishTime > getTime()) {
-                return STATE_INITIAL_BIDDING;
-
-            } else {
-                return STATE_OWNED;
-            }
+        //state initial bidding - as that state depends on
+        //current time, we have to double check if initial bidding
+        //didn't finish yet
+        uint finishTime = canvas.initialBiddingFinishTime;
+        if (finishTime == 0 || finishTime > getTime()) {
+            return STATE_INITIAL_BIDDING;
 
         } else {
-            return STATE_NOT_FINISHED;
+            return STATE_OWNED;
         }
     }
 
@@ -132,7 +139,12 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         return _slice(result, 0, currentIndex);
     }
 
-    function calculateReward(uint32 _canvasId, address _address) public view stateOwned(_canvasId) returns (uint32 pixelsCount, uint reward, bool isPaid) {
+    function calculateReward(uint32 _canvasId, address _address)
+    public
+    view
+    stateOwned(_canvasId)
+    returns (uint32 pixelsCount, uint reward, bool isPaid) {
+
         Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
 
@@ -148,7 +160,11 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     * and calculated per canvas. Because of that it is not enough to call function
     * withdraw(). Caller has to call  addRewardToPendingWithdrawals() separately.
     */
-    function addRewardToPendingWithdrawals(uint32 _canvasId) external stateOwned(_canvasId) {
+    function addRewardToPendingWithdrawals(uint32 _canvasId)
+    external
+    stateOwned(_canvasId)
+    forceOwned(_canvasId) {
+
         Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
 
@@ -167,14 +183,24 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         RewardAddedToWithdrawals(_canvasId, msg.sender, reward);
     }
 
-    function calculateCommission(uint32 _canvasId) public view stateOwned(_canvasId) returns (uint commission, bool isPaid) {
+    function calculateCommission(uint32 _canvasId)
+    public
+    view
+    stateOwned(_canvasId)
+    returns (uint commission, bool isPaid) {
+
         Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
 
         return (_calculateCommission(bid.amount), canvas.isCommissionPaid);
     }
 
-    function addCommissionToPendingWithdrawals(uint32 _canvasId) external onlyOwner stateOwned(_canvasId) {
+    function addCommissionToPendingWithdrawals(uint32 _canvasId)
+    external
+    onlyOwner
+    stateOwned(_canvasId)
+    forceOwned(_canvasId) {
+
         Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
 
@@ -189,20 +215,6 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         addPendingWithdrawal(owner, commission);
 
         CommissionAddedToWithdrawals(_canvasId, commission);
-    }
-
-    /**
-    * Secures canvas. Can be called just once, by the owner of the canvas.
-    * When secured, canvas will be time-manipulation proof. It means that
-    * nobody will be able to "go back in time" and pretend that initial
-    * bidding is still on.
-    */
-    function secure(uint32 _canvasId) external stateOwned(_canvasId) {
-        Canvas storage canvas = _getCanvas(_canvasId);
-        require(canvas.owner == msg.sender);
-        require(!canvas.secured);
-
-        canvas.secured = true;
     }
 
     function balanceOf(address _owner) external view returns (uint) {

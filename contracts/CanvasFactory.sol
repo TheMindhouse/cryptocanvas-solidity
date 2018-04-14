@@ -7,9 +7,19 @@ import "./TimeAware.sol";
 */
 contract CanvasFactory is TimeAware {
 
-    uint8 public constant WIDTH = 64;
-    uint8 public constant HEIGHT = 64;
-    uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
+    //@dev It means canvas is not finished yet, and bidding is not possible.
+    uint8 public constant STATE_NOT_FINISHED = 0;
+
+    //@dev  there is ongoing bidding and anybody can bid. If there canvas can have
+    //      assigned owner, but it can change if someone will over-bid him.
+    uint8 public constant STATE_INITIAL_BIDDING = 1;
+
+    //@dev canvas has been sold, and has the owner
+    uint8 public constant STATE_OWNED = 2;
+
+    uint8 public constant WIDTH = 5;
+    uint8 public constant HEIGHT = 5;
+    uint32 public constant PIXEL_COUNT = 25; //WIDTH * HEIGHT doesn't work for some reason
 
     uint32 public constant MAX_CANVAS_COUNT = 1000;
     uint8 public constant MAX_ACTIVE_CANVAS = 10;
@@ -40,7 +50,7 @@ contract CanvasFactory is TimeAware {
         require(canvases.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
-        uint id = canvases.push(Canvas(0, 0, 0, false, false)) - 1;
+        uint id = canvases.push(Canvas(STATE_NOT_FINISHED, 0, 0, false)) - 1;
 
         CanvasCreated(id);
         activeCanvasCount++;
@@ -67,6 +77,7 @@ contract CanvasFactory is TimeAware {
 
         if (_isCanvasFinished(canvas)) {
             activeCanvasCount--;
+            canvas.state = STATE_INITIAL_BIDDING;
             CanvasFinished(_canvasId);
         }
 
@@ -132,6 +143,8 @@ contract CanvasFactory is TimeAware {
         */
         mapping(uint32 => Pixel) pixels;
 
+        uint8 state;
+
         /**
         * Owner of canvas. Canvas doesn't have an owner until initial bidding ends. 
         */
@@ -151,16 +164,14 @@ contract CanvasFactory is TimeAware {
         */
         uint initialBiddingFinishTime;
 
+        /**
+        * If commission from initial bidding has been paid.
+        */
         bool isCommissionPaid;
 
         /**
-        * @dev if address has been paid a reward for drawing
+        * @dev if address has been paid a reward for drawing.
         */
         mapping(address => bool) isAddressPaid;
-
-        /**
-        * Protection against time manipulation.
-        */
-        bool secured;
     }
 }
