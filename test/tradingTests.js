@@ -4,19 +4,19 @@ const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
 chai.use(require('chai-arrays')).should();
 
-const bigInt = require('big-integer');
+const BigNumber = require('bignumber.js');
 
 const TestableArt = artifacts.require("TestableArt");
 
 const STATE_INITIAL_BIDDING = 1;
 const STATE_OWNED = 2;
-const GAS_PRICE = bigInt("2000000000");
+const GAS_PRICE = new BigNumber("2000000000");
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-const eth = bigInt("100000000000000000");
+const eth = new BigNumber("100000000000000000");
 
 const calculateFee = (amount) => {
-    return bigInt(amount).multiply(39).divide(1000); //3.9%
+    return new BigNumber(amount).multipliedBy(39).dividedBy(1000); //3.9%
 };
 
 /**
@@ -24,10 +24,14 @@ const calculateFee = (amount) => {
  * at the end of the test suite.
  * @type {number}
  */
-let expectedFees = bigInt();
+let expectedFees = new BigNumber(0);
 let owner = '0x0';
 
 contract('Canvas trading suite', async (accounts) => {
+
+    beforeEach(async () => {
+        //todo balance check!!
+    });
 
     /**
      * Creates canvas.
@@ -91,7 +95,8 @@ contract('Canvas trading suite', async (accounts) => {
      */
     it('should fill the canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        await instance.fillWholeCanvas(0); //we don't really care here who is painting
+        // await instance.fillWholeCanvas(0); //we don't really care here who is painting
+        await instance.fillCanvas(0, 0, 25);
 
         const state = await instance.getCanvasState(0);
         state.should.be.eq(STATE_INITIAL_BIDDING);
@@ -153,7 +158,7 @@ contract('Canvas trading suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
         owner = accounts[1];
-        await instance.makeBid(0, {from: owner, value: eth});
+        await instance.makeBid(0, {from: owner, value: eth.toNumber()});
         await instance.pushTimeForward(48);
 
         const state = await instance.getCanvasState(0);
@@ -232,30 +237,34 @@ contract('Canvas trading suite', async (accounts) => {
     });
 
     /**
-     * Account 0 buys canvas.
+     * Account 2 buys canvas.
      */
     it('should buy a canvas offered for sale', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const amount = eth.multiply(2); //2 eth
+        const amount = eth.multipliedBy(2); //2 eth
         const fee = calculateFee(amount);
-        const buyer = accounts[0];
+        const buyer = accounts[2];
 
         const buyerBalance = await instance.getBalance(buyer);
-        const sellerBalance = await instance.getBalance(owner);
+        const sellerPending = await instance.getPendingWithdrawal(owner);
 
-        const result = await instance.acceptSellOffer(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
+        const result = await instance.acceptSellOffer(0, {
+            from: buyer,
+            value: amount.toNumber(),
+            gasPrice: GAS_PRICE.toNumber()
+        });
 
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
+        const gas = GAS_PRICE.multipliedBy(result.receipt.gasUsed);
         const info = await instance.getCanvasInfo(0);
         const sellOffer = await instance.getCurrentSellOffer(0);
         const newBuyerBalance = await instance.getBalance(buyer);
-        const newSellerBalance = await instance.getBalance(owner);
+        const newSellerPending = await instance.getPendingWithdrawal(owner);
 
         info.owner.should.be.eq(buyer);
         sellOffer.isForSale.should.be.false;
 
         buyerBalance.minus(gas).minus(amount).eq(newBuyerBalance).should.be.true;
-        sellerBalance.plus(amount).minus(fee).eq(newSellerBalance).should.be.true;
+        sellerPending.plus(amount).minus(fee).eq(newSellerPending).should.be.true;
 
         (await instance.balanceOf(owner)).should.be.eq(0);
         (await instance.balanceOf(buyer)).should.be.eq(1);
@@ -270,7 +279,7 @@ contract('Canvas trading suite', async (accounts) => {
     });
 
     /**
-     * Account 0 offers canvas for sale only for account 5.
+     * Account 2 offers canvas for sale only for account 5.
      */
     it('should offer canvas for sale for specified address', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
@@ -294,26 +303,30 @@ contract('Canvas trading suite', async (accounts) => {
      */
     it('should buy canvas when specific address is specified', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const amount = eth.multiply(1); //2 eth
+        const amount = eth.multipliedBy(1); //1 eth
         const fee = calculateFee(amount);
         const buyer = accounts[5];
 
         const buyerBalance = await instance.getBalance(buyer);
-        const sellerBalance = await instance.getBalance(owner);
+        const sellerPending = await instance.getPendingWithdrawal(owner);
 
-        const result = await instance.acceptSellOffer(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
+        const result = await instance.acceptSellOffer(0, {
+            from: buyer,
+            value: amount.toNumber(),
+            gasPrice: GAS_PRICE.toNumber()
+        });
 
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
+        const gas = GAS_PRICE.multipliedBy(result.receipt.gasUsed);
         const info = await instance.getCanvasInfo(0);
         const sellOffer = await instance.getCurrentSellOffer(0);
         const newBuyerBalance = await instance.getBalance(buyer);
-        const newSellerBalance = await instance.getBalance(owner);
+        const newSellerPending = await instance.getPendingWithdrawal(owner);
 
         info.owner.should.be.eq(buyer);
         sellOffer.isForSale.should.be.false;
 
         buyerBalance.minus(gas).minus(amount).eq(newBuyerBalance).should.be.true;
-        sellerBalance.plus(amount).minus(fee).eq(newSellerBalance).should.be.true;
+        sellerPending.plus(amount).minus(fee).eq(newSellerPending).should.be.true;
 
         (await instance.balanceOf(owner)).should.be.eq(0);
         (await instance.balanceOf(buyer)).should.be.eq(1);
@@ -327,33 +340,32 @@ contract('Canvas trading suite', async (accounts) => {
      */
     it('should return buy offer when buying a canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const amount = eth.multiply(3);
-        const buyOffer = eth.multiply(2);
+        const amount = eth.multipliedBy(3);
+        const buyOffer = eth.multipliedBy(2);
         const fee = calculateFee(amount);
         const buyer = accounts[7];
 
         //Enter buy offer and sell offer.
-        await instance.makeBuyOffer(0, {from: buyer, value: buyOffer});
+        await instance.makeBuyOffer(0, {from: buyer, value: buyOffer.toNumber()});
         await instance.offerCanvasForSale(0, 10, {from: owner});
 
         //Balance after posting offers
-        const buyerBalance = await instance.getBalance(buyer);
-        const sellerBalance = await instance.getBalance(owner);
+        const buyerPending = await instance.getPendingWithdrawal(buyer);
+        const sellerPending = await instance.getPendingWithdrawal(owner);
 
-        const result = await instance.acceptSellOffer(0, {from: buyer, value: amount, gasPrice: GAS_PRICE});
+        await instance.acceptSellOffer(0, {from: buyer, value: amount.toNumber()});
 
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
         const info = await instance.getCanvasInfo(0);
         const sellOffer = await instance.getCurrentSellOffer(0);
-        const newBuyerBalance = await instance.getBalance(buyer);
-        const newSellerBalance = await instance.getBalance(owner);
+        const newBuyerPending = await instance.getPendingWithdrawal(buyer);
+        const newSellerPending = await instance.getPendingWithdrawal(owner);
 
         info.owner.should.be.eq(buyer);
         sellOffer.isForSale.should.be.false;
 
         //Buyer should have buy offer refunded
-        buyerBalance.minus(gas).minus(amount).plus(buyOffer).eq(newBuyerBalance).should.be.true;
-        sellerBalance.plus(amount).minus(fee).eq(newSellerBalance).should.be.true;
+        buyerPending.plus(buyOffer).eq(newBuyerPending).should.be.true;
+        sellerPending.plus(amount).minus(fee).eq(newSellerPending).should.be.true;
 
         (await instance.balanceOf(owner)).should.be.eq(0);
         (await instance.balanceOf(buyer)).should.be.eq(1);
@@ -380,8 +392,12 @@ contract('Canvas trading suite', async (accounts) => {
         const amount = eth;
         const buyerBalance = await instance.getBalance(buyer);
 
-        const result = await instance.makeBuyOffer(0, {from: buyer, value: eth, gasPrice: GAS_PRICE});
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
+        const result = await instance.makeBuyOffer(0, {
+            from: buyer,
+            value: eth.toNumber(),
+            gasPrice: GAS_PRICE.toNumber()
+        });
+        const gas = GAS_PRICE.multipliedBy(result.receipt.gasUsed);
 
         const newBuyerBalance = await instance.getBalance(buyer);
         const buyOffer = await instance.getCurrentBuyOffer(0);
@@ -406,17 +422,15 @@ contract('Canvas trading suite', async (accounts) => {
 
         const buyer = accounts[2];
         const amount = eth;
-        const buyerBalance = await instance.getBalance(buyer);
+        const buyerPending = await instance.getPendingWithdrawal(buyer);
 
-        const result = await instance.cancelBuyOffer(0, {from: buyer, gasPrice: GAS_PRICE});
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
-
-        const newBuyerBalance = await instance.getBalance(buyer);
+        await instance.cancelBuyOffer(0, {from: buyer});
+        const newBuyerPending = await instance.getPendingWithdrawal(buyer);
         const buyOffer = await instance.getCurrentBuyOffer(0);
 
         buyOffer.hasOffer.should.be.false;
 
-        buyerBalance.minus(gas).plus(amount).eq(newBuyerBalance).should.be.true;
+        buyerPending.plus(amount).eq(newBuyerPending).should.be.true;
     });
 
     /**
@@ -427,25 +441,25 @@ contract('Canvas trading suite', async (accounts) => {
         const buyer1 = accounts[2];
         const buyer2 = accounts[9];
         const amount1 = eth;
-        const amount2 = eth.multiply(2);
+        const amount2 = eth.multipliedBy(2);
 
-        await instance.makeBuyOffer(0, {from: buyer1, value: amount1});
-        const buyer1Balance = await instance.getBalance(buyer1);
+        await instance.makeBuyOffer(0, {from: buyer1, value: amount1.toNumber()});
+        const buyer1Pending = await instance.getPendingWithdrawal(buyer1);
 
-        await instance.makeBuyOffer(0, {from: buyer2, value: amount2});
-        const newBuyer1Balance = await instance.getBalance(buyer1);
+        await instance.makeBuyOffer(0, {from: buyer2, value: amount2.toNumber()});
+        const newBuyer1Pending = await instance.getPendingWithdrawal(buyer1);
         const buyOffer = await instance.getCurrentBuyOffer(0);
 
         buyOffer.hasOffer.should.be.true;
         buyOffer.buyer.should.be.eq(buyer2);
         amount2.eq(buyOffer.amount).should.be.true;
 
-        buyer1Balance.plus(amount1).eq(newBuyer1Balance).should.be.true;
+        buyer1Pending.plus(amount1).eq(newBuyer1Pending).should.be.true;
     });
 
     it('should not allow to make buy offer when din\'t send bigger value', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.makeBuyOffer(0, {from: accounts[2], value: eth.multiply(2)}).should.be.rejected;
+        return instance.makeBuyOffer(0, {from: accounts[2], value: eth.multipliedBy(2)}).should.be.rejected;
     });
 
     it('should not allow to accept buy offer if not called by the owner of the canvas', async () => {
@@ -456,7 +470,7 @@ contract('Canvas trading suite', async (accounts) => {
 
     it('should not allow to accept buy offer if minimum price is higher that buy offer', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.acceptBuyOffer(0, eth.multiply(10), {from: owner}).should.be.rejected;
+        return instance.acceptBuyOffer(0, eth.multipliedBy(10), {from: owner}).should.be.rejected;
     });
 
     /**
@@ -467,16 +481,15 @@ contract('Canvas trading suite', async (accounts) => {
         //let's do sell offer, to make sure it will be cancelled
         await instance.offerCanvasForSale(0, 10, {from: owner});
         const buyOffer = await instance.getCurrentBuyOffer(0);
-        const balance = await instance.getBalance(owner);
+        const ownerPending = await instance.getPendingWithdrawal(owner);
 
         const seller = owner;
         const fee = calculateFee(buyOffer.amount);
 
-        const result = await instance.acceptBuyOffer(0, parseInt(eth.multiply(2)), {from: seller, gasPrice: GAS_PRICE});
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
-        const newBalance = await instance.getBalance(seller);
+        await instance.acceptBuyOffer(0, eth.multipliedBy(2).toNumber(), {from: seller});
+        const newOwnerPending = await instance.getPendingWithdrawal(seller);
 
-        balance.plus(buyOffer.amount).minus(gas).minus(fee).eq(newBalance).should.be.true;
+        ownerPending.plus(buyOffer.amount).minus(fee).eq(newOwnerPending).should.be.true;
 
         //check ownership and balanceOf
         const info = await instance.getCanvasInfo(0);
@@ -500,39 +513,43 @@ contract('Canvas trading suite', async (accounts) => {
         sellOffer.isForSale.should.be.false;
     });
 
-    it('should not allow to withdraw fees when not called by the owner of the contract', async () => {
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.withdrawFees({from: accounts[9]}).should.be.rejected;
-    });
-
-    it('should withdraw fees', async () => {
+    it('should have fees on contract owner\'s pending withdrawals', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const contractOwner = accounts[0];
 
-        const fees = await instance.fees();
-        expectedFees.eq(fees).should.be.true;
-
-        const balance = await instance.getBalance(contractOwner);
-        const result = await instance.withdrawFees({from: contractOwner, gasPrice: GAS_PRICE});
-        const gas = GAS_PRICE.multiply(result.receipt.gasUsed);
-
-        const newBalance = await instance.getBalance(contractOwner);
-
-        balance.plus(fees).minus(gas).eq(newBalance).should.be.true;
+        const pendingWithdrawal = await instance.getPendingWithdrawal(contractOwner);
+        expectedFees.eq(pendingWithdrawal).should.be.true;
     });
 
-    it('should clear fees after withdrawal', async () => {
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const fees = await instance.fees();
+    //WITHDRAWABLE
 
-        fees.should.be.eq(0);
+    it('should withdraw pending withdrawals', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        for (let i = 0; i < accounts.length; i++) {
+            const account = accounts[i];
+            const pending = await instance.getPendingWithdrawal(account);
+            const balance = await instance.getBalance(account);
+            let gas = new BigNumber(0);
+
+            if (pending.eq(0)) {
+                await instance.withdraw({from: account}).should.be.rejected;
+
+            } else {
+                const result = await instance.withdraw({from: account, gasPrice: GAS_PRICE.toNumber()});
+                gas = GAS_PRICE.multipliedBy(result.receipt.gasUsed);
+
+                const newPending = await instance.getPendingWithdrawal(account);
+                const newBalance = await instance.getBalance(account);
+
+                newPending.eq(0).should.be.true;
+                balance.plus(pending).minus(gas).eq(newBalance).should.be.true;
+            }
+        }
     });
 
-    it('should not allow to withdraw fees when there is nothing to withdraw', async () => {
+    it('should not allow to add pending withdrawal', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const contractOwner = accounts[0];
-
-        return instance.withdrawFees({from: contractOwner}).should.be.rejected;
+        return instance.addPendingWithdrawal(accounts[1], 100).should.be.rejected;
     });
 
 });

@@ -20,8 +20,6 @@ export class TestableArtWrapper {
 
     createCanvas = async () => await this.instance.createCanvas();
 
-    fees = async () => parseInt(await this.instance.fees());
-
     activeCanvasCount = async () => {
         const activeCount = await this.instance.activeCanvasCount();
         return parseInt(activeCount);
@@ -69,8 +67,6 @@ export class TestableArtWrapper {
 
     balanceOf = async (address) => parseInt(await this.instance.balanceOf(address));
 
-    secure = async (canvasId, options = {}) => await this.instance.secure(canvasId, options);
-
     calculateCommission = async (canvasId) => {
         const result = await this.instance.calculateCommission(canvasId);
         return {
@@ -97,8 +93,8 @@ export class TestableArtWrapper {
         return {
             id: parseInt(result[0]),
             paintedPixels: parseInt(result[1]),
-            isSecured: result[2],
-            canvasState: parseInt(result[3]),
+            canvasState: parseInt(result[2]),
+            initialBiddingFinishTime: parseInt(result[3]),
             owner: result[4]
         };
     };

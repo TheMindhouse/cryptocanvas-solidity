@@ -20,8 +20,8 @@ const BIDDING_DURATION_HOURS = 48;
 const MAX_ALLOWED_GAS_PER_PIXEL = 100000;
 
 const GAS_PRICE = new BigNumber("2000000000");
-const ACCOUNT_PIXELS = [400, 350, 450, 500, 350, 546, 500, 450, 550];
-// const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
+// const ACCOUNT_PIXELS = [400, 350, 450, 500, 350, 546, 500, 450, 550];
+const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
 
 const BIDS = [new BigNumber("70000000000000000"), new BigNumber("90000000000000000"), new BigNumber("80000000000000000"), new BigNumber("100000000000000000")];
 
@@ -51,11 +51,6 @@ contract('Initial bidding suite', async (accounts) => {
     it('should disallow to bid when canvas is not finished', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         return instance.makeBid(0, {from: accounts[0], amount: MINIMUM_BID_AMOUNT_WEI}).should.be.rejected;
-    });
-
-    it('should disallow to secure not finished canvas', async () => {
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.secure(0).should.be.rejected;
     });
 
     it('should not allow to withdraw reward on not finished canvas', async () => {
@@ -268,7 +263,7 @@ contract('Initial bidding suite', async (accounts) => {
         return instance.addCommissionToPendingWithdrawals(0, {from: accounts[1]}).should.be.rejected;
     });
 
-    it('should withdraw fee', async () => {
+    it('should withdraw commission', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
         let owner = accounts[0];
@@ -294,33 +289,9 @@ contract('Initial bidding suite', async (accounts) => {
         return instance.addCommissionToPendingWithdrawals(0, {from: owner}).should.be.rejected;
     });
 
-    it('should not allow to secure not existing canvas', async () => {
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        return instance.secure(10).should.be.rejected;
-    });
-
-    it('should not allow to secure canvas when not called by owner of the canvas', async () => {
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const notOwner = accounts[3];
-
-        return instance.secure(0, {from: notOwner}).should.be.rejected;
-    });
-
-    it('should secure canvas', async () => {
-        //after securing canvas, it should be time manipulation proof!
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const owner = accounts[1];
-
-        let info = await instance.getCanvasInfo(0);
-        info.isSecured.should.be.false;
-
-        await instance.secure(0, {from: owner});
-
-        info = await instance.getCanvasInfo(0);
-        info.isSecured.should.be.true;
-    });
-
-    it('should disallow to bid when canvas is secured (and went back in time)', async () => {
+    it('should disallow to make bid when time is hacked (go back in time)', async () => {
+        //canvas is being 'secured' first time somebody interacts with it
+        //after initial bidding is finished.
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const fakeBid = BIDS[3].multipliedBy(2);
         const hacker = accounts[5];

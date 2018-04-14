@@ -63,8 +63,6 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         Canvas storage canvas = _getCanvas(_canvasId);
         Bid storage oldBid = bids[_canvasId];
 
-        require(!canvas.secured);
-
         if (msg.value < minimumBidAmount || msg.value <= oldBid.amount) {
             revert();
         }
