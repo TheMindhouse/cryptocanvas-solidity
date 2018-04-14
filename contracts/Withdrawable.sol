@@ -7,8 +7,8 @@ contract Withdrawable {
 
     mapping(address => uint) private pendingWithdrawals;
 
-    event Withdrawal(address receiver, uint amount);
-    event BalanceChanged(address _address, uint oldBalance, uint newBalance);
+    event Withdrawal(address indexed receiver, uint amount);
+    event BalanceChanged(address indexed _address, uint oldBalance, uint newBalance);
 
     /**
     * Returns amount of wei that given address is able to withdraw.
