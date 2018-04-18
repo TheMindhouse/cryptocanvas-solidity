@@ -13,7 +13,7 @@ contract CanvasMarket is BiddableCanvas {
 
     event CanvasOfferedForSale(uint32 indexed canvasId, uint minPrice, address toAddress);
     event CanvasNoLongerForSale(uint32 indexed canvasId);
-    event CanvasSold(uint32 indexed canvasId, uint amount, address from, address to);
+    event CanvasSold(uint32 indexed canvasId, uint amount, address indexed from, address indexed to);
     event BuyOfferMade(uint32 indexed canvasId, address buyer, uint amount);
     event BuyOfferCancelled(uint32 indexed canvasId, address buyer, uint amount);
 

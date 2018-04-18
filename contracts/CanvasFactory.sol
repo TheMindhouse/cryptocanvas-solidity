@@ -27,7 +27,7 @@ contract CanvasFactory is TimeAware {
     Canvas[] canvases;
     uint32 public activeCanvasCount = 0;
 
-    event PixelPainted(uint32 indexed canvasId, uint32 index, uint8 color);
+    event PixelPainted(uint32 indexed canvasId, uint32 index, uint8 color, address indexed painter);
     event CanvasFinished(uint32 indexed canvasId);
     event CanvasCreated(uint indexed canvasId);
 
@@ -81,7 +81,7 @@ contract CanvasFactory is TimeAware {
             emit CanvasFinished(_canvasId);
         }
 
-        emit PixelPainted(_canvasId, _index, _color);
+        emit PixelPainted(_canvasId, _index, _color, msg.sender);
     }
 
     function getCanvasBitmap(uint32 _canvasId) external view returns (uint8[]) {
