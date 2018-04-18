@@ -162,8 +162,6 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     external
     stateOwned(_canvasId)
     forceOwned(_canvasId) {
-
-        Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
 
         uint32 pixelCount;
@@ -199,7 +197,6 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     stateOwned(_canvasId)
     forceOwned(_canvasId) {
 
-        Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
 
         uint commission;
