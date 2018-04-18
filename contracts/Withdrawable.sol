@@ -26,7 +26,7 @@ contract Withdrawable {
         uint oldBalance = pendingWithdrawals[_address];
         pendingWithdrawals[_address] += _amount;
 
-        BalanceChanged(_address, oldBalance, oldBalance + _amount);
+        emit BalanceChanged(_address, oldBalance, oldBalance + _amount);
     }
 
     /**
@@ -39,8 +39,8 @@ contract Withdrawable {
         pendingWithdrawals[msg.sender] = 0;
         msg.sender.transfer(amount);
 
-        Withdrawal(msg.sender, amount);
-        BalanceChanged(msg.sender, amount, 0);
+        emit Withdrawal(msg.sender, amount);
+        emit BalanceChanged(msg.sender, amount, 0);
     }
 
 }

@@ -52,7 +52,7 @@ contract CanvasFactory is TimeAware {
 
         uint id = canvases.push(Canvas(STATE_NOT_FINISHED, 0x0, 0, 0, false)) - 1;
 
-        CanvasCreated(id);
+        emit CanvasCreated(id);
         activeCanvasCount++;
 
         return id;
@@ -78,10 +78,10 @@ contract CanvasFactory is TimeAware {
         if (_isCanvasFinished(canvas)) {
             activeCanvasCount--;
             canvas.state = STATE_INITIAL_BIDDING;
-            CanvasFinished(_canvasId);
+            emit CanvasFinished(_canvasId);
         }
 
-        PixelPainted(_canvasId, _index, _color);
+        emit PixelPainted(_canvasId, _index, _color);
     }
 
     function getCanvasBitmap(uint32 _canvasId) external view returns (uint8[]) {

@@ -85,7 +85,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         canvas.owner = msg.sender;
         addressToCount[msg.sender]++;
 
-        BidPosted(_canvasId, msg.sender, msg.value, canvas.initialBiddingFinishTime);
+        emit BidPosted(_canvasId, msg.sender, msg.value, canvas.initialBiddingFinishTime);
     }
 
     function getLastBidForCanvas(uint32 _canvasId) external view returns (uint32 canvasId, address bidder, uint amount, uint finishTime) {
@@ -176,7 +176,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         canvas.isAddressPaid[msg.sender] = true;
         addPendingWithdrawal(msg.sender, reward);
 
-        RewardAddedToWithdrawals(_canvasId, msg.sender, reward);
+        emit RewardAddedToWithdrawals(_canvasId, msg.sender, reward);
     }
 
     function calculateCommission(uint32 _canvasId)
@@ -209,7 +209,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         canvas.isCommissionPaid = true;
         addPendingWithdrawal(owner, commission);
 
-        CommissionAddedToWithdrawals(_canvasId, commission);
+        emit CommissionAddedToWithdrawals(_canvasId, commission);
     }
 
     function balanceOf(address _owner) external view returns (uint) {
