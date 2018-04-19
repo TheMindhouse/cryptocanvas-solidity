@@ -99,6 +99,8 @@ export class TestableArtWrapper {
         };
     };
 
+    getCanvasByOwner = async (owner) => await this.instance.getCanvasByOwner(owner);
+
     setMinimumBidAmount = async (amount, options = {}) => await this.instance.setMinimumBidAmount(amount, options);
 
     //TRADING

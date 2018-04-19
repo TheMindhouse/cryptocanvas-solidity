@@ -232,7 +232,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     * @dev  Slices array from start (inclusive) to end (exclusive).
     *       Doesn't modify input array.
     */
-    function _slice(uint32[] memory _array, uint _start, uint _end) private pure returns (uint32[]) {
+    function _slice(uint32[] memory _array, uint _start, uint _end) internal pure returns (uint32[]) {
         require(_start <= _end);
 
         if (_start == 0 && _end == _array.length) {

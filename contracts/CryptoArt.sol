@@ -20,4 +20,21 @@ contract CryptoArt is CanvasMarket {
         canvas.initialBiddingFinishTime, canvas.owner);
     }
 
+    function getCanvasByOwner(address _owner) external view returns (uint32[]) {
+        uint32[] memory result = new uint32[](canvases.length);
+        uint currentIndex = 0;
+
+        for (uint32 i = 0; i < canvases.length; i++) {
+            if (getCanvasState(i) == STATE_OWNED) {
+                Canvas storage canvas = _getCanvas(i);
+                if (canvas.owner == _owner) {
+                    result[currentIndex] = i;
+                    currentIndex++;
+                }
+            }
+        }
+
+        return _slice(result, 0, currentIndex);
+    }
+
 } 

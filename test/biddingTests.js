@@ -180,6 +180,13 @@ contract('Initial bidding suite', async (accounts) => {
         balanceOf1.should.be.eq(1);
     });
 
+    it('should not return canvas by owner if in initial bidding', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const canvases = await instance.getCanvasByOwner(accounts[1]);
+
+        canvases.length.should.be.eq(0);
+    });
+
     it('should finish initial bidding', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await instance.pushTimeForward(BIDDING_DURATION_HOURS);
@@ -187,6 +194,14 @@ contract('Initial bidding suite', async (accounts) => {
         const state = await instance.getCanvasState(0);
         state.should.be.eq(STATE_OWNED);
     });
+
+    it('should return canvases by owner', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const canvases = await instance.getCanvasByOwner(accounts[1]);
+
+        canvases.length.should.be.eq(1);
+    });
+
 
     it('should calculate correct commission', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
