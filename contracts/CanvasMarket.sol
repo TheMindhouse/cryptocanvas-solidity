@@ -11,8 +11,8 @@ contract CanvasMarket is BiddableCanvas {
     mapping(uint32 => SellOffer) canvasForSale;
     mapping(uint32 => BuyOffer) buyOffers;
 
-    event CanvasOfferedForSale(uint32 indexed canvasId, uint minPrice, address toAddress);
-    event SellOfferCancelled(uint32 indexed canvasId);
+    event CanvasOfferedForSale(uint32 indexed canvasId, uint minPrice, address indexed from, address indexed to);
+    event SellOfferCancelled(uint32 indexed canvasId, uint minPrice, address indexed from, address indexed to);
     event CanvasSold(uint32 indexed canvasId, uint amount, address indexed from, address indexed to);
     event BuyOfferMade(uint32 indexed canvasId, address buyer, uint amount);
     event BuyOfferCancelled(uint32 indexed canvasId, address buyer, uint amount);
@@ -31,8 +31,8 @@ contract CanvasMarket is BiddableCanvas {
     }
 
     /**
-    * @notice   Buy artwork. Artwork has to be put on sale. If buyer has bid before for 
-    *           for that artwork bid will be canceled. 
+    * @notice   Buy artwork. Artwork has to be put on sale. If buyer has bid before for
+    *           that artwork, that bid will be canceled.
     */
     function acceptSellOffer(uint32 _canvasId)
     external
@@ -172,7 +172,7 @@ contract CanvasMarket is BiddableCanvas {
         require(_receiver != canvas.owner);
 
         canvasForSale[_canvasId] = SellOffer(true, msg.sender, _minPrice, _receiver);
-        emit CanvasOfferedForSale(_canvasId, _minPrice, _receiver);
+        emit CanvasOfferedForSale(_canvasId, _minPrice, msg.sender, _receiver);
     }
 
     function cancelSellOfferInternal(uint32 _canvasId, bool emitEvent)
@@ -181,12 +181,15 @@ contract CanvasMarket is BiddableCanvas {
     forceOwned(_canvasId) {
 
         Canvas storage canvas = _getCanvas(_canvasId);
+        SellOffer memory oldOffer = canvasForSale[_canvasId];
+
         require(canvas.owner == msg.sender);
+        require(oldOffer.isForSale); //don't allow to cancel if there is no offer
 
         canvasForSale[_canvasId] = SellOffer(false, msg.sender, 0, 0x0);
 
         if (emitEvent) {
-            emit SellOfferCancelled(_canvasId);
+            emit SellOfferCancelled(_canvasId, oldOffer.minPrice, oldOffer.seller, oldOffer.onlySellTo);
         }
     }
 
