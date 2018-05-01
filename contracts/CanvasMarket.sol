@@ -41,7 +41,7 @@ contract CanvasMarket is BiddableCanvas {
     forceOwned(_canvasId) {
 
         Canvas storage canvas = _getCanvas(_canvasId);
-        SellOffer storage sellOffer = canvasForSale[_canvasId];
+        SellOffer memory sellOffer = canvasForSale[_canvasId];
 
         require(msg.sender != canvas.owner);
         //don't sell for the owner
@@ -124,7 +124,7 @@ contract CanvasMarket is BiddableCanvas {
         Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 
-        BuyOffer storage offer = buyOffers[_canvasId];
+        BuyOffer memory offer = buyOffers[_canvasId];
         require(offer.amount > 0);
         require(offer.buyer != 0x0);
         require(offer.amount >= _minPrice);
