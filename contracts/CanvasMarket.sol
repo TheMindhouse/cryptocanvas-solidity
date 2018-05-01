@@ -12,7 +12,7 @@ contract CanvasMarket is BiddableCanvas {
     mapping(uint32 => BuyOffer) buyOffers;
 
     event CanvasOfferedForSale(uint32 indexed canvasId, uint minPrice, address toAddress);
-    event CanvasNoLongerForSale(uint32 indexed canvasId);
+    event SellOfferCancelled(uint32 indexed canvasId);
     event CanvasSold(uint32 indexed canvasId, uint amount, address indexed from, address indexed to);
     event BuyOfferMade(uint32 indexed canvasId, address buyer, uint amount);
     event BuyOfferCancelled(uint32 indexed canvasId, address buyer, uint amount);
@@ -62,7 +62,7 @@ contract CanvasMarket is BiddableCanvas {
         addressToCount[msg.sender]++;
 
         canvas.owner = msg.sender;
-        cancelSellOffer(_canvasId);
+        cancelSellOfferInternal(_canvasId, false);
 
         emit CanvasSold(_canvasId, msg.value, sellOffer.seller, msg.sender);
 
@@ -86,12 +86,8 @@ contract CanvasMarket is BiddableCanvas {
         _offerCanvasForSaleInternal(_canvasId, _minPrice, _receiver);
     }
 
-    function cancelSellOffer(uint32 _canvasId) public stateOwned(_canvasId) forceOwned(_canvasId) {
-        Canvas storage canvas = _getCanvas(_canvasId);
-        require(canvas.owner == msg.sender);
-
-        canvasForSale[_canvasId] = SellOffer(false, msg.sender, 0, 0x0);
-        emit CanvasNoLongerForSale(_canvasId);
+    function cancelSellOffer(uint32 _canvasId) external {
+        cancelSellOfferInternal(_canvasId, true);
     }
 
     function makeBuyOffer(uint32 _canvasId) external payable stateOwned(_canvasId) forceOwned(_canvasId) {
@@ -177,6 +173,21 @@ contract CanvasMarket is BiddableCanvas {
 
         canvasForSale[_canvasId] = SellOffer(true, msg.sender, _minPrice, _receiver);
         emit CanvasOfferedForSale(_canvasId, _minPrice, _receiver);
+    }
+
+    function cancelSellOfferInternal(uint32 _canvasId, bool emitEvent)
+    private
+    stateOwned(_canvasId)
+    forceOwned(_canvasId) {
+
+        Canvas storage canvas = _getCanvas(_canvasId);
+        require(canvas.owner == msg.sender);
+
+        canvasForSale[_canvasId] = SellOffer(false, msg.sender, 0, 0x0);
+
+        if (emitEvent) {
+            emit SellOfferCancelled(_canvasId);
+        }
     }
 
 }
