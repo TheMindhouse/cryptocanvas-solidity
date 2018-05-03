@@ -46,6 +46,10 @@ contract CanvasFactory is TimeAware {
         _;
     }
 
+    /**
+    * @notice   Creates new canvas. There can't be more canvases then MAX_CANVAS_COUNT.
+    *           There can't be more unfinished canvases than MAX_ACTIVE_CANVAS.
+    */
     function createCanvas() external returns (uint canvasId) {
         require(canvases.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
@@ -58,6 +62,9 @@ contract CanvasFactory is TimeAware {
         return id;
     }
 
+    /**
+    * @notice   Sets pixel. Given canvas can't be yet finished.
+    */
     function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external notFinished(_canvasId) validPixelIndex(_index) {
         require(_color > 0);
 
@@ -84,6 +91,9 @@ contract CanvasFactory is TimeAware {
         emit PixelPainted(_canvasId, _index, _color, msg.sender);
     }
 
+    /**
+    * @notice   Returns full bitmap for given canvas.
+    */
     function getCanvasBitmap(uint32 _canvasId) external view returns (uint8[]) {
         Canvas storage canvas = _getCanvas(_canvasId);
         uint8[] memory result = new uint8[](PIXEL_COUNT);
@@ -95,6 +105,9 @@ contract CanvasFactory is TimeAware {
         return result;
     }
 
+    /**
+    * @notice   Returns how many pixels has been already set.
+    */
     function getCanvasPaintedPixelsCount(uint32 _canvasId) public view returns (uint32) {
         return _getCanvas(_canvasId).paintedPixelsCount;
     }
@@ -110,14 +123,23 @@ contract CanvasFactory is TimeAware {
         return canvases.length;
     }
 
+    /**
+    * @notice   Returns true if the canvas has been already finished.
+    */
     function isCanvasFinished(uint32 _canvasId) public view returns (bool) {
         return _isCanvasFinished(_getCanvas(_canvasId));
     }
 
+    /**
+    * @notice   Returns the author of given pixel.
+    */
     function getPixelAuthor(uint32 _canvasId, uint32 _pixelIndex) public view validPixelIndex(_pixelIndex) returns (address) {
         return _getCanvas(_canvasId).pixels[_pixelIndex].painter;
     }
 
+    /**
+    * @notice   Returns number of pixels set by given address.
+    */
     function getPaintedPixelsCountByAddress(address _address, uint32 _canvasId) public view returns (uint32) {
         Canvas storage canvas = _getCanvas(_canvasId);
         return canvas.addressToCount[_address];

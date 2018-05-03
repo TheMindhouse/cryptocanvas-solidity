@@ -11,10 +11,16 @@ contract TestableArt is CryptoArt {
 
     uint public mockTime;
 
+    /**
+    * @dev Overrides default behaviour. Allows to mock time.
+    */
     function getTime() public view returns (uint) {
         return mockTime;
     }
 
+    /**
+    * @dev Sets current time.
+    */
     function mockTime(uint _time) external {
         mockTime = _time;
     }

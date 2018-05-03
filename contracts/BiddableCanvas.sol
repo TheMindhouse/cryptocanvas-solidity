@@ -88,6 +88,10 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         emit BidPosted(_canvasId, msg.sender, msg.value, canvas.initialBiddingFinishTime);
     }
 
+    /**
+    * @notice   Returns last bid for canvas. If the initial bidding has been
+    *           already finished that will be winning offer.
+    */
     function getLastBidForCanvas(uint32 _canvasId) external view returns (uint32 canvasId, address bidder, uint amount, uint finishTime) {
         Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
@@ -95,6 +99,9 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         return (_canvasId, bid.bidder, bid.amount, canvas.initialBiddingFinishTime);
     }
 
+    /**
+    * @notice   Returns current canvas state.
+    */
     function getCanvasState(uint32 _canvasId) public view returns (uint8) {
         Canvas storage canvas = _getCanvas(_canvasId);
         if (canvas.state != STATE_INITIAL_BIDDING) {
@@ -106,7 +113,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
 
         //state initial bidding - as that state depends on
         //current time, we have to double check if initial bidding
-        //didn't finish yet
+        //hasn't finish yet
         uint finishTime = canvas.initialBiddingFinishTime;
         if (finishTime == 0 || finishTime > getTime()) {
             return STATE_INITIAL_BIDDING;
@@ -116,6 +123,9 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         }
     }
 
+    /**
+    * @notice   Returns all canvas' id for a given state.
+    */
     function getCanvasByState(uint8 _state) external view returns (uint32[]) {
         uint size;
         if (_state == STATE_NOT_FINISHED) {
@@ -137,6 +147,12 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         return _slice(result, 0, currentIndex);
     }
 
+    /**
+    * @notice   Returns reward for painting pixels in wei. That reward is proportional
+    *           to number of set pixels. For example let's assume that the address has painted
+    *           2048 pixels, which is 50% of all pixels. He will be rewarded
+    *           with 50% of winning bid minus fee.
+    */
     function calculateReward(uint32 _canvasId, address _address)
     public
     view
@@ -179,6 +195,9 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         emit RewardAddedToWithdrawals(_canvasId, msg.sender, reward);
     }
 
+    /**
+    * @notice   Calculates commission that has been charged for selling the canvas.
+    */
     function calculateCommission(uint32 _canvasId)
     public
     view
@@ -191,6 +210,10 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         return (_calculateCommission(bid.amount), canvas.isCommissionPaid);
     }
 
+    /**
+    * @notice   Only for the owner of the contract. Adds commission to the owner's
+    *           pending withdrawals.
+    */
     function addCommissionToPendingWithdrawals(uint32 _canvasId)
     external
     onlyOwner
@@ -212,10 +235,16 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         emit CommissionAddedToWithdrawals(_canvasId, commission);
     }
 
+    /**
+    * @notice   Returns number of canvases owned by the given address.
+    */
     function balanceOf(address _owner) external view returns (uint) {
         return addressToCount[_owner];
     }
 
+    /**
+    * @notice   Only for the owner of the contract. Sets minimum bid amount.
+    */
     function setMinimumBidAmount(uint _amount) external onlyOwner {
         minimumBidAmount = _amount;
     }

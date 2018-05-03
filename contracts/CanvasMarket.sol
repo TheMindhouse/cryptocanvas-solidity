@@ -66,7 +66,7 @@ contract CanvasMarket is BiddableCanvas {
 
         emit CanvasSold(_canvasId, msg.value, sellOffer.seller, msg.sender);
 
-        //If the buyer have placed buy offer, refound it 
+        //If the buyer have placed buy offer, refund it
         BuyOffer memory offer = buyOffers[_canvasId];
         if (offer.buyer == msg.sender) {
             buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
@@ -78,18 +78,37 @@ contract CanvasMarket is BiddableCanvas {
 
     }
 
+    /**
+    * @notice   Offer canvas for sale for a minimal price.
+    *           Anybody can buy it for an amount grater or equal to min price.
+    */
     function offerCanvasForSale(uint32 _canvasId, uint _minPrice) external {
         _offerCanvasForSaleInternal(_canvasId, _minPrice, 0x0);
     }
 
+    /**
+    * @notice   Offer canvas for sale to a given address. Only that address
+    *           is allowed to buy canvas for an amount grater or equal
+    *           to minimal price.
+    */
     function offerCanvasForSaleToAddress(uint32 _canvasId, uint _minPrice, address _receiver) external {
         _offerCanvasForSaleInternal(_canvasId, _minPrice, _receiver);
     }
 
+    /**
+    * @notice   Cancels previously made sell offer. Caller has to be an owner
+    *           of the canvas. Function will fail if there is no sell offer
+    *           for the canvas.
+    */
     function cancelSellOffer(uint32 _canvasId) external {
         cancelSellOfferInternal(_canvasId, true);
     }
 
+    /**
+    * @notice   Places buy offer for the canvas. It cannot be called by the owner of the canvas.
+    *           New offer has to be bigger than existing offer. Returns ethers to the previous
+    *           bidder, if any.
+    */
     function makeBuyOffer(uint32 _canvasId) external payable stateOwned(_canvasId) forceOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         BuyOffer storage existing = buyOffers[_canvasId];
@@ -107,6 +126,10 @@ contract CanvasMarket is BiddableCanvas {
         emit BuyOfferMade(_canvasId, msg.sender, msg.value);
     }
 
+    /**
+    * @notice   Cancels previously made buy offer. Caller has to be an author
+    *           of the offer.
+    */
     function cancelBuyOffer(uint32 _canvasId) external stateOwned(_canvasId) forceOwned(_canvasId) {
         BuyOffer memory offer = buyOffers[_canvasId];
         require(offer.buyer == msg.sender);
@@ -120,11 +143,17 @@ contract CanvasMarket is BiddableCanvas {
         emit BuyOfferCancelled(_canvasId, offer.buyer, offer.amount);
     }
 
+    /**
+    * @notice   Accepts buy offer for the canvas. Caller has to be the owner
+    *           of the canvas. You can specify minimal price, which is the
+    *           protection against accidental calls.
+    */
     function acceptBuyOffer(uint32 _canvasId, uint _minPrice) external stateOwned(_canvasId) forceOwned(_canvasId) {
         Canvas storage canvas = _getCanvas(_canvasId);
         require(canvas.owner == msg.sender);
 
         BuyOffer memory offer = buyOffers[_canvasId];
+        require(offer.hasOffer);
         require(offer.amount > 0);
         require(offer.buyer != 0x0);
         require(offer.amount >= _minPrice);
@@ -145,6 +174,9 @@ contract CanvasMarket is BiddableCanvas {
         emit CanvasSold(_canvasId, offer.amount, msg.sender, offer.buyer);
     }
 
+    /**
+    * @notice   Returns current buy offer for the canvas.
+    */
     function getCurrentBuyOffer(uint32 _canvasId)
     external
     view
@@ -153,6 +185,9 @@ contract CanvasMarket is BiddableCanvas {
         return (offer.hasOffer, offer.buyer, offer.amount);
     }
 
+    /**
+    * @notice   Returns current sell offer for the canvas.
+    */
     function getCurrentSellOffer(uint32 _canvasId)
     external
     view
@@ -184,7 +219,8 @@ contract CanvasMarket is BiddableCanvas {
         SellOffer memory oldOffer = canvasForSale[_canvasId];
 
         require(canvas.owner == msg.sender);
-        require(oldOffer.isForSale); //don't allow to cancel if there is no offer
+        require(oldOffer.isForSale);
+        //don't allow to cancel if there is no offer
 
         canvasForSale[_canvasId] = SellOffer(false, msg.sender, 0, 0x0);
 
