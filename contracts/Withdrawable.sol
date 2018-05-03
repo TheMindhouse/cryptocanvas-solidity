@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity 0.4.23;
 
 /**
  * @dev Contract that holds pending withdrawals. Responsible for withdrawals.
