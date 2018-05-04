@@ -14,8 +14,8 @@ contract CanvasMarket is BiddableCanvas {
     event CanvasOfferedForSale(uint32 indexed canvasId, uint minPrice, address indexed from, address indexed to);
     event SellOfferCancelled(uint32 indexed canvasId, uint minPrice, address indexed from, address indexed to);
     event CanvasSold(uint32 indexed canvasId, uint amount, address indexed from, address indexed to);
-    event BuyOfferMade(uint32 indexed canvasId, address buyer, uint amount);
-    event BuyOfferCancelled(uint32 indexed canvasId, address buyer, uint amount);
+    event BuyOfferMade(uint32 indexed canvasId, address indexed buyer, uint amount);
+    event BuyOfferCancelled(uint32 indexed canvasId, address indexed buyer, uint amount);
 
     struct SellOffer {
         bool isForSale;
