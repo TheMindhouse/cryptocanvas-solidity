@@ -103,6 +103,11 @@ export class TestableArtWrapper {
 
     setMinimumBidAmount = async (amount, options = {}) => await this.instance.setMinimumBidAmount(amount, options);
 
+    /**
+     * @returns {Promise<Array<String>>}
+     */
+    getPixelsOwners = async (canvasId) => await this.instance.getPixelsOwners(canvasId);
+
     //TRADING
 
     acceptSellOffer = async (canvasId, options = {}) => await this.instance.acceptSellOffer(canvasId, options);

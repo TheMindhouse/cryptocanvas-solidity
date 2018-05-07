@@ -5,6 +5,7 @@ chai.use(require('chai-as-promised')).should();
 chai.use(require('chai-arrays')).should();
 
 const TestableArt = artifacts.require("TestableArt");
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 contract('Simple canvas creation', async (accounts) => {
 
@@ -36,6 +37,15 @@ contract('Simple canvas creation', async (accounts) => {
 
         activeCount.should.be.equal(2);
         count.should.be.equal(2);
+    });
+
+    it('should all authors be address 0x0', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const authors = await instance.getPixelsOwners(1);
+
+        authors.forEach(value => {
+            value.should.be.eq(ZERO_ADDRESS);
+        });
     });
 
     it('shouldn\'t have created canvases finished', async () => {
@@ -91,7 +101,7 @@ contract('Canvas creation limit', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const active = await instance.getCanvasByState(0);
 
-        active.should.be.equalTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        active.should.be.equalTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     });
 
     it('should decrement activeCount after filling canvas', async () => {
@@ -104,6 +114,15 @@ contract('Canvas creation limit', async (accounts) => {
 
         activeCount.should.be.eq(count - 1);
         isFinished.should.be.true;
+    });
+
+    it('should all authors be account 0', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const authors = await instance.getPixelsOwners(1);
+
+        authors.forEach(value => {
+            value.should.be.eq(accounts[0]);
+        })
     });
 
     it('shouldn\'t have canvas 1 active', async () => {
