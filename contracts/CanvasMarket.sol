@@ -65,7 +65,7 @@ contract CanvasMarket is BiddableCanvas {
         cancelSellOfferInternal(_canvasId, false);
 
         emit CanvasSold(_canvasId, msg.value, sellOffer.seller, msg.sender);
-        emit CommissionAddedToWithdrawals(_canvasId, fee, "accept_sell_offer");
+        emit CommissionAddedToWithdrawals(_canvasId, fee, ACTION_SELL_OFFER_ACCEPTED);
 
         //If the buyer have placed buy offer, refund it
         BuyOffer memory offer = buyOffers[_canvasId];
@@ -173,7 +173,7 @@ contract CanvasMarket is BiddableCanvas {
         canvasForSale[_canvasId] = SellOffer(false, 0x0, 0, 0x0);
 
         emit CanvasSold(_canvasId, offer.amount, msg.sender, offer.buyer);
-        emit CommissionAddedToWithdrawals(_canvasId, fee, "accept_buy_offer");
+        emit CommissionAddedToWithdrawals(_canvasId, fee, ACTION_BUY_OFFER_ACCEPTED);
     }
 
     /**

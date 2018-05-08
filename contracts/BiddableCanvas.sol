@@ -17,6 +17,10 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     uint public constant COMMISSION = 39;
     uint public constant COMMISSION_DIVIDER = 1000;
 
+    uint8 public constant ACTION_INITIAL_BIDDING = 0;
+    uint8 public constant ACTION_SELL_OFFER_ACCEPTED = 1;
+    uint8 public constant ACTION_BUY_OFFER_ACCEPTED = 2;
+
     uint public constant BIDDING_DURATION = 48 hours;
 
     mapping(uint32 => Bid) bids;
@@ -26,7 +30,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
 
     event BidPosted(uint32 indexed canvasId, address indexed bidder, uint amount, uint finishTime);
     event RewardAddedToWithdrawals(uint32 indexed canvasId, address indexed toAddress, uint amount);
-    event CommissionAddedToWithdrawals(uint32 indexed canvasId, uint amount, string indexed reason);
+    event CommissionAddedToWithdrawals(uint32 indexed canvasId, uint amount, uint8 indexed action);
 
     modifier stateBidding(uint32 _canvasId) {
         require(getCanvasState(_canvasId) == STATE_INITIAL_BIDDING);
@@ -232,7 +236,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         canvas.isCommissionPaid = true;
         addPendingWithdrawal(owner, commission);
 
-        emit CommissionAddedToWithdrawals(_canvasId, commission, "initial_bidding");
+        emit CommissionAddedToWithdrawals(_canvasId, commission, ACTION_INITIAL_BIDDING);
     }
 
     /**
