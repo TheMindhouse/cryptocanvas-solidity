@@ -38,6 +38,26 @@ contract CryptoArt is CanvasMarket {
     }
 
     /**
+    * @notice   Returns array of canvas's ids. Returned canvases have sell offer.
+    *           If includePrivateOffers is true, includes offers that are targeted
+    *           only to one specified address.
+    */
+    function getCanvasesWithSellOffer(bool includePrivateOffers) external view returns (uint32[]) {
+        uint32[] memory result = new uint32[](canvases.length);
+        uint currentIndex = 0;
+
+        for (uint32 i = 0; i < canvases.length; i++) {
+            SellOffer storage offer = canvasForSale[_canvasId];
+            if (offer.isForSale && (includePrivateOffers || offer.onlySellTo == 0x0)) {
+                result[currentIndex] = i;
+                currentIndex++;
+            }
+        }
+
+        return _slice(result, 0, currentIndex);
+    }
+
+    /**
     * @notice   Returns array of all the owners of all of pixels. If some pixel hasn't
     *           been painted yet, 0x0 address will be returned.
     */
