@@ -41,7 +41,7 @@ contract('Simple canvas creation', async (accounts) => {
 
     it('should all authors be address 0x0', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const authors = await instance.getPixelsOwners(1);
+        const authors = await instance.getCanvasPainters(1);
 
         authors.forEach(value => {
             value.should.be.eq(ZERO_ADDRESS);
@@ -118,7 +118,7 @@ contract('Canvas creation limit', async (accounts) => {
 
     it('should all authors be account 0', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const authors = await instance.getPixelsOwners(1);
+        const authors = await instance.getCanvasPainters(1);
 
         authors.forEach(value => {
             value.should.be.eq(accounts[0]);

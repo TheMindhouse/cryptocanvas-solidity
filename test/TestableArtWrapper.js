@@ -70,7 +70,7 @@ export class TestableArtWrapper {
     calculateCommission = async (canvasId) => {
         const result = await this.instance.calculateCommission(canvasId);
         return {
-            commission: parseInt(result[0]),
+            commission: result[0],
             isPaid: result[1]
         }
     };
@@ -106,7 +106,7 @@ export class TestableArtWrapper {
     /**
      * @returns {Promise<Array<String>>}
      */
-    getPixelsOwners = async (canvasId) => await this.instance.getPixelsOwners(canvasId);
+    getCanvasPainters = async (canvasId) => await this.instance.getCanvasPainters(canvasId);
 
     //TRADING
 
@@ -153,6 +153,11 @@ export class TestableArtWrapper {
     addPendingWithdrawal = async (address, amount) => await this.instance.addPendingWithdrawal(address, amount);
 
     //UTILITY
+
+    getCanvasesWithSellOffer = async (includePrivateOffers) => {
+        return (await this.instance.getCanvasesWithSellOffer(includePrivateOffers))
+            .map(value => value.toNumber());
+    };
 
     /**
      * Calling this function for huge set of pixels causes test failure! Don't call it with default

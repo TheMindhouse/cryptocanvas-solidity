@@ -4,7 +4,7 @@ const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
 chai.use(require('chai-arrays')).should();
 
-const bigInt = require('big-integer');
+const BigNumber = require('bignumber.js');
 
 const TestableArt = artifacts.require("TestableArt");
 
@@ -12,7 +12,7 @@ const STATE_NOT_FINISHED = 0;
 const STATE_INITIAL_BIDDING = 1;
 const STATE_OWNED = 2;
 
-const eth = bigInt("100000000000000000");
+const eth = new BigNumber("100000000000000000");
 
 const gasCosts = [];
 let pixelCount = 0;
@@ -83,11 +83,11 @@ contract('Contract gas calculator', async (accounts) => {
     it('calculate making bid cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
-        let transaction = await instance.makeBid(0, {from: accounts[0], value: eth});
+        let transaction = await instance.makeBid(0, {from: accounts[0], value: eth.toNumber()});
         let cost = transaction.receipt.gasUsed;
         gasCosts.push(['makeBid() [first one]', cost]);
 
-        transaction = await instance.makeBid(0, {from: accounts[1], value: eth.multiply(2)});
+        transaction = await instance.makeBid(0, {from: accounts[1], value: eth.multipliedBy(2).toNumber()});
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['makeBid() [outbidding someone]', cost]);
 
@@ -100,6 +100,7 @@ contract('Contract gas calculator', async (accounts) => {
     it('calculate securing cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await instance.pushTimeForward(48);
+
         const state = await instance.getCanvasState(0);
         state.should.be.eq(STATE_OWNED);
     });
@@ -184,7 +185,7 @@ contract('Contract gas calculator', async (accounts) => {
     it('calculate accepting buy offer cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const buyer = accounts[5];
-        await instance.makeBuyOffer(0, {from: buyer, value: eth});
+        await instance.makeBuyOffer(0, {from: buyer, value: eth.toNumber()});
 
         let transaction = await instance.acceptBuyOffer(0, 0, {from: owner});
         let cost = transaction.receipt.gasUsed;

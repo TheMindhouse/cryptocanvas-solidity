@@ -207,10 +207,11 @@ contract('Initial bidding suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const bid = await instance.getLastBidForCanvas(0);
 
-        const desiredCommission = bid.amount * COMMISSION;
-        const commission = await instance.calculateCommission(0);
+        let desiredCommission = new BigNumber(COMMISSION);
+        desiredCommission = desiredCommission.multipliedBy(bid.amount);
+        const commission = (await instance.calculateCommission(0));
 
-        desiredCommission.should.be.eq(commission.commission);
+        commission.commission.eq(desiredCommission).should.be.true;
         commission.isPaid.should.be.false;
     });
 
@@ -286,8 +287,7 @@ contract('Initial bidding suite', async (accounts) => {
         let commission = await instance.calculateCommission(0);
 
         await instance.addCommissionToPendingWithdrawals(0, {
-            from: owner,
-            gasPrice: GAS_PRICE.toNumber()
+            from: owner
         });
 
         const newPending = await instance.getPendingWithdrawal(owner);

@@ -92,6 +92,13 @@ contract('Canvas trading suite', async (accounts) => {
         sellOffer.isForSale.should.be.false;
     });
 
+    it("should return empty canvases with sell offers", async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const withSellOffer = await instance.getCanvasesWithSellOffer(true);
+
+        withSellOffer.should.be.empty;
+    });
+
     /**
      * Fills canvas with pixels. Starts INITIAL BIDDING.
      */
@@ -199,6 +206,13 @@ contract('Canvas trading suite', async (accounts) => {
         sellOffer.onlySellTo.should.be.eq(ZERO_ADDRESS);
     });
 
+    it("should return 1 canvas with sell offers", async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const withSellOffer = await instance.getCanvasesWithSellOffer(true);
+
+        withSellOffer.should.be.equalTo([0]);
+    });
+
     it('should not allow to cancel sell offer if not called by the owner', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         return instance.cancelSellOffer(0, {from: accounts[8]}).should.be.rejected;
@@ -293,6 +307,20 @@ contract('Canvas trading suite', async (accounts) => {
         sellOffer.minPrice.should.be.eq(20);
         sellOffer.seller.should.be.eq(owner);
         sellOffer.onlySellTo.should.be.eq(sellTo);
+    });
+
+    it("should return 1 canvas with sell offers [private offer]", async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const withSellOffer = await instance.getCanvasesWithSellOffer(true);
+
+        withSellOffer.should.be.equalTo([0]);
+    });
+
+    it("should return 0 canvas with sell offers [private offer]", async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const withSellOffer = await instance.getCanvasesWithSellOffer(false);
+
+        withSellOffer.should.be.empty;
     });
 
     it('should not allow to buy canvas by the address different than specified', async () => {
