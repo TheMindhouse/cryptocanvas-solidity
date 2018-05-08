@@ -47,7 +47,7 @@ contract CryptoArt is CanvasMarket {
         uint currentIndex = 0;
 
         for (uint32 i = 0; i < canvases.length; i++) {
-            SellOffer storage offer = canvasForSale[_canvasId];
+            SellOffer storage offer = canvasForSale[i];
             if (offer.isForSale && (includePrivateOffers || offer.onlySellTo == 0x0)) {
                 result[currentIndex] = i;
                 currentIndex++;
