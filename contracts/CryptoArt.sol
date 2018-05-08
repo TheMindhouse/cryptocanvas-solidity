@@ -41,7 +41,7 @@ contract CryptoArt is CanvasMarket {
     * @notice   Returns array of all the owners of all of pixels. If some pixel hasn't
     *           been painted yet, 0x0 address will be returned.
     */
-    function getPixelsOwners(uint32 _canvasId) external view returns (address[]) {
+    function getCanvasPainters(uint32 _canvasId) external view returns (address[]) {
         Canvas storage canvas = _getCanvas(_canvasId);
         address[] memory result = new address[](PIXEL_COUNT);
 
