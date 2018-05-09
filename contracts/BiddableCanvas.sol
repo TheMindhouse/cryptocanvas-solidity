@@ -26,7 +26,7 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     mapping(uint32 => Bid) bids;
     mapping(address => uint32) addressToCount;
 
-    uint public minimumBidAmount = 0.08 ether;
+    uint public minimumBidAmount = 0.1 ether;
 
     event BidPosted(uint32 indexed canvasId, address indexed bidder, uint amount, uint finishTime);
     event RewardAddedToWithdrawals(uint32 indexed canvasId, address indexed toAddress, uint amount);
