@@ -23,7 +23,7 @@ const GAS_PRICE = new BigNumber("2000000000");
 const ACCOUNT_PIXELS = [400, 350, 450, 500, 350, 546, 500, 450, 550];
 // const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
 
-const BIDS = [new BigNumber("70000000000000000"), new BigNumber("90000000000000000"), new BigNumber("80000000000000000"), new BigNumber("100000000000000000")];
+const BIDS = [new BigNumber("70000000000000000"), new BigNumber("110000000000000000"), new BigNumber("100000000000000000"), new BigNumber("130000000000000000")];
 
 let finishTime = 0;
 

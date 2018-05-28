@@ -94,16 +94,17 @@ contract('Contract gas calculator', async (accounts) => {
         let cost = transaction.receipt.gasUsed;
         gasCosts.push(['setPixels() [5 pixels + first pixel]', cost]);
 
+        toDraw = generateArray(6, 11);
         transaction = await instance.setPixels(1, toDraw, toDraw);
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setPixels() [5 pixels]', cost]);
 
-        toDraw = generateArray(1, 11);
+        toDraw = generateArray(11, 21);
         transaction = await instance.setPixels(1, toDraw, toDraw);
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setPixels() [10 pixels]', cost]);
 
-        toDraw = generateArray(1, 21);
+        toDraw = generateArray(21, 41);
         transaction = await instance.setPixels(1, toDraw, toDraw);
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setPixels() [20 pixels]', cost]);
