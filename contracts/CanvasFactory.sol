@@ -65,30 +65,26 @@ contract CanvasFactory is TimeAware {
     /**
     * @notice   Sets pixel. Given canvas can't be yet finished.
     */
-    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external notFinished(_canvasId) validPixelIndex(_index) {
-        require(_color > 0);
-
+    function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external {
         Canvas storage canvas = _getCanvas(_canvasId);
-        Pixel storage pixel = canvas.pixels[_index];
+        _setPixelInternal(canvas, _canvasId, _index, _color);
+        _finishCanvasIfNeeded(canvas, _canvasId);
+    }
 
-        // pixel always has a painter. If it's equal to address(0) it means 
-        // that pixel hasn't been set.
-        if (pixel.painter == 0x0) {
-            canvas.paintedPixelsCount++;
-        } else {
-            canvas.addressToCount[pixel.painter]--;
+    /**
+    * Set many pixels with one tx. Be careful though - sending a lot of pixels
+    * to set may cause out of gas error.
+    *
+    */
+    function setPixels(uint32 _canvasId, uint32[] _indexes, uint8[] _colors) external {
+        require(_indexes.length == _colors.length);
+        Canvas storage canvas = _getCanvas(_canvasId);
+
+        for (uint32 i = 0; i < _indexes.length; i++) {
+            _setPixelInternal(canvas, _canvasId, _indexes[i], _colors[i]);
         }
 
-        canvas.addressToCount[msg.sender]++;
-        canvas.pixels[_index] = Pixel(_color, msg.sender);
-
-        if (_isCanvasFinished(canvas)) {
-            activeCanvasCount--;
-            canvas.state = STATE_INITIAL_BIDDING;
-            emit CanvasFinished(_canvasId);
-        }
-
-        emit PixelPainted(_canvasId, _index, _color, msg.sender);
+        _finishCanvasIfNeeded(canvas, _canvasId);
     }
 
     /**
@@ -152,6 +148,42 @@ contract CanvasFactory is TimeAware {
     function _getCanvas(uint32 _canvasId) internal view returns (Canvas storage) {
         require(_canvasId < canvases.length);
         return canvases[_canvasId];
+    }
+
+    /**
+    * Sets the pixel. Doesn't check if canvas has been finished or not.
+    */
+    function _setPixelInternal(Canvas storage _canvas, uint32 _canvasId, uint32 _index, uint8 _color)
+    private
+    notFinished(_canvasId)
+    validPixelIndex(_index) {
+        require(_color > 0);
+        Pixel storage pixel = _canvas.pixels[_index];
+
+        // pixel always has a painter. If it's equal to address(0) it means
+        // that pixel hasn't been set.
+        if (pixel.painter == 0x0) {
+            _canvas.paintedPixelsCount++;
+        } else {
+            _canvas.addressToCount[pixel.painter]--;
+        }
+
+        _canvas.addressToCount[msg.sender]++;
+        _canvas.pixels[_index] = Pixel(_color, msg.sender);
+
+        emit PixelPainted(_canvasId, _index, _color, msg.sender);
+    }
+
+    /**
+    * Marks canvas as finished if all the pixels has been already set.
+    * Starts initial bidding session.
+    */
+    function _finishCanvasIfNeeded(Canvas storage _canvas, uint32 _canvasId) private {
+        if (_isCanvasFinished(_canvas)) {
+            activeCanvasCount--;
+            _canvas.state = STATE_INITIAL_BIDDING;
+            emit CanvasFinished(_canvasId);
+        }
     }
 
     struct Pixel {
