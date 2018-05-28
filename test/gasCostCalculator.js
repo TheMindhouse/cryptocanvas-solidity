@@ -84,6 +84,31 @@ contract('Contract gas calculator', async (accounts) => {
         state.should.be.eq(STATE_INITIAL_BIDDING);
     });
 
+    it('calculate batch drawing cost', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        await instance.createCanvas();
+
+
+        let toDraw = generateArray(1, 6);
+        let transaction = await instance.setPixels(1, toDraw, toDraw);
+        let cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setPixels() [5 pixels + first pixel]', cost]);
+
+        transaction = await instance.setPixels(1, toDraw, toDraw);
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setPixels() [5 pixels]', cost]);
+
+        toDraw = generateArray(1, 11);
+        transaction = await instance.setPixels(1, toDraw, toDraw);
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setPixels() [10 pixels]', cost]);
+
+        toDraw = generateArray(1, 21);
+        transaction = await instance.setPixels(1, toDraw, toDraw);
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setPixels() [20 pixels]', cost]);
+    });
+
     it('calculate making bid cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
@@ -206,5 +231,18 @@ contract('Contract gas calculator', async (accounts) => {
         gasCosts.push(['withdraw()', cost]);
     });
 
-
 });
+
+/**
+ * Generates array that is filled with numbers [from,...,to]
+ * @param from inclusive
+ * @param to exclusive
+ */
+function generateArray(from, to) {
+    const array = [];
+    for (let i = from; i < to; i++) {
+        array.push(i)
+    }
+
+    return array;
+}
