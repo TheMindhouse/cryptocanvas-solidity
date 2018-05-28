@@ -41,6 +41,15 @@ export class TestableArtWrapper {
 
     setPixel = async (canvasId, pixelId, color, options = {}) => await this.instance.setPixel(canvasId, pixelId, color, options);
 
+    /**
+     * @param {Number} canvasId
+     * @param {Array<Number>} indexes
+     * @param {Array<Number>} colors
+     * @param options
+     * @returns {Promise<*>}
+     */
+    setPixels = async (canvasId, indexes, colors, options = {}) => await this.instance.setPixels(canvasId, indexes, colors, options);
+
     getCanvasBitmap = async (canvasId) => {
         const bitmap = await this.instance.getCanvasBitmap(canvasId);
         return bitmap.map(it => parseInt(it));
