@@ -9,5 +9,4 @@ install:
 script:
 - ganache-cli -p 7545 > /dev/null &
 - sleep 5
-- truffle migrate
-- truffle test
+- travis_wait 30 truffle test
