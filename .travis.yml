@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+  - '8.0.0'
+install:
+  - npm install -g truffle
+  - truffle version
+  - npm install -g ganache-cli
+  - npm install
+script:
+- ganache-cli -p 7545 > /dev/null &
+- sleep 5
+- truffle migrate
+- truffle test
