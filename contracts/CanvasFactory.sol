@@ -66,9 +66,15 @@ contract CanvasFactory is TimeAware {
     * @notice   Sets pixel. Given canvas can't be yet finished.
     */
     function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external {
-        Canvas storage canvas = _getCanvas(_canvasId);
-        _setPixelInternal(canvas, _canvasId, _index, _color);
-        _finishCanvasIfNeeded(canvas, _canvasId);
+        Pixel storage _pixel = _canvas.pixels[_index];
+        if (_pixel.color != 0) {
+            //it means color has been already set - revert!
+            revert();
+        }
+
+        Canvas storage _canvas = _getCanvas(_canvasId);
+        _setPixelInternal(_canvas, _pixel, _canvasId, _index, _color);
+        _finishCanvasIfNeeded(_canvas, _canvasId);
     }
 
     /**
@@ -78,13 +84,17 @@ contract CanvasFactory is TimeAware {
     */
     function setPixels(uint32 _canvasId, uint32[] _indexes, uint8[] _colors) external {
         require(_indexes.length == _colors.length);
-        Canvas storage canvas = _getCanvas(_canvasId);
+        Canvas storage _canvas = _getCanvas(_canvasId);
 
         for (uint32 i = 0; i < _indexes.length; i++) {
-            _setPixelInternal(canvas, _canvasId, _indexes[i], _colors[i]);
+            Pixel storage _pixel = _canvas.pixels[_indexes[i]];
+            if (_pixel.color == 0) {
+                //only allow when pixel is not set
+                _setPixelInternal(_canvas, _pixel, _canvasId, _indexes[i], _colors[i]);
+            }
         }
 
-        _finishCanvasIfNeeded(canvas, _canvasId);
+        _finishCanvasIfNeeded(_canvas, _canvasId);
     }
 
     /**
@@ -151,14 +161,13 @@ contract CanvasFactory is TimeAware {
     }
 
     /**
-    * Sets the pixel. Doesn't check if canvas has been finished or not.
+    * Sets the pixel. Does't check if the pixel has been already set or not.
     */
-    function _setPixelInternal(Canvas storage _canvas, uint32 _canvasId, uint32 _index, uint8 _color)
+    function _setPixelInternal(Canvas storage _canvas, Pixel storage pixel, uint32 _canvasId, uint32 _index, uint8 _color)
     private
     notFinished(_canvasId)
     validPixelIndex(_index) {
         require(_color > 0);
-        Pixel storage pixel = _canvas.pixels[_index];
 
         // pixel always has a painter. If it's equal to address(0) it means
         // that pixel hasn't been set.
