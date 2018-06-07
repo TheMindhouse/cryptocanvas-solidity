@@ -106,16 +106,19 @@ export class TestableArtWrapper {
         const result = await this.instance.getCanvasInfo(canvasId);
         return {
             id: parseInt(result[0]),
-            paintedPixels: parseInt(result[1]),
-            canvasState: parseInt(result[2]),
-            initialBiddingFinishTime: parseInt(result[3]),
-            owner: result[4]
+            name: result[1],
+            paintedPixels: parseInt(result[2]),
+            canvasState: parseInt(result[3]),
+            initialBiddingFinishTime: parseInt(result[4]),
+            owner: result[5]
         };
     };
 
     getCanvasByOwner = async (owner) => await this.instance.getCanvasByOwner(owner);
 
     setMinimumBidAmount = async (amount, options = {}) => await this.instance.setMinimumBidAmount(amount, options);
+
+    setCanvasName = async (canvasId, name, options = {}) => await this.instance.setCanvasName(canvasId, name, options);
 
     /**
      * @returns {Promise<Array<String>>}
@@ -201,9 +204,8 @@ export class TestableArtWrapper {
      * Fills all canvas with 10 color.
      */
     fillWholeCanvas = async (canvasId) => {
-        for (let i = 0; i < 18; i++) {
-            await this.fillCanvas(canvasId, i * 128, (i + 1) * 128);
-        }
+        const pixelCount = await this.PIXEL_COUNT();
+        await this.fillCanvas(canvasId, 0, pixelCount, 10);
     };
 
     /**
