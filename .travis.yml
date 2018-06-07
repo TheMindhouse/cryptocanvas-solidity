@@ -9,4 +9,4 @@ install:
 script:
 - ganache-cli -p 7545 > /dev/null &
 - sleep 5
-- travis_wait 30 truffle test
+- travis_wait 30 truffle test --compile-all --verbose-rpc
