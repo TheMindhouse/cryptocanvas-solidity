@@ -17,9 +17,9 @@ contract CanvasFactory is TimeAware {
     //@dev canvas has been sold, and has the owner
     uint8 public constant STATE_OWNED = 2;
 
-    uint8 public constant WIDTH = 64;
-    uint8 public constant HEIGHT = 64;
-    uint32 public constant PIXEL_COUNT = 4096; //WIDTH * HEIGHT doesn't work for some reason
+    uint8 public constant WIDTH = 48;
+    uint8 public constant HEIGHT = 48;
+    uint32 public constant PIXEL_COUNT = 2304; //WIDTH * HEIGHT doesn't work for some reason
 
     uint32 public constant MAX_CANVAS_COUNT = 1000;
     uint8 public constant MAX_ACTIVE_CANVAS = 12;
@@ -66,25 +66,38 @@ contract CanvasFactory is TimeAware {
     * @notice   Sets pixel. Given canvas can't be yet finished.
     */
     function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external {
-        Canvas storage canvas = _getCanvas(_canvasId);
-        _setPixelInternal(canvas, _canvasId, _index, _color);
-        _finishCanvasIfNeeded(canvas, _canvasId);
+        Canvas storage _canvas = _getCanvas(_canvasId);
+        _setPixelInternal(_canvas, _canvasId, _index, _color);
+        _finishCanvasIfNeeded(_canvas, _canvasId);
     }
 
     /**
     * Set many pixels with one tx. Be careful though - sending a lot of pixels
     * to set may cause out of gas error.
     *
+    * Throws when none of the pixels has been set.
+    *
     */
     function setPixels(uint32 _canvasId, uint32[] _indexes, uint8[] _colors) external {
         require(_indexes.length == _colors.length);
-        Canvas storage canvas = _getCanvas(_canvasId);
+        Canvas storage _canvas = _getCanvas(_canvasId);
 
+        bool anySet = false;
         for (uint32 i = 0; i < _indexes.length; i++) {
-            _setPixelInternal(canvas, _canvasId, _indexes[i], _colors[i]);
+            Pixel storage _pixel = _canvas.pixels[_indexes[i]];
+            if (_pixel.painter == 0x0) {
+                //only allow when pixel is not set
+                _setPixelInternal(_canvas, _canvasId, _indexes[i], _colors[i]);
+                anySet = true;
+            }
         }
 
-        _finishCanvasIfNeeded(canvas, _canvasId);
+        if (!anySet) {
+            //If didn't set any pixels - revert to show that transaction failed
+            revert();
+        }
+
+        _finishCanvasIfNeeded(_canvas, _canvasId);
     }
 
     /**
@@ -151,23 +164,19 @@ contract CanvasFactory is TimeAware {
     }
 
     /**
-    * Sets the pixel. Doesn't check if canvas has been finished or not.
+    * Sets the pixel.
     */
     function _setPixelInternal(Canvas storage _canvas, uint32 _canvasId, uint32 _index, uint8 _color)
     private
     notFinished(_canvasId)
     validPixelIndex(_index) {
         require(_color > 0);
-        Pixel storage pixel = _canvas.pixels[_index];
-
-        // pixel always has a painter. If it's equal to address(0) it means
-        // that pixel hasn't been set.
-        if (pixel.painter == 0x0) {
-            _canvas.paintedPixelsCount++;
-        } else {
-            _canvas.addressToCount[pixel.painter]--;
+        if (_canvas.pixels[_index].painter != 0x0) {
+            //it means this pixel has been already set!
+            revert();
         }
 
+        _canvas.paintedPixelsCount++;
         _canvas.addressToCount[msg.sender]++;
         _canvas.pixels[_index] = Pixel(_color, msg.sender);
 
@@ -193,14 +202,14 @@ contract CanvasFactory is TimeAware {
 
     struct Canvas {
         /**
-        * Map of all pixels. 
+        * Map of all pixels.
         */
         mapping(uint32 => Pixel) pixels;
 
         uint8 state;
 
         /**
-        * Owner of canvas. Canvas doesn't have an owner until initial bidding ends. 
+        * Owner of canvas. Canvas doesn't have an owner until initial bidding ends.
         */
         address owner;
 

@@ -59,15 +59,20 @@ contract('Drawing on canvas suite', async (accounts) => {
 
     });
 
+    it('should disallow to paint over already set pixels', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.setPixel(0, 0, 10).should.be.rejected;
+    });
+
     it('should set many pixels at once', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const pixels = [0, 1, 2, 3];
+        const pixels = [4, 5, 6, 7];
         const colors = [33, 54, 11, 99];
 
         await instance.setPixels(0, pixels, colors, {from: accounts[1]});
 
         const bitmap = await instance.getCanvasBitmap(0);
-        const drawn = bitmap.slice(0, colors.length);
+        const drawn = bitmap.slice(4, 4 + colors.length);
 
         drawn.should.be.equalTo(colors);
 
@@ -77,11 +82,31 @@ contract('Drawing on canvas suite', async (accounts) => {
         });
     });
 
+    it('should fail when batch painting didn\'t paint any pixels', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const pixels = [4, 5, 6, 7];
+        const colors = [33, 54, 11, 99];
+
+        return instance.setPixels(0, pixels, colors).should.be.rejected;
+    });
+
+    it('should batch paint pixels if at least one pixel is to be set', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const pixels = [4, 5, 6, 7, 8];
+        const colors = [33, 54, 11, 99, 99];
+
+        const pixelCountBefore = await instance.getCanvasPaintedPixelsCount(0);
+        await instance.setPixels(0, pixels, colors);
+        const pixelCountAfter = await instance.getCanvasPaintedPixelsCount(0);
+
+        pixelCountBefore.should.be.eq(pixelCountAfter - 1);
+    });
+
     it('should remember pixel\'s author', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        await instance.setPixel(0, 0, 10, {from: accounts[1]});
+        await instance.setPixel(0, 9, 10, {from: accounts[1]});
 
-        const author = await instance.getPixelAuthor(0, 0);
+        const author = await instance.getPixelAuthor(0, 9);
         author.should.be.eq(accounts[1]);
     });
 
@@ -89,7 +114,7 @@ contract('Drawing on canvas suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const pixelsToSet = 5;
         for (let i = 0; i < pixelsToSet; i++) {
-            await instance.setPixel(0, i * 3, 10, {from: accounts[2]});
+            await instance.setPixel(0, 10 + i * 3, 10, {from: accounts[2]});
         }
 
         const count = await instance.getPaintedPixelsCountByAddress(accounts[2], 0);

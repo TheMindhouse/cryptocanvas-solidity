@@ -211,7 +211,11 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         Bid storage bid = bids[_canvasId];
         Canvas storage canvas = _getCanvas(_canvasId);
 
-        return (_calculateCommission(bid.amount), canvas.isCommissionPaid);
+        uint _commission;
+        uint _pricePerPixel;
+        (_commission, _pricePerPixel) = _splitMoney(bid.amount);
+
+        return (_commission, canvas.isCommissionPaid);
     }
 
     /**
@@ -253,11 +257,38 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
         minimumBidAmount = _amount;
     }
 
-    function _calculatePricePerPixel(uint _totalPrice) private pure returns (uint) {
-        return (_totalPrice - _calculateCommission(_totalPrice)) / PIXEL_COUNT;
+    /**
+    * Splits money between owner of the contract and painters.
+    * Returned commission may be slightly a bit higher then percentage value.
+    * It's caused by the fact that _calculatePricePerPixel() function
+    * operates on the integer values. Division that is calculated over there
+    * may leave a remainder.
+    */
+    function _splitMoney(uint _amount) internal pure returns (
+        uint commission,
+        uint pricePerPixel
+    ) {
+        uint totalRewards = _calculateTotalRewards(_amount);
+        uint totalCommission = _amount - totalRewards;
+
+        return (totalCommission, _calculatePricePerPixel(_amount));
     }
 
-    function _calculateCommission(uint _amount) internal pure returns (uint) {
+    function _calculatePricePerPixel(uint _totalPrice) private pure returns (uint) {
+        return (_totalPrice - _calculateCut(_totalPrice)) / PIXEL_COUNT;
+    }
+
+    /**
+    * Calculates total amount of rewards to be paid.
+    */
+    function _calculateTotalRewards(uint _totalPrice) private pure returns (uint) {
+        return PIXEL_COUNT * _calculatePricePerPixel(_totalPrice);
+    }
+
+    /**
+    * Calculates cut from the value. Currently 3.9%.
+    */
+    function _calculateCut(uint _amount) internal pure returns (uint) {
         return (_amount * COMMISSION) / COMMISSION_DIVIDER;
     }
 

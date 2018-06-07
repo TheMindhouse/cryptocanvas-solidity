@@ -52,7 +52,7 @@ contract CanvasMarket is BiddableCanvas {
         require(sellOffer.onlySellTo == 0x0 || sellOffer.onlySellTo == msg.sender);
         //protect from selling to unintended address
 
-        uint fee = _calculateCommission(msg.value);
+        uint fee = _calculateCut(msg.value);
         uint toTransfer = msg.value - fee;
 
         addPendingWithdrawal(sellOffer.seller, toTransfer);
@@ -159,7 +159,7 @@ contract CanvasMarket is BiddableCanvas {
         require(offer.buyer != 0x0);
         require(offer.amount >= _minPrice);
 
-        uint fee = _calculateCommission(offer.amount);
+        uint fee = _calculateCut(offer.amount);
         uint toTransfer = offer.amount - fee;
 
         addressToCount[canvas.owner]--;
