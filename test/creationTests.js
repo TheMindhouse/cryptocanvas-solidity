@@ -1,11 +1,14 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
 
+const BigNumber = require('bignumber.js');
+
 const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
 chai.use(require('chai-arrays')).should();
 
 const TestableArt = artifacts.require("TestableArt");
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+const eth = new BigNumber("100000000000000000");
 
 contract('Simple canvas creation', async (accounts) => {
 
@@ -116,6 +119,11 @@ contract('Canvas creation limit', async (accounts) => {
         isFinished.should.be.true;
     });
 
+    it('should disallow to set a name when initial bidding is not finished', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.setCanvasName(1, "asd").should.be.rejected;
+    });
+
     it('should all authors be account 0', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const authors = await instance.getCanvasPainters(1);
@@ -130,6 +138,26 @@ contract('Canvas creation limit', async (accounts) => {
         const active = await instance.getCanvasByState(0);
 
         active.should.not.to.be.containing(1);
+    });
+
+    it('should disallow to change canvas name if not called by the owner', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        await instance.makeBid(1, {value: eth.toNumber(), from: accounts[0]});
+        await instance.pushTimeForward(48);
+
+        const state = await instance.getCanvasState(1);
+        state.should.be.eq(2);
+
+        return instance.setCanvasName(1, "1231", {from: accounts[1]}).should.be.rejected;
+    });
+
+    it('should change canvas name', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const nameToSet = "name";
+        await instance.setCanvasName(1, nameToSet, {from: accounts[0]});
+
+        const name = (await instance.getCanvasInfo(1)).name;
+        name.should.be.eq(nameToSet);
     });
 
     it('should create additional canvas', async () => {
