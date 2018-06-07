@@ -30,6 +30,7 @@ contract CanvasFactory is TimeAware {
     event PixelPainted(uint32 indexed canvasId, uint32 index, uint8 color, address indexed painter);
     event CanvasFinished(uint32 indexed canvasId);
     event CanvasCreated(uint indexed canvasId);
+    event CanvasNameSet(uint indexed canvasId, string name);
 
     modifier notFinished(uint32 _canvasId) {
         require(!isCanvasFinished(_canvasId));
@@ -54,7 +55,7 @@ contract CanvasFactory is TimeAware {
         require(canvases.length < MAX_CANVAS_COUNT);
         require(activeCanvasCount < MAX_ACTIVE_CANVAS);
 
-        uint id = canvases.push(Canvas(STATE_NOT_FINISHED, 0x0, 0, 0, false)) - 1;
+        uint id = canvases.push(Canvas(STATE_NOT_FINISHED, 0x0, "", 0, 0, false)) - 1;
 
         emit CanvasCreated(id);
         activeCanvasCount++;
@@ -212,6 +213,8 @@ contract CanvasFactory is TimeAware {
         * Owner of canvas. Canvas doesn't have an owner until initial bidding ends.
         */
         address owner;
+
+        string name;
 
         /**
         * Numbers of pixels set. Canvas will be considered finished when all pixels will be set.

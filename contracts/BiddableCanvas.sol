@@ -244,6 +244,21 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     }
 
     /**
+    * Sets canvas name. Only for the owner of the canvas. Name can be an empty
+    * string which is the same as lack of the name.
+    */
+    function setCanvasName(uint32 _canvasId, string _name) external
+    stateOwned(_canvasId)
+    forceOwned(_canvasId)
+    {
+        Canvas storage _canvas = _getCanvas(_canvasId);
+        require(msg.sender == _canvas.owner);
+
+        _canvas.name = _name;
+        emit CanvasNameSet(_canvasId, _name);
+    }
+
+    /**
     * @notice   Returns number of canvases owned by the given address.
     */
     function balanceOf(address _owner) external view returns (uint) {

@@ -79,6 +79,7 @@ contract CryptoArt is CanvasMarket {
 
     function getCanvasInfo(uint32 _canvasId) external view returns (
         uint32 id,
+        string name,
         uint32 paintedPixels,
         uint8 canvasState,
         uint initialBiddingFinishTime,
@@ -86,7 +87,7 @@ contract CryptoArt is CanvasMarket {
     ) {
         Canvas storage canvas = _getCanvas(_canvasId);
 
-        return (_canvasId, canvas.paintedPixelsCount, getCanvasState(_canvasId),
+        return (_canvasId, canvas.name, canvas.paintedPixelsCount, getCanvasState(_canvasId),
         canvas.initialBiddingFinishTime, canvas.owner);
     }
 
