@@ -10,6 +10,4 @@ script:
 - ganache-cli -p 8545 > /dev/null &
 - sleep 5
 - rm -rf build
-- truffle compile
-- truffle migrate --reset --network development
-- travis_wait 30 truffle test test/drawingTests.js --compile-all --verbose-rpc
+- travis_wait 30 truffle test test/drawingTests.js --compile-all
