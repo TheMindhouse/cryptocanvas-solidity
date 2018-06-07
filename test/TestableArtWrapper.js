@@ -1,3 +1,5 @@
+import {generateArray} from "./utility";
+
 const BigNumber = require('bignumber.js');
 
 export class TestableArtWrapper {
@@ -63,9 +65,12 @@ export class TestableArtWrapper {
 
     getCanvasState = async (canvasId) => parseInt(await this.instance.getCanvasState(canvasId));
 
+    /**
+     * @returns {Promise<{address: String, amount: BigNumber, finishTime: number}>}
+     */
     getLastBidForCanvas = async (canvasId) => {
         const bid = await this.instance.getLastBidForCanvas(canvasId);
-        return {address: bid[1], amount: parseInt(bid[2]), finishTime: parseInt(bid[3])}
+        return {address: bid[1], amount: bid[2], finishTime: parseInt(bid[3])}
     };
 
     makeBid = async (canvasId, options) => await this.instance.makeBid(canvasId, options);
@@ -88,7 +93,7 @@ export class TestableArtWrapper {
         const result = await this.instance.calculateReward(canvasId, address);
         return {
             pixelCount: parseInt(result[0]),
-            reward: parseInt(result[1]),
+            reward: result[1],
             isPaid: result[2]
         }
     };
@@ -169,13 +174,24 @@ export class TestableArtWrapper {
     };
 
     /**
-     * Calling this function for huge set of pixels causes test failure! Don't call it with default
-     * values [0 - 4096>, this set is too large!
+     * Will fill canvas from first index (inclusive) to last index (exclusive)
      */
-    fillCanvas = (canvasId, firstIndex = 0, lastIndex = 4096, color = 10, options = {}) => {
+    fillCanvas = (canvasId, firstIndex = 0, lastIndex = 2304, color = 10, options = {}) => {
+        const maxChunk = 128;
         const promises = [];
-        for (let i = firstIndex; i < lastIndex; i++) {
-            promises.push(this.setPixel(canvasId, i, color, options));
+
+        let end = firstIndex;
+        let start = firstIndex;
+
+        while (end < lastIndex) {
+            start = end;
+            end = Math.min(start + maxChunk, lastIndex);
+
+            const indexes = generateArray(start, end);
+            const colors = indexes.map(() => color);
+            const promise = this.setPixels(canvasId, indexes, colors, options);
+
+            promises.push(promise);
         }
 
         return Promise.all(promises);
@@ -185,8 +201,8 @@ export class TestableArtWrapper {
      * Fills all canvas with 10 color.
      */
     fillWholeCanvas = async (canvasId) => {
-        for (let i = 0; i < 8; i++) {
-            await this.fillCanvas(canvasId, i * 512, (i + 1) * 512);
+        for (let i = 0; i < 18; i++) {
+            await this.fillCanvas(canvasId, i * 128, (i + 1) * 128);
         }
     };
 

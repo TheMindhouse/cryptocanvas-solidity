@@ -9,6 +9,50 @@ const STATE_INITIAL_BIDDING = 1;
 const STATE_OWNED = 2;
 
 /**
+ * Generates array that is filled with numbers [from,...,to]
+ * @param from inclusive
+ * @param to exclusive
+ */
+export function generateArray(from, to) {
+    const array = [];
+    for (let i = from; i < to; i++) {
+        array.push(i)
+    }
+
+    return array;
+}
+
+/**
+ * Splits money. Calculates reward per pixel, total reward and a commission.
+ * Note that total commission can be a bit higher that commission * amount,
+ * because of integer division remainder when calculating pixel price.
+ *
+ * @param {BigNumber} amount - amount to split
+ * @param {Number} commission - float number, greater than 0.0, smaller than 1.0
+ * @param {Number} pixelCount - pixel count. Integer number
+ *
+ * @returns {{cut: BigNumber, pricePerPixel: BigNumber, rewards: BigNumber}}
+ */
+export function splitMoney(amount, commission, pixelCount) {
+    pixelCount = Math.floor(pixelCount);
+    amount = new BigNumber(amount);
+
+    const rewardPercent = new BigNumber(1 - commission);
+    const pricePerPixel = amount.multipliedBy(rewardPercent)
+        .dividedBy(pixelCount)
+        .integerValue(BigNumber.BigNumber.ROUND_FLOOR);
+
+    const rewardsSum = pricePerPixel.multipliedBy(pixelCount);
+    const cut = amount.minus(rewardsSum);
+
+    return {
+        cut: cut,
+        pricePerPixel: pricePerPixel,
+        rewards: rewardsSum
+    }
+}
+
+/**
  * Checks balance consistency.
  * <br>
  * Sum of all pending withdrawals, all rewards for canvas,

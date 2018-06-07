@@ -1,4 +1,5 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
+import {generateArray} from "./utility";
 
 const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
@@ -68,13 +69,11 @@ contract('Contract gas calculator', async (accounts) => {
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setPixel() [second one]', cost]);
 
-        transaction = await instance.setPixel(0, 0, 10);
+        transaction = await instance.setPixel(0, 2, 10);
         cost = transaction.receipt.gasUsed;
-        gasCosts.push(['setPixel() [update]', cost]);
+        gasCosts.push(['setPixel() [third one]', cost]);
 
-        for (let i = 0; i < pixelCount - 1; i++) {
-            await instance.setPixel(0, i, 10);
-        }
+        await instance.fillCanvas(0, 3, pixelCount - 1);
 
         transaction = await instance.setPixel(0, pixelCount - 1, 10);
         cost = transaction.receipt.gasUsed;
@@ -243,17 +242,3 @@ contract('Contract gas calculator', async (accounts) => {
     });
 
 });
-
-/**
- * Generates array that is filled with numbers [from,...,to]
- * @param from inclusive
- * @param to exclusive
- */
-function generateArray(from, to) {
-    const array = [];
-    for (let i = from; i < to; i++) {
-        array.push(i)
-    }
-
-    return array;
-}

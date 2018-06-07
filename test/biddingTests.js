@@ -1,5 +1,5 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
-import {checkBalanceConsistency} from "./utility";
+import {checkBalanceConsistency, splitMoney} from "./utility";
 
 const BigNumber = require('bignumber.js');
 
@@ -8,7 +8,6 @@ chai.use(require('chai-as-promised')).should();
 chai.use(require('chai-arrays')).should();
 
 const TestableArt = artifacts.require("TestableArt");
-const emptyBid = {address: "0x0000000000000000000000000000000000000000", amount: 0, finishTime: 0};
 
 const STATE_NOT_FINISHED = 0;
 const STATE_INITIAL_BIDDING = 1;
@@ -19,8 +18,10 @@ const BIDDING_DURATION_HOURS = 48;
 
 const MAX_ALLOWED_GAS_PER_PIXEL = 100000;
 
+let pixelCount = 0;
+
 const GAS_PRICE = new BigNumber("2000000000");
-const ACCOUNT_PIXELS = [400, 350, 450, 500, 350, 546, 500, 450, 550];
+const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
 // const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
 
 const BIDS = [new BigNumber("70000000000000000"), new BigNumber("110000000000000000"), new BigNumber("100000000000000000"), new BigNumber("130000000000000000")];
@@ -28,6 +29,11 @@ const BIDS = [new BigNumber("70000000000000000"), new BigNumber("110000000000000
 let finishTime = 0;
 
 contract('Initial bidding suite', async (accounts) => {
+
+    before(async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        pixelCount = await instance.PIXEL_COUNT();
+    });
 
     afterEach(async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
@@ -66,12 +72,14 @@ contract('Initial bidding suite', async (accounts) => {
 
     it(`should have price for setting pixel lower than ${MAX_ALLOWED_GAS_PER_PIXEL} gas`, async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        let result = await instance.setPixel(0, 0, 10, {from: accounts[0]});
+        await instance.createCanvas();
+
+        let result = await instance.setPixel(1, 0, 10, {from: accounts[0]});
         let gas = parseInt(result.receipt.gasUsed);
 
         gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
 
-        result = await instance.setPixel(0, 0, 20, {from: accounts[1]});
+        result = await instance.setPixel(1, 1, 20, {from: accounts[1]});
         gas = parseInt(result.receipt.gasUsed);
 
         gas.should.be.lessThan(MAX_ALLOWED_GAS_PER_PIXEL);
@@ -105,7 +113,7 @@ contract('Initial bidding suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const result = await instance.getLastBidForCanvas(0);
 
-        result.should.be.eql(emptyBid);
+        result.amount.eq(0).should.be.true;
     });
 
     it('should disallow to bid with value smaller than minimal', async () => {
@@ -207,31 +215,27 @@ contract('Initial bidding suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const bid = await instance.getLastBidForCanvas(0);
 
-        let desiredCommission = new BigNumber(COMMISSION);
-        desiredCommission = desiredCommission.multipliedBy(bid.amount);
+        const split = splitMoney(bid.amount, COMMISSION, pixelCount);
         const commission = (await instance.calculateCommission(0));
 
-        commission.commission.eq(desiredCommission).should.be.true;
+        commission.commission.eq(split.cut).should.be.true;
         commission.isPaid.should.be.false;
     });
 
     it('should calculate correct reward', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const bid = await instance.getLastBidForCanvas(0);
-        const pixelCount = await instance.PIXEL_COUNT();
-
-        const toDistribute = (1 - COMMISSION) * bid.amount;
+        const split = splitMoney(bid.amount, COMMISSION, pixelCount);
 
         for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
             const account = accounts[i];
             const pixelsSet = ACCOUNT_PIXELS[i];
-            const share = pixelsSet / pixelCount;
-            const desiredReward = toDistribute * share;
+            const desiredReward = split.pricePerPixel.multipliedBy(pixelsSet);
 
             const reward = await instance.calculateReward(0, account);
 
             pixelsSet.should.be.eq(reward.pixelCount);
-            desiredReward.should.be.eq(reward.reward);
+            desiredReward.eq(reward.reward).should.be.true;
             reward.isPaid.should.be.false;
         }
     });
@@ -242,7 +246,7 @@ contract('Initial bidding suite', async (accounts) => {
         let account = accounts[9];
         const reward = await instance.calculateReward(0, account);
 
-        reward.reward.should.be.eq(0);
+        reward.reward.eq(0).should.be.true;
         return instance.addRewardToPendingWithdrawals(0, {from: account}).should.be.rejected;
     });
 
