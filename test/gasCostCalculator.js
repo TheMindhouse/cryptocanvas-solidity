@@ -147,10 +147,10 @@ contract('Contract gas calculator', async (accounts) => {
     it('calculate setting canvas name cost', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
-        let name = "01234";
+        let name = "a";
         let transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
         let cost = transaction.receipt.gasUsed;
-        gasCosts.push(['setCanvasName() [5 char, first time]', cost]);
+        gasCosts.push(['setCanvasName() [1 char, first time]', cost]);
 
         name = "a";
         transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
@@ -177,30 +177,21 @@ contract('Contract gas calculator', async (accounts) => {
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setCanvasName() [10 chars, including 2 special]', cost]);
 
-        name = "NzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9q";
+        name = "NzTkeT77vUe2Vąć";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [15 chars, including 2 special]', cost]);
+
+        name = "NzTkeT77vUe2VaElcoź€";
         transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setCanvasName() [20 chars, including 2 special]', cost]);
 
-        name = "NzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9q";
+        name = "NzTkeT77vUe2VaElco9q1234";
         transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
         cost = transaction.receipt.gasUsed;
-        gasCosts.push(['setCanvasName() [40 chars, including 2 special]', cost]);
+        gasCosts.push(['setCanvasName() [24 chars]', cost]);
 
-        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
-        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
-        cost = transaction.receipt.gasUsed;
-        gasCosts.push(['setCanvasName() [100 chars]', cost]);
-
-        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
-        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
-        cost = transaction.receipt.gasUsed;
-        gasCosts.push(['setCanvasName() [200 chars]', cost]);
-
-        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj09876T77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
-        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
-        cost = transaction.receipt.gasUsed;
-        gasCosts.push(['setCanvasName() [600 chars]', cost]);
 
         const setName = (await instance.getCanvasInfo(0)).name;
         setName.should.be.eq(setName);

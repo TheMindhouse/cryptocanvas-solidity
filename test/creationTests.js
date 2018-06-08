@@ -151,6 +151,13 @@ contract('Canvas creation limit', async (accounts) => {
         return instance.setCanvasName(1, "1231", {from: accounts[1]}).should.be.rejected;
     });
 
+    it('should dissallow to change canvas name if longer than 24 chars', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const nameToSet = "my long name that is cool";
+        
+        return instance.setCanvasName(1, nameToSet, {from: accounts[0]}).should.be.rejected;
+    });
+
     it('should change canvas name', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const nameToSet = "name";
