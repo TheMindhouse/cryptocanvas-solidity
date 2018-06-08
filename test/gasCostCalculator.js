@@ -119,6 +119,19 @@ contract('Contract gas calculator', async (accounts) => {
         gasCosts.push(['setPixels() [1 pixels]', cost]);
     });
 
+    it('calculate booking cost', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+
+        let transaction = await instance.createAndBookCanvas({from: accounts[0], value: eth.toNumber()});
+        let cost = transaction.receipt.gasUsed;
+        gasCosts.push(['createAndBookCanvas()', cost]);
+
+        transaction = await instance.setBookPrice(eth.multipliedBy(2).toNumber(), {from: accounts[0]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setBookPrice()', cost]);
+    });
+
+
     it('calculate making bid cost', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
