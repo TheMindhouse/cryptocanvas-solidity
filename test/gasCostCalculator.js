@@ -136,12 +136,74 @@ contract('Contract gas calculator', async (accounts) => {
     /**
      * Account 1 wins initial bidding
      */
-    it('calculate securing cost', async () => {
+    it('buying canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await instance.pushTimeForward(48);
 
         const state = await instance.getCanvasState(0);
         state.should.be.eq(STATE_OWNED);
+    });
+
+    it('calculate setting canvas name cost', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+
+        let name = "01234";
+        let transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        let cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [5 char, first time]', cost]);
+
+        name = "a";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [1 char]', cost]);
+
+        name = "abcde";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [5 chars]', cost]);
+
+        name = "aąeęi";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [5 chars including 2 special]', cost]);
+
+        name = "0123456789";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [10 chars]', cost]);
+
+        name = "01234567ź€";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [10 chars, including 2 special]', cost]);
+
+        name = "NzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9q";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [20 chars, including 2 special]', cost]);
+
+        name = "NzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9qNzTkeT77vUe2VaElco9q";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [40 chars, including 2 special]', cost]);
+
+        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [100 chars]', cost]);
+
+        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [200 chars]', cost]);
+
+        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [600 chars]', cost]);
+
+        const setName = (await instance.getCanvasInfo(0)).name;
+        setName.should.be.eq(setName);
     });
 
     it('calculate withdraw reward cost', async () => {
