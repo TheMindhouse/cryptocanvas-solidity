@@ -20,7 +20,13 @@ export class TestableArtWrapper {
 
     minimumBidAmount = async () => parseInt(await this.instance.minimumBidAmount());
 
+    bookCanvasPrice = async () => await this.instance.bookCanvasPrice();
+
     createCanvas = async () => await this.instance.createCanvas();
+
+    createAndBookCanvas = async (options = {}) => await this.instance.createAndBookCanvas(options);
+
+    setBookPrice = async (amount, options = {}) => await this.instance.setBookPrice(amount, options);
 
     activeCanvasCount = async () => {
         const activeCount = await this.instance.activeCanvasCount();
@@ -110,7 +116,8 @@ export class TestableArtWrapper {
             paintedPixels: parseInt(result[2]),
             canvasState: parseInt(result[3]),
             initialBiddingFinishTime: parseInt(result[4]),
-            owner: result[5]
+            owner: result[5],
+            bookedFor: result[6]
         };
     };
 
