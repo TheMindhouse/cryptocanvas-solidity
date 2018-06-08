@@ -1,12 +1,11 @@
 pragma solidity 0.4.24;
 
 import "./CanvasFactory.sol";
-import "./Withdrawable.sol";
 
 /**
 * @dev This contract takes care of initial bidding.
 */
-contract BiddableCanvas is CanvasFactory, Withdrawable {
+contract BiddableCanvas is CanvasFactory {
 
     /**
     * As it's hard to operate on floating numbers, each fee will be calculated like this:

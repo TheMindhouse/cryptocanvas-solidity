@@ -83,12 +83,13 @@ contract CryptoArt is CanvasMarket {
         uint32 paintedPixels,
         uint8 canvasState,
         uint initialBiddingFinishTime,
-        address owner
+        address owner,
+        address bookedFor
     ) {
         Canvas storage canvas = _getCanvas(_canvasId);
 
         return (_canvasId, canvas.name, canvas.paintedPixelsCount, getCanvasState(_canvasId),
-        canvas.initialBiddingFinishTime, canvas.owner);
+        canvas.initialBiddingFinishTime, canvas.owner, canvas.bookedFor);
     }
 
     function getCanvasByOwner(address _owner) external view returns (uint32[]) {

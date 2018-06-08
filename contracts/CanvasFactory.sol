@@ -1,11 +1,12 @@
 pragma solidity 0.4.24;
 
 import "./TimeAware.sol";
+import "./Withdrawable.sol";
 
 /**
 * @dev This contract takes care of painting on canvases, returning artworks and creating ones. 
 */
-contract CanvasFactory is TimeAware {
+contract CanvasFactory is TimeAware, Withdrawable {
 
     //@dev It means canvas is not finished yet, and bidding is not possible.
     uint8 public constant STATE_NOT_FINISHED = 0;
@@ -24,6 +25,8 @@ contract CanvasFactory is TimeAware {
     uint32 public constant MAX_CANVAS_COUNT = 1000;
     uint8 public constant MAX_ACTIVE_CANVAS = 12;
     uint8 public constant MAX_CANVAS_NAME_LENGTH = 24;
+
+    uint public bookCanvasPrice = 0.1 ether;
 
     Canvas[] canvases;
     uint32 public activeCanvasCount = 0;
@@ -53,15 +56,17 @@ contract CanvasFactory is TimeAware {
     *           There can't be more unfinished canvases than MAX_ACTIVE_CANVAS.
     */
     function createCanvas() external returns (uint canvasId) {
-        require(canvases.length < MAX_CANVAS_COUNT);
-        require(activeCanvasCount < MAX_ACTIVE_CANVAS);
+        return _createCanvasInternal(0x0);
+    }
 
-        uint id = canvases.push(Canvas(STATE_NOT_FINISHED, 0x0, "", 0, 0, false)) - 1;
+    /**
+    * @notice   Similar to createCanvas(). Additionally, books it for a caller.
+    */
+    function createAndBookCanvas() external payable returns (uint canvasId) {
+        require(msg.value >= bookCanvasPrice);
 
-        emit CanvasCreated(id);
-        activeCanvasCount++;
-
-        return id;
+        addPendingWithdrawal(owner, msg.value);
+        return _createCanvasInternal(msg.sender);
     }
 
     /**
@@ -156,6 +161,10 @@ contract CanvasFactory is TimeAware {
         return canvas.addressToCount[_address];
     }
 
+    function setBookPrice(uint _price) external onlyOwner {
+        bookCanvasPrice = _price;
+    }
+
     function _isCanvasFinished(Canvas canvas) internal pure returns (bool) {
         return canvas.paintedPixelsCount == PIXEL_COUNT;
     }
@@ -163,6 +172,18 @@ contract CanvasFactory is TimeAware {
     function _getCanvas(uint32 _canvasId) internal view returns (Canvas storage) {
         require(_canvasId < canvases.length);
         return canvases[_canvasId];
+    }
+
+    function _createCanvasInternal(address _bookedFor) private returns (uint canvasId) {
+        require(canvases.length < MAX_CANVAS_COUNT);
+        require(activeCanvasCount < MAX_ACTIVE_CANVAS);
+
+        uint id = canvases.push(Canvas(STATE_NOT_FINISHED, 0x0, _bookedFor, "", 0, 0, false)) - 1;
+
+        emit CanvasCreated(id);
+        activeCanvasCount++;
+
+        return id;
     }
 
     /**
@@ -173,6 +194,7 @@ contract CanvasFactory is TimeAware {
     notFinished(_canvasId)
     validPixelIndex(_index) {
         require(_color > 0);
+        require(_canvas.bookedFor == 0x0 || _canvas.bookedFor == msg.sender);
         if (_canvas.pixels[_index].painter != 0x0) {
             //it means this pixel has been already set!
             revert();
@@ -214,6 +236,12 @@ contract CanvasFactory is TimeAware {
         * Owner of canvas. Canvas doesn't have an owner until initial bidding ends.
         */
         address owner;
+
+        /**
+        * Booked by this address. It means that only that address can draw on the canvas.
+        * 0x0 if everybody can paint on the canvas.
+        */
+        address bookedFor;
 
         string name;
 
