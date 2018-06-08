@@ -33,7 +33,7 @@ contract CanvasFactory is TimeAware, Withdrawable {
 
     event PixelPainted(uint32 indexed canvasId, uint32 index, uint8 color, address indexed painter);
     event CanvasFinished(uint32 indexed canvasId);
-    event CanvasCreated(uint indexed canvasId);
+    event CanvasCreated(uint indexed canvasId, address indexed bookedFor);
     event CanvasNameSet(uint indexed canvasId, string name);
 
     modifier notFinished(uint32 _canvasId) {
@@ -180,7 +180,7 @@ contract CanvasFactory is TimeAware, Withdrawable {
 
         uint id = canvases.push(Canvas(STATE_NOT_FINISHED, 0x0, _bookedFor, "", 0, 0, false)) - 1;
 
-        emit CanvasCreated(id);
+        emit CanvasCreated(id, _bookedFor);
         activeCanvasCount++;
 
         return id;
