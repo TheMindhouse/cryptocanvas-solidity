@@ -251,6 +251,8 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     stateOwned(_canvasId)
     forceOwned(_canvasId)
     {
+        require(_name.length <= MAX_CANVAS_NAME_LENGTH);
+
         Canvas storage _canvas = _getCanvas(_canvasId);
         require(msg.sender == _canvas.owner);
 

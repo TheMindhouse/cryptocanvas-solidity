@@ -23,6 +23,7 @@ contract CanvasFactory is TimeAware {
 
     uint32 public constant MAX_CANVAS_COUNT = 1000;
     uint8 public constant MAX_ACTIVE_CANVAS = 12;
+    uint8 public constant MAX_CANVAS_NAME_LENGTH = 24;
 
     Canvas[] canvases;
     uint32 public activeCanvasCount = 0;
