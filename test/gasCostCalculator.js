@@ -197,13 +197,18 @@ contract('Contract gas calculator', async (accounts) => {
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setCanvasName() [200 chars]', cost]);
 
-        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
+        name = "NzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj09876T77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6YjNzTkeT77vUe2VaElco9q6zVYmI0EifTKb3b826c1oNwnYPyS5xB1lVqDr5r xUrcSYRQGu6TnrgADbMro32UuJgTYHkGKGkLk6Yj";
         transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
         cost = transaction.receipt.gasUsed;
         gasCosts.push(['setCanvasName() [600 chars]', cost]);
 
         const setName = (await instance.getCanvasInfo(0)).name;
         setName.should.be.eq(setName);
+
+        name = "";
+        transaction = await instance.setCanvasName(0, name, {from: accounts[1]});
+        cost = transaction.receipt.gasUsed;
+        gasCosts.push(['setCanvasName() [empty]', cost]);
     });
 
     it('calculate withdraw reward cost', async () => {
