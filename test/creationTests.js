@@ -8,7 +8,7 @@ chai.use(require('chai-arrays')).should();
 
 const TestableArt = artifacts.require("TestableArt");
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const eth = new BigNumber("100000000000000000");
+const eth = new BigNumber("1000000000000000000");
 
 contract('Simple canvas creation', async (accounts) => {
 
@@ -37,9 +37,13 @@ contract('Simple canvas creation', async (accounts) => {
 
         const activeCount = await instance.activeCanvasCount();
         const count = await instance.canvasCount();
+        const info1 = await instance.getCanvasInfo(0);
+        const info2 = await instance.getCanvasInfo(1);
 
         activeCount.should.be.equal(2);
         count.should.be.equal(2);
+        info1.bookedFor.should.be.eq(ZERO_ADDRESS);
+        info2.bookedFor.should.be.eq(ZERO_ADDRESS);
     });
 
     it('should all authors be address 0x0', async () => {
@@ -65,6 +69,62 @@ contract('Simple canvas creation', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const active = await instance.getCanvasByState(0);
         active.should.be.equalTo([0, 1]);
+    });
+
+    it('should disallow to book canvas for too small value', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const value = eth.multipliedBy(0.09).toNumber();
+
+        return instance.createAndBookCanvas({value}).should.be.rejected;
+    });
+
+    it('should allow to create and book canvas', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const value = eth.multipliedBy(0.1).toNumber();
+
+        await instance.createAndBookCanvas({from: accounts[1], value: value});
+        const info = await instance.getCanvasInfo(2);
+
+        info.bookedFor.should.be.eq(accounts[1]);
+    });
+
+    it('should disallow to set pixels if booked for another address', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.setPixel(2, 0, 10, {from: accounts[0]}).should.be.rejected;
+    });
+
+    it('should allow to set pixels on booked canvas', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        await instance.setPixel(2, 0, 10, {from: accounts[1]});
+
+        const pixelAuthor = await instance.getPixelAuthor(2, 0);
+        pixelAuthor.should.be.eq(accounts[1]);
+    });
+
+    it('should disallow to change booking price if not called by the owner', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.setBookPrice(eth.toNumber(), {from: accounts[1]}).should.be.rejected;
+    });
+
+    it('should change booking price', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const oldValue = eth.multipliedBy(0.1).toNumber();
+        await instance.setBookPrice(eth.toNumber(), {from: accounts[0]});
+
+        const bookingPrice = await instance.bookCanvasPrice();
+        bookingPrice.eq(eth).should.be.true;
+
+        return instance.createAndBookCanvas({from: accounts[1], value: oldValue}).should.be.rejected;
+    });
+
+    it('should allow to create and book canvas after price change', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const value = eth.toNumber();
+
+        await instance.createAndBookCanvas({from: accounts[5], value: value});
+        const info = await instance.getCanvasInfo(3);
+
+        info.bookedFor.should.be.eq(accounts[5]);
     });
 
     afterEach(async () => {
@@ -149,6 +209,13 @@ contract('Canvas creation limit', async (accounts) => {
         state.should.be.eq(2);
 
         return instance.setCanvasName(1, "1231", {from: accounts[1]}).should.be.rejected;
+    });
+
+    it('should dissallow to change canvas name if longer than 24 chars', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const nameToSet = "my long name that is cool";
+
+        return instance.setCanvasName(1, nameToSet, {from: accounts[0]}).should.be.rejected;
     });
 
     it('should change canvas name', async function () {

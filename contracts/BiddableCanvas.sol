@@ -1,12 +1,11 @@
 pragma solidity 0.4.24;
 
 import "./CanvasFactory.sol";
-import "./Withdrawable.sol";
 
 /**
 * @dev This contract takes care of initial bidding.
 */
-contract BiddableCanvas is CanvasFactory, Withdrawable {
+contract BiddableCanvas is CanvasFactory {
 
     /**
     * As it's hard to operate on floating numbers, each fee will be calculated like this:
@@ -251,6 +250,9 @@ contract BiddableCanvas is CanvasFactory, Withdrawable {
     stateOwned(_canvasId)
     forceOwned(_canvasId)
     {
+        bytes memory _strBytes = bytes(_name);
+        require(_strBytes.length <= MAX_CANVAS_NAME_LENGTH);
+
         Canvas storage _canvas = _getCanvas(_canvasId);
         require(msg.sender == _canvas.owner);
 
