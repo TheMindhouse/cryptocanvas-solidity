@@ -105,6 +105,32 @@ contract RewardableCanvas is CanvasState {
         return _toWithdraw;
     }
 
+    function getTotalCommission(uint32 _canvasId) external view returns (uint) {
+        require(_canvasId < canvases.length);
+        FeeHistory storage _history = canvasToFeeHistory[_canvasId];
+        uint _lastIndex = _history.commissionCumulative.length - 1;
+
+        if (_lastIndex < 0) {
+            //means that FeeHistory hasn't been created yet
+            return 0;
+        }
+
+        return _history.commissionCumulative[_lastIndex];
+    }
+
+    function getTotalRewards(uint32 _canvasId) external view returns (uint) {
+        require(_canvasId < canvases.length);
+        FeeHistory storage _history = canvasToFeeHistory[_canvasId];
+        uint _lastIndex = _history.rewardsCumulative.length - 1;
+
+        if (_lastIndex < 0) {
+            //means that FeeHistory hasn't been created yet
+            return 0;
+        }
+
+        return _history.rewardsCumulative[_lastIndex];
+    }
+
     /**
     * @notice   Calculates how the initial bidding money will be split.
     *

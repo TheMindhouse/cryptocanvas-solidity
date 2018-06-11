@@ -30,7 +30,7 @@ let owner = '0x0';
 
 contract('Canvas trading suite', async (accounts) => {
 
-    beforeEach(async () => {
+    afterEach(async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await checkBalanceConsistency(instance, accounts);
     });
