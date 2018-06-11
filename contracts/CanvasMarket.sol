@@ -52,11 +52,10 @@ contract CanvasMarket is BiddableCanvas {
         require(sellOffer.onlySellTo == 0x0 || sellOffer.onlySellTo == msg.sender);
         //protect from selling to unintended address
 
-        uint fee = _calculateCut(msg.value);
-        uint toTransfer = msg.value - fee;
+        uint toTransfer;
+        (, ,toTransfer) = _registerTrade(_canvasId, msg.value);
 
         addPendingWithdrawal(sellOffer.seller, toTransfer);
-        addPendingWithdrawal(owner, fee);
 
         addressToCount[canvas.owner]--;
         addressToCount[msg.sender]++;
@@ -65,7 +64,6 @@ contract CanvasMarket is BiddableCanvas {
         cancelSellOfferInternal(_canvasId, false);
 
         emit CanvasSold(_canvasId, msg.value, sellOffer.seller, msg.sender);
-        emit CommissionAddedToWithdrawals(_canvasId, fee, ACTION_SELL_OFFER_ACCEPTED);
 
         //If the buyer have placed buy offer, refund it
         BuyOffer memory offer = buyOffers[_canvasId];
@@ -159,21 +157,19 @@ contract CanvasMarket is BiddableCanvas {
         require(offer.buyer != 0x0);
         require(offer.amount >= _minPrice);
 
-        uint fee = _calculateCut(offer.amount);
-        uint toTransfer = offer.amount - fee;
+        uint toTransfer;
+        (, ,toTransfer) = _registerTrade(_canvasId, offer.amount);
 
         addressToCount[canvas.owner]--;
         addressToCount[offer.buyer]++;
 
         canvas.owner = offer.buyer;
         addPendingWithdrawal(msg.sender, toTransfer);
-        addPendingWithdrawal(owner, fee);
 
         buyOffers[_canvasId] = BuyOffer(false, 0x0, 0);
         canvasForSale[_canvasId] = SellOffer(false, 0x0, 0, 0x0);
 
         emit CanvasSold(_canvasId, offer.amount, msg.sender, offer.buyer);
-        emit CommissionAddedToWithdrawals(_canvasId, fee, ACTION_BUY_OFFER_ACCEPTED);
     }
 
     /**
