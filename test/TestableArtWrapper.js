@@ -87,26 +87,33 @@ export class TestableArtWrapper {
 
     balanceOf = async (address) => parseInt(await this.instance.balanceOf(address));
 
-    calculateCommission = async (canvasId) => {
-        const result = await this.instance.calculateCommission(canvasId);
-        return {
-            commission: result[0],
-            isPaid: result[1]
-        }
-    };
+    //RewardableCanvas
 
-    calculateReward = async (canvasId, address) => {
-        const result = await this.instance.calculateReward(canvasId, address);
-        return {
-            pixelCount: parseInt(result[0]),
-            reward: result[1],
-            isPaid: result[2]
-        }
-    };
+    addCommissionToPendingWithdrawals = async (canvasId, options = {}) =>
+        await this.instance.addCommissionToPendingWithdrawals(canvasId, options);
 
-    addRewardToPendingWithdrawals = async (canvasId, options = {}) => await this.instance.addRewardToPendingWithdrawals(canvasId, options);
+    addRewardToPendingWithdrawals = async (canvasId, options = {}) =>
+        await this.instance.addRewardToPendingWithdrawals(canvasId, options);
 
-    addCommissionToPendingWithdrawals = async (canvasId, options = {}) => await this.instance.addCommissionToPendingWithdrawals(canvasId, options);
+    calculateCommissionToWithdraw = async (canvasId) => await this.instance.calculateCommissionToWithdraw(canvasId);
+
+    calculateRewardToWithdraw = async (canvasId, address) =>
+        await this.instance.calculateRewardToWithdraw(canvasId, address);
+
+    getTotalCommission = async (canvasId) => await this.instance.getTotalCommission(canvasId);
+
+    getCommissionWithdrawn = async (canvasId) => await this.instance.getCommissionWithdrawn(canvasId);
+
+    getTotalRewards = async (canvasId) => await this.instance.getTotalRewards(canvasId);
+
+    getRewardsWithdrawn = async (canvasId, address) => await this.instance.getRewardsWithdrawn(canvasId, address);
+
+    splitBid = async (amount) => await this.instance.splitBid(amount);
+
+    splitTrade = async (amount) => await this.instance.splitTrade(amount);
+
+
+    //===
 
     getCanvasInfo = async (canvasId) => {
         const result = await this.instance.getCanvasInfo(canvasId);
