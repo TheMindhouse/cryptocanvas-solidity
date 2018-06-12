@@ -1,5 +1,5 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
-import {checkBalanceConsistency, checkCommissionsIntegrity, checkRewardsIntegrity, splitMoney} from "./utility";
+import {checkBalanceConsistency, checkCommissionsIntegrity, checkRewardsIntegrity, splitBid} from "./utility";
 
 const BigNumber = require('bignumber.js');
 
@@ -21,8 +21,8 @@ const MAX_ALLOWED_GAS_PER_PIXEL = 100000;
 let pixelCount = 0;
 
 const GAS_PRICE = new BigNumber("2000000000");
-// const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
-const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
+const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
+// const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
 
 const BIDS = [new BigNumber("70000000000000000"), new BigNumber("110000000000000000"), new BigNumber("100000000000000000"), new BigNumber("130000000000000000")];
 
@@ -217,21 +217,23 @@ contract('Initial bidding suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const bid = await instance.getLastBidForCanvas(0);
 
-        const split = splitMoney(bid.amount, COMMISSION, pixelCount);
+        const split = splitBid(bid.amount, pixelCount);
         const commission = (await instance.calculateCommissionToWithdraw(0));
 
-        commission.eq(split.cut).should.be.true;
+        commission.eq(split.commission).should.be.true;
     });
 
     it('should calculate correct reward', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const bid = await instance.getLastBidForCanvas(0);
-        const split = splitMoney(bid.amount, COMMISSION, pixelCount);
+        const split = splitBid(bid.amount, pixelCount);
 
         for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
             const account = accounts[i];
             const pixelsSet = ACCOUNT_PIXELS[i];
-            const desiredReward = split.pricePerPixel.multipliedBy(pixelsSet);
+            const desiredReward = split.paintersRewards
+                .dividedBy(pixelCount)
+                .times(pixelsSet);
 
             const reward = await instance.calculateRewardToWithdraw(0, account);
 

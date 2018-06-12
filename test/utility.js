@@ -23,32 +23,43 @@ export function generateArray(from, to) {
 }
 
 /**
- * Splits money. Calculates reward per pixel, total reward and a commission.
- * Note that total commission can be a bit higher that commission * amount,
- * because of integer division remainder when calculating pixel price.
- *
- * @param {BigNumber} amount - amount to split
- * @param {Number} commission - float number, greater than 0.0, smaller than 1.0
- * @param {Number} pixelCount - pixel count. Integer number
- *
- * @returns {{cut: BigNumber, pricePerPixel: BigNumber, rewards: BigNumber}}
+ * @param {BigNumber} amount
+ * @param {number} pixelCount
  */
-export function splitMoney(amount, commission, pixelCount) {
-    pixelCount = Math.floor(pixelCount);
-    amount = new BigNumber(amount);
+export function splitBid(amount, pixelCount) {
+    const fee = amount.times(39)
+        .dividedBy(1000);
 
-    const rewardPercent = new BigNumber(1 - commission);
-    const pricePerPixel = amount.multipliedBy(rewardPercent)
-        .dividedBy(pixelCount)
-        .integerValue(BigNumber.BigNumber.ROUND_FLOOR);
+    const rewardPerPixel = amount.minus(fee)
+        .dividedBy(pixelCount);
 
-    const rewardsSum = pricePerPixel.multipliedBy(pixelCount);
-    const cut = amount.minus(rewardsSum);
+    const rewards = rewardPerPixel.times(pixelCount);
 
     return {
-        cut: cut,
-        pricePerPixel: pricePerPixel,
-        rewards: rewardsSum
+        commission: amount.minus(rewards),
+        paintersRewards: rewards
+    }
+}
+
+/**
+ * @param {BigNumber} amount
+ * @param {number} pixelCount
+ */
+export function splitTrade(amount, pixelCount) {
+    const commission = amount.times(39)
+        .dividedBy(1000);
+
+    const rewardPerPixel = amount.times(61)
+        .dividedBy(1000)
+        .dividedBy(pixelCount);
+
+    const rewards = rewardPerPixel.times(pixelCount);
+    const sellerProfit = amount.minus(rewards).minus(commission);
+
+    return {
+        commission: commission,
+        paintersRewards: rewards,
+        sellerProfit: sellerProfit
     }
 }
 
