@@ -93,10 +93,10 @@ export async function checkCommissionsIntegrity(instance) {
 
             const sum = toWithdraw.plus(withdrawnCommission);
             if (!sum.eq(totalCommission)) {
-                assert.fail(null, null, `Failed checking commission integrity for canvas ${i}.` +
-                    `\tCommission to withdraw: ${toWithdraw}` +
-                    `\tWithdrawn commission  : ${withdrawnCommission}` +
-                    `\tTotal commission      : ${totalCommission}`);
+                assert.fail(null, null, `Failed checking commission integrity for canvas ${i}.\n` +
+                    `\tCommission to withdraw: ${toWithdraw}\n` +
+                    `\tWithdrawn commission  : ${withdrawnCommission}\n` +
+                    `\tTotal commission      : ${totalCommission}\n`);
             }
         }
     }
@@ -108,6 +108,7 @@ export async function checkCommissionsIntegrity(instance) {
  */
 export async function checkRewardsIntegrity(instance, accounts) {
     const canvasCount = await instance.canvasCount();
+    const pixelCount = await instance.PIXEL_COUNT();
 
     for (let i = 0; i < canvasCount; i++) {
         const state = await instance.getCanvasState(i);
@@ -127,20 +128,22 @@ export async function checkRewardsIntegrity(instance, accounts) {
             paid = paid.plus(rewardPaid);
             toWithdraw = toWithdraw.plus(toReward);
 
-            const expectedReward = totalRewards.dividedBy(pixelsOwned);
+            const expectedReward = totalRewards.dividedBy(pixelCount).times(pixelsOwned);
             if (!rewardPaid.plus(toReward).eq(expectedReward)) {
-                assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}, account: ${accounts[j]}` +
-                    `\tRewards paid           : ${rewardPaid}` +
-                    `\tTo reward              : ${toReward}` +
-                    `\tExpected total reward  : ${expectedReward}`);
+                assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}, account[${j}]: ${accounts[j]}\n` +
+                    `\tRewards paid     : ${rewardPaid}\n` +
+                    `\tTo reward        : ${toReward}\n` +
+                    `\tOwned pixels:    : ${pixelsOwned}\n` +
+                    `\tTotal rewards:   : ${totalRewards}\n` +
+                    `\tExpected reward  : ${expectedReward}\n`);
             }
         }
 
         if (!paid.plus(toWithdraw).eq(totalRewards)) {
-            assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}.` +
-                `\tTotal paid    : ${paid}` +
-                `\tTotal to pay  : ${toWithdraw}` +
-                `\tTotal rewards : ${totalRewards}`);
+            assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}.\n` +
+                `\tTotal paid    : ${paid}\n` +
+                `\tTotal to pay  : ${toWithdraw}\n` +
+                `\tTotal rewards : ${totalRewards}\n`);
         }
     }
 }

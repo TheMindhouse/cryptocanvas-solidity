@@ -21,8 +21,8 @@ const MAX_ALLOWED_GAS_PER_PIXEL = 100000;
 let pixelCount = 0;
 
 const GAS_PRICE = new BigNumber("2000000000");
-const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
-// const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
+// const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
+const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
 
 const BIDS = [new BigNumber("70000000000000000"), new BigNumber("110000000000000000"), new BigNumber("100000000000000000"), new BigNumber("130000000000000000")];
 
@@ -218,10 +218,9 @@ contract('Initial bidding suite', async (accounts) => {
         const bid = await instance.getLastBidForCanvas(0);
 
         const split = splitMoney(bid.amount, COMMISSION, pixelCount);
-        const commission = (await instance.calculateCommission(0));
+        const commission = (await instance.calculateCommissionToWithdraw(0));
 
-        commission.commission.eq(split.cut).should.be.true;
-        commission.isPaid.should.be.false;
+        commission.eq(split.cut).should.be.true;
     });
 
     it('should calculate correct reward', async () => {
@@ -234,11 +233,9 @@ contract('Initial bidding suite', async (accounts) => {
             const pixelsSet = ACCOUNT_PIXELS[i];
             const desiredReward = split.pricePerPixel.multipliedBy(pixelsSet);
 
-            const reward = await instance.calculateReward(0, account);
+            const reward = await instance.calculateRewardToWithdraw(0, account);
 
-            pixelsSet.should.be.eq(reward.pixelCount);
-            desiredReward.eq(reward.reward).should.be.true;
-            reward.isPaid.should.be.false;
+            desiredReward.eq(reward).should.be.true;
         }
     });
 
@@ -246,9 +243,9 @@ contract('Initial bidding suite', async (accounts) => {
     it('should not allow to withdraw reward when didn\'t paint any pixels', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         let account = accounts[9];
-        const reward = await instance.calculateReward(0, account);
+        const reward = await instance.calculateRewardToWithdraw(0, account);
 
-        reward.reward.eq(0).should.be.true;
+        reward.eq(0).should.be.true;
         return instance.addRewardToPendingWithdrawals(0, {from: account}).should.be.rejected;
     });
 
@@ -257,7 +254,7 @@ contract('Initial bidding suite', async (accounts) => {
 
         for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
             const account = accounts[i];
-            let reward = await instance.calculateReward(0, account);
+            let reward = await instance.calculateRewardToWithdraw(0, account);
 
             const pending = await instance.getPendingWithdrawal(account);
 
@@ -267,10 +264,13 @@ contract('Initial bidding suite', async (accounts) => {
             });
             const newPending = await instance.getPendingWithdrawal(account);
 
-            pending.plus(reward.reward).eq(newPending).should.be.true;
+            pending.plus(reward).eq(newPending).should.be.true;
 
-            reward = await instance.calculateReward(0, account);
-            reward.isPaid.should.be.true;
+            const withdrawn = await instance.getRewardsWithdrawn(0, account);
+            withdrawn.eq(reward).should.be.true;
+
+            reward = await instance.calculateRewardToWithdraw(0, account);
+            reward.eq(0).should.be.true;
         }
     });
 
@@ -290,7 +290,7 @@ contract('Initial bidding suite', async (accounts) => {
 
         let owner = accounts[0];
         const pending = await instance.getPendingWithdrawal(owner);
-        let commission = await instance.calculateCommission(0);
+        let commission = await instance.calculateCommissionToWithdraw(0);
 
         await instance.addCommissionToPendingWithdrawals(0, {
             from: owner
@@ -298,10 +298,13 @@ contract('Initial bidding suite', async (accounts) => {
 
         const newPending = await instance.getPendingWithdrawal(owner);
 
-        pending.plus(commission.commission).eq(newPending).should.be.true;
+        pending.plus(commission).eq(newPending).should.be.true;
 
-        commission = await instance.calculateCommission(0);
-        commission.isPaid.should.be.true;
+        const withdrawn = await instance.getCommissionWithdrawn(0);
+        withdrawn.eq(commission).should.be.true;
+
+        commission = await instance.calculateCommissionToWithdraw(0);
+        commission.eq(0).should.be.true;
     });
 
     it('should not allow to withdraw fee twice', async () => {

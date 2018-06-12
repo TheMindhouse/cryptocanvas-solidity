@@ -179,7 +179,11 @@ contract RewardableCanvas is CanvasState {
         uint _index = _history.addressToPaidRewardIndex[_address];
         uint _pixelsOwned = getPaintedPixelsCountByAddress(_address, _canvasId);
 
-        return _history.rewardsCumulative[_index] / _pixelsOwned;
+        if (_history.rewardsCumulative.length == 0 || _index == 0) {
+            return 0;
+        }
+
+        return (_history.rewardsCumulative[_index] / PIXEL_COUNT) * _pixelsOwned;
     }
 
     /**

@@ -18,9 +18,9 @@ contract CanvasFactory is TimeAware, Withdrawable {
     //@dev canvas has been sold, and has the owner
     uint8 public constant STATE_OWNED = 2;
 
-    uint8 public constant WIDTH = 48;
-    uint8 public constant HEIGHT = 48;
-    uint32 public constant PIXEL_COUNT = 2304; //WIDTH * HEIGHT doesn't work for some reason
+    uint8 public constant WIDTH = 5;
+    uint8 public constant HEIGHT = 5;
+    uint32 public constant PIXEL_COUNT = 25; //WIDTH * HEIGHT doesn't work for some reason
 
     uint32 public constant MAX_CANVAS_COUNT = 1000;
     uint8 public constant MAX_ACTIVE_CANVAS = 12;
