@@ -25,6 +25,12 @@ contract RewardableCanvas is CanvasState {
 
     mapping(uint32 => FeeHistory) private canvasToFeeHistory;
 
+    /**
+    * @notice   Adds all unpaid commission to the owner's pending withdrawals.
+    *           Ethers to withdraw has to be greater that 0, otherwise transaction
+    *           will be rejected.
+    *           Can be called only by the owner.
+    */
     function addCommissionToPendingWithdrawals(uint32 _canvasId)
     public
     onlyOwner
@@ -33,6 +39,7 @@ contract RewardableCanvas is CanvasState {
         FeeHistory storage _history = _getOrCreateFeeHistory(_canvasId);
         uint _toWithdraw = calculateCommissionToWithdraw(_canvasId);
         uint _lastIndex = _history.commissionCumulative.length - 1;
+        require(_toWithdraw > 0);
 
         _history.paidCommissionIndex = _lastIndex;
         addPendingWithdrawal(owner, _toWithdraw);
@@ -40,6 +47,11 @@ contract RewardableCanvas is CanvasState {
         emit CommissionAddedToWithdrawals(_canvasId, _toWithdraw);
     }
 
+    /**
+    * @notice   Adds all unpaid rewards of the caller to his pending withdrawals.
+    *           Ethers to withdraw has to be greater that 0, otherwise transaction
+    *           will be rejected.
+    */
     function addRewardToPendingWithdrawals(uint32 _canvasId)
     public
     stateOwned(_canvasId)
@@ -47,6 +59,7 @@ contract RewardableCanvas is CanvasState {
         FeeHistory storage _history = _getOrCreateFeeHistory(_canvasId);
         uint _toWithdraw = calculateRewardToWithdraw(_canvasId, msg.sender);
         uint _lastIndex = _history.rewardsCumulative.length - 1;
+        require(_toWithdraw > 0);
 
         _history.addressToPaidRewardIndex[msg.sender] = _lastIndex;
         addPendingWithdrawal(msg.sender, _toWithdraw);
@@ -54,6 +67,9 @@ contract RewardableCanvas is CanvasState {
         emit RewardAddedToWithdrawals(_canvasId, msg.sender, _toWithdraw);
     }
 
+    /**
+    * @notice   Calculates how much of commission there is to be paid.
+    */
     function calculateCommissionToWithdraw(uint32 _canvasId)
     public
     view
@@ -79,6 +95,9 @@ contract RewardableCanvas is CanvasState {
         return _toWithdraw;
     }
 
+    /**
+    * @notice   Calculates unpaid rewards of a given address.
+    */
     function calculateRewardToWithdraw(uint32 _canvasId, address _address)
     public
     view
@@ -105,6 +124,10 @@ contract RewardableCanvas is CanvasState {
         return _toWithdraw;
     }
 
+    /**
+    * @notice   Returns total amount of commission charged for a given canvas.
+    *           It is not a commission to be withdrawn!
+    */
     function getTotalCommission(uint32 _canvasId) external view returns (uint) {
         require(_canvasId < canvases.length);
         FeeHistory storage _history = canvasToFeeHistory[_canvasId];
@@ -118,6 +141,10 @@ contract RewardableCanvas is CanvasState {
         return _history.commissionCumulative[_lastIndex];
     }
 
+    /**
+    * @notice   Returns total amount of commission that has been already
+    *           paid (added to pending withdrawals).
+    */
     function getCommissionWithdrawn(uint32 _canvasId) external view returns (uint) {
         require(_canvasId < canvases.length);
         FeeHistory storage _history = canvasToFeeHistory[_canvasId];
@@ -126,6 +153,9 @@ contract RewardableCanvas is CanvasState {
         return _history.commissionCumulative[_index];
     }
 
+    /**
+    * @notice   Returns all rewards charged for the given canvas.
+    */
     function getTotalRewards(uint32 _canvasId) external view returns (uint) {
         require(_canvasId < canvases.length);
         FeeHistory storage _history = canvasToFeeHistory[_canvasId];
@@ -139,6 +169,10 @@ contract RewardableCanvas is CanvasState {
         return _history.rewardsCumulative[_lastIndex];
     }
 
+    /**
+    * @notice   Returns total amount of commission that has been already
+    *           paid (added to pending withdrawals).
+    */
     function getRewardsWithdrawn(uint32 _canvasId, address _address) external view returns (uint) {
         require(_canvasId < canvases.length);
         FeeHistory storage _history = canvasToFeeHistory[_canvasId];
