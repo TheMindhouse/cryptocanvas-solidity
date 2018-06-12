@@ -57,7 +57,8 @@ contract RewardableCanvas is CanvasState {
     stateOwned(_canvasId)
     forceOwned(_canvasId) {
         FeeHistory storage _history = _getOrCreateFeeHistory(_canvasId);
-        uint _toWithdraw = calculateRewardToWithdraw(_canvasId, msg.sender);
+        uint _toWithdraw;
+        (_toWithdraw,) = calculateRewardToWithdraw(_canvasId, msg.sender);
         uint _lastIndex = _history.rewardsCumulative.length - 1;
         require(_toWithdraw > 0);
 
@@ -96,32 +97,36 @@ contract RewardableCanvas is CanvasState {
     }
 
     /**
-    * @notice   Calculates unpaid rewards of a given address.
+    * @notice   Calculates unpaid rewards of a given address. Returns amount to withdraw
+    *           and amount of pixels owned.
     */
     function calculateRewardToWithdraw(uint32 _canvasId, address _address)
     public
     view
     stateOwned(_canvasId)
-    returns (uint)
+    returns (
+        uint reward,
+        uint pixelsOwned
+    )
     {
         require(_canvasId < canvases.length);
         FeeHistory storage _history = canvasToFeeHistory[_canvasId];
         uint _lastIndex = _history.rewardsCumulative.length - 1;
         uint _lastPaidIndex = _history.addressToPaidRewardIndex[_address];
+        uint _pixelsOwned = getPaintedPixelsCountByAddress(_address, _canvasId);
 
         if (_lastIndex < 0) {
             //means that FeeHistory hasn't been created yet
-            return 0;
+            return (0, _pixelsOwned);
         }
 
         uint _rewardsSum = _history.rewardsCumulative[_lastIndex];
         uint _lastWithdrawn = _history.rewardsCumulative[_lastPaidIndex];
-        uint _pixelsOwned = getPaintedPixelsCountByAddress(_address, _canvasId);
 
         // Our data structure guarantees that _commissionSum is greater or equal to _lastWithdrawn
         uint _toWithdraw = ((_rewardsSum - _lastWithdrawn) / PIXEL_COUNT) * _pixelsOwned;
 
-        return _toWithdraw;
+        return (_toWithdraw, _pixelsOwned);
     }
 
     /**

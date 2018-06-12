@@ -133,7 +133,7 @@ export async function checkRewardsIntegrity(instance, accounts) {
 
         for (let j = 0; j < accounts.length; j++) {
             const rewardPaid = await instance.getRewardsWithdrawn(i, accounts[j]);
-            const toReward = await instance.calculateRewardToWithdraw(i, accounts[j]);
+            const toReward = (await instance.calculateRewardToWithdraw(i, accounts[j])).reward;
             const pixelsOwned = await instance.getPaintedPixelsCountByAddress(accounts[j], i);
 
             paid = paid.plus(rewardPaid);
@@ -182,7 +182,7 @@ async function calculateRewards(instance, accounts) {
             const state = await instance.getCanvasState(j);
 
             if (state === STATE_OWNED) {
-                const reward = await instance.calculateRewardToWithdraw(j, account);
+                const reward = (await instance.calculateRewardToWithdraw(j, account)).reward;
                 rewards = rewards.plus(reward);
             }
         }

@@ -237,7 +237,7 @@ contract('Initial bidding suite', async (accounts) => {
 
             const reward = await instance.calculateRewardToWithdraw(0, account);
 
-            desiredReward.eq(reward).should.be.true;
+            desiredReward.eq(reward.reward).should.be.true;
         }
     });
 
@@ -247,7 +247,7 @@ contract('Initial bidding suite', async (accounts) => {
         let account = accounts[9];
         const reward = await instance.calculateRewardToWithdraw(0, account);
 
-        reward.eq(0).should.be.true;
+        reward.reward.eq(0).should.be.true;
         return instance.addRewardToPendingWithdrawals(0, {from: account}).should.be.rejected;
     });
 
@@ -256,7 +256,7 @@ contract('Initial bidding suite', async (accounts) => {
 
         for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
             const account = accounts[i];
-            let reward = await instance.calculateRewardToWithdraw(0, account);
+            let reward = (await instance.calculateRewardToWithdraw(0, account)).reward;
 
             const pending = await instance.getPendingWithdrawal(account);
 
@@ -271,7 +271,7 @@ contract('Initial bidding suite', async (accounts) => {
             const withdrawn = await instance.getRewardsWithdrawn(0, account);
             withdrawn.eq(reward).should.be.true;
 
-            reward = await instance.calculateRewardToWithdraw(0, account);
+            reward = (await instance.calculateRewardToWithdraw(0, account)).reward;
             reward.eq(0).should.be.true;
         }
     });

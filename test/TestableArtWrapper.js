@@ -104,10 +104,15 @@ export class TestableArtWrapper {
     calculateCommissionToWithdraw = async (canvasId) => await this.instance.calculateCommissionToWithdraw(canvasId);
 
     /**
-     * @returns {Promise<BigNumber>}
+     * @returns {Promise<{reward: BigNumber, pixelsOwned: number}>}
      */
-    calculateRewardToWithdraw = async (canvasId, address) =>
-        await this.instance.calculateRewardToWithdraw(canvasId, address);
+    calculateRewardToWithdraw = async (canvasId, address) => {
+        let result = await this.instance.calculateRewardToWithdraw(canvasId, address);
+        return {
+            reward: result[0],
+            pixelsOwned: parseInt(result[1])
+        };
+    };
 
     /**
      * @returns {Promise<BigNumber>}
