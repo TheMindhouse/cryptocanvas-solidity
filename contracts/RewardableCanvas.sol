@@ -118,6 +118,14 @@ contract RewardableCanvas is CanvasState {
         return _history.commissionCumulative[_lastIndex];
     }
 
+    function getCommissionWithdrawn(uint32 _canvasId) external view returns (uint) {
+        require(_canvasId < canvases.length);
+        FeeHistory storage _history = canvasToFeeHistory[_canvasId];
+        uint _index = _history.paidCommissionIndex;
+
+        return _history.commissionCumulative[_index];
+    }
+
     function getTotalRewards(uint32 _canvasId) external view returns (uint) {
         require(_canvasId < canvases.length);
         FeeHistory storage _history = canvasToFeeHistory[_canvasId];
@@ -129,6 +137,15 @@ contract RewardableCanvas is CanvasState {
         }
 
         return _history.rewardsCumulative[_lastIndex];
+    }
+
+    function getRewardsWithdrawn(uint32 _canvasId, address _address) external view returns (uint) {
+        require(_canvasId < canvases.length);
+        FeeHistory storage _history = canvasToFeeHistory[_canvasId];
+        uint _index = _history.addressToPaidRewardIndex[_address];
+        uint _pixelsOwned = getPaintedPixelsCountByAddress(_address, _canvasId);
+
+        return _history.rewardsCumulative[_index] / _pixelsOwned;
     }
 
     /**
