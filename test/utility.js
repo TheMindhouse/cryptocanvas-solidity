@@ -28,10 +28,10 @@ export function generateArray(from, to) {
  */
 export function splitBid(amount, pixelCount) {
     const fee = amount.times(39)
-        .dividedBy(1000);
+        .dividedToIntegerBy(1000);
 
     const rewardPerPixel = amount.minus(fee)
-        .dividedBy(pixelCount);
+        .dividedToIntegerBy(pixelCount);
 
     const rewards = rewardPerPixel.times(pixelCount);
 
@@ -47,11 +47,11 @@ export function splitBid(amount, pixelCount) {
  */
 export function splitTrade(amount, pixelCount) {
     const commission = amount.times(39)
-        .dividedBy(1000);
+        .dividedToIntegerBy(1000);
 
     const rewardPerPixel = amount.times(61)
-        .dividedBy(1000)
-        .dividedBy(pixelCount);
+        .dividedToIntegerBy(1000)
+        .dividedToIntegerBy(pixelCount);
 
     const rewards = rewardPerPixel.times(pixelCount);
     const sellerProfit = amount.minus(rewards).minus(commission);

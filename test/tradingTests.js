@@ -22,6 +22,9 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const eth = new BigNumber("100000000000000000");
 
+const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
+// const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
+
 /**
  * All tests that involve trading will calculate expected fees. It has to verified
  * at the end of the test suite.
@@ -114,11 +117,21 @@ contract('Canvas trading suite', async (accounts) => {
      */
     it('should fill the canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        await instance.fillWholeCanvas(0); //we don't really care here who is painting
-        // await instance.fillCanvas(0, 0, 25);
+
+        const pixelIndices = [0];
+        ACCOUNT_PIXELS.reduce(function (a, b, i) {
+            return pixelIndices[i + 1] = a + b;
+        }, 0);
+
+        for (let i = 1; i < pixelIndices.length; i++) {
+            await instance.fillCanvas(0, pixelIndices[i - 1], pixelIndices[i], i, {from: accounts[i - 1]});
+        }
 
         const state = await instance.getCanvasState(0);
+        const bidding = await instance.getCanvasByState(1);
+
         state.should.be.eq(STATE_INITIAL_BIDDING);
+        bidding.should.be.equalTo([0]);
     });
 
     it("should not allow to buy when canvas is in initial bidding", async () => {
