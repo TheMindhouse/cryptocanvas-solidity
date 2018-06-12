@@ -1,5 +1,5 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
-import {checkBalanceConsistency} from "./utility";
+import {checkBalanceConsistency, checkCommissionsIntegrity, checkRewardsIntegrity} from "./utility";
 
 const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
@@ -33,6 +33,8 @@ contract('Canvas trading suite', async (accounts) => {
     afterEach(async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await checkBalanceConsistency(instance, accounts);
+        await checkCommissionsIntegrity(instance);
+        await checkRewardsIntegrity(instance, accounts);
     });
 
     /**

@@ -1,5 +1,5 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
-import {checkBalanceConsistency, splitMoney} from "./utility";
+import {checkBalanceConsistency, checkCommissionsIntegrity, checkRewardsIntegrity, splitMoney} from "./utility";
 
 const BigNumber = require('bignumber.js');
 
@@ -38,6 +38,8 @@ contract('Initial bidding suite', async (accounts) => {
     afterEach(async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await checkBalanceConsistency(instance, accounts);
+        await checkCommissionsIntegrity(instance);
+        await checkRewardsIntegrity(instance, accounts);
     });
 
     it("should fail to return state of not existing canvas", async () => {

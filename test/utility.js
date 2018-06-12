@@ -76,7 +76,73 @@ export async function checkBalanceConsistency(instance, accounts) {
             `Balance of the contract: ${balanceOfContract}\n` +
             `All withdrawals: ${toPay}`);
     }
+}
 
+/**
+ * @param {TestableArtWrapper} instance
+ */
+export async function checkCommissionsIntegrity(instance) {
+    const canvasCount = await instance.canvasCount();
+
+    for (let i = 0; i < canvasCount; i++) {
+        const state = await instance.getCanvasState(i);
+        if (state === STATE_OWNED) {
+            const toWithdraw = await instance.calculateCommissionToWithdraw(i);
+            const totalCommission = await instance.getTotalCommission(i);
+            const withdrawnCommission = await instance.getCommissionWithdrawn(i);
+
+            const sum = toWithdraw.plus(withdrawnCommission);
+            if (!sum.eq(totalCommission)) {
+                assert.fail(null, null, `Failed checking commission integrity for canvas ${i}.` +
+                    `\tCommission to withdraw: ${toWithdraw}` +
+                    `\tWithdrawn commission  : ${withdrawnCommission}` +
+                    `\tTotal commission      : ${totalCommission}`);
+            }
+        }
+    }
+}
+
+/**
+ * @param {TestableArtWrapper} instance
+ * @param {Array<string>} accounts
+ */
+export async function checkRewardsIntegrity(instance, accounts) {
+    const canvasCount = await instance.canvasCount();
+
+    for (let i = 0; i < canvasCount; i++) {
+        const state = await instance.getCanvasState(i);
+        if (state !== STATE_OWNED) {
+            continue;
+        }
+
+        let paid = new BigNumber(0);
+        let toWithdraw = new BigNumber(0);
+        const totalRewards = await instance.getTotalRewards(i);
+
+        for (let j = 0; j < accounts.length; j++) {
+            const rewardPaid = await instance.getRewardsWithdrawn(i, accounts[j]);
+            const toReward = await instance.calculateRewardToWithdraw(i, accounts[j]);
+            const pixelsOwned = await instance.getPaintedPixelsCountByAddress(accounts[j], i);
+
+            paid = paid.plus(rewardPaid);
+            toWithdraw = toWithdraw.plus(toReward);
+
+            const expectedReward = totalRewards.dividedBy(pixelsOwned);
+            if (!rewardPaid.plus(toReward).eq(expectedReward)) {
+                assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}, account: ${accounts[j]}` +
+                    `\tRewards paid           : ${rewardPaid}` +
+                    `\tTo reward              : ${toReward}` +
+                    `\tExpected total reward  : ${expectedReward}`);
+            }
+        }
+
+        if (!paid.plus(toWithdraw).eq(totalRewards)) {
+            assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}.` +
+                `\tTotal paid    : ${paid}` +
+                `\tTotal to pay  : ${toWithdraw}` +
+                `\tTotal rewards : ${totalRewards}`);
+        }
+    }
 }
 
 async function calculatePendingWithdrawals(instance, accounts) {
@@ -102,10 +168,8 @@ async function calculateRewards(instance, accounts) {
             const state = await instance.getCanvasState(j);
 
             if (state === STATE_OWNED) {
-                const reward = await instance.calculateReward(j, account);
-                if (!reward.isPaid) {
-                    rewards = rewards.plus(reward.reward);
-                }
+                const reward = await instance.calculateRewardToWithdraw(j, account);
+                rewards = rewards.plus(reward);
             }
         }
     }
@@ -121,10 +185,8 @@ async function calculateCommissions(instance) {
         const state = await instance.getCanvasState(i);
 
         if (state === STATE_OWNED) {
-            const commission = await instance.calculateCommission(i);
-            if (!commission.isPaid) {
-                commissions = commissions.plus(commission.commission);
-            }
+            const commission = await instance.calculateCommissionToWithdraw(i);
+            commissions = commissions.plus(commission);
         }
     }
 

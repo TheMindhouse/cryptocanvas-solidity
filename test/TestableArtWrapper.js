@@ -63,6 +63,9 @@ export class TestableArtWrapper {
         return bitmap.map(it => parseInt(it));
     };
 
+    /**
+     * @returns {Promise<number>}
+     */
     getPaintedPixelsCountByAddress = async (address, canvasId) => parseInt(await this.instance.getPaintedPixelsCountByAddress(address, canvasId));
 
     getCanvasPaintedPixelsCount = async (canvasId) => parseInt(await this.instance.getCanvasPaintedPixelsCount(canvasId));
@@ -95,22 +98,59 @@ export class TestableArtWrapper {
     addRewardToPendingWithdrawals = async (canvasId, options = {}) =>
         await this.instance.addRewardToPendingWithdrawals(canvasId, options);
 
+    /**
+     * @returns {Promise<BigNumber>}
+     */
     calculateCommissionToWithdraw = async (canvasId) => await this.instance.calculateCommissionToWithdraw(canvasId);
 
+    /**
+     * @returns {Promise<BigNumber>}
+     */
     calculateRewardToWithdraw = async (canvasId, address) =>
         await this.instance.calculateRewardToWithdraw(canvasId, address);
 
+    /**
+     * @returns {Promise<BigNumber>}
+     */
     getTotalCommission = async (canvasId) => await this.instance.getTotalCommission(canvasId);
 
+    /**
+     * @returns {Promise<BigNumber>}
+     */
     getCommissionWithdrawn = async (canvasId) => await this.instance.getCommissionWithdrawn(canvasId);
 
+    /**
+     * @returns {Promise<BigNumber>}
+     */
     getTotalRewards = async (canvasId) => await this.instance.getTotalRewards(canvasId);
 
+    /**
+     * @returns {Promise<BigNumber>}
+     */
     getRewardsWithdrawn = async (canvasId, address) => await this.instance.getRewardsWithdrawn(canvasId, address);
 
-    splitBid = async (amount) => await this.instance.splitBid(amount);
+    /**
+     * @returns {Promise<{commission: BigNumber, paintersRewards: BigNumber}>}
+     */
+    splitBid = async (amount) => {
+        let result = await this.instance.splitBid(amount);
+        return {
+            commission: result[0],
+            paintersRewards: result[1]
+        };
+    };
 
-    splitTrade = async (amount) => await this.instance.splitTrade(amount);
+    /**
+     * @returns {Promise<{commission: BigNumber, paintersRewards: BigNumber, sellerProfit: BigNumber}>}
+     */
+    splitTrade = async (amount) => {
+        let result = await this.instance.splitTrade(amount);
+        return {
+            commission: result[0],
+            paintersRewards: result[1],
+            sellerProfit: result[2]
+        };
+    };
 
 
     //===
@@ -155,6 +195,9 @@ export class TestableArtWrapper {
 
     acceptBuyOffer = async (canvasId, minPrice, options = {}) => await this.instance.acceptBuyOffer(canvasId, minPrice, options);
 
+    /**
+     * @returns {Promise<{hasOffer: boolean, buyer: string, amount: number}>}
+     */
     getCurrentBuyOffer = async (canvasId) => {
         const result = await this.instance.getCurrentBuyOffer(canvasId);
         return {

@@ -170,8 +170,8 @@ contract RewardableCanvas is CanvasState {
     }
 
     /**
-    * @notice   Returns total amount of commission that has been already
-    *           paid (added to pending withdrawals).
+    * @notice   Returns total amount of rewards that has been already
+    *           paid (added to pending withdrawals) by a given address.
     */
     function getRewardsWithdrawn(uint32 _canvasId, address _address) external view returns (uint) {
         require(_canvasId < canvases.length);
