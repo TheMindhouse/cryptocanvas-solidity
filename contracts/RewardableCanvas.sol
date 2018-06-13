@@ -23,7 +23,7 @@ contract RewardableCanvas is CanvasState {
     event CommissionAddedToWithdrawals(uint32 indexed canvasId, uint amount);
     event FeesUpdated(uint32 indexed canvasId, uint totalCommissions, uint totalReward);
 
-    mapping(uint32 => FeeHistory) private canvasToFeeHistory;
+    mapping(uint => FeeHistory) private canvasToFeeHistory;
 
     /**
     * @notice   Adds all unpaid commission to the owner's pending withdrawals.
@@ -278,7 +278,7 @@ contract RewardableCanvas is CanvasState {
         return (_commission, _rewards, _sellerProfit);
     }
 
-    function _onCanvasCreated(uint32 _canvasId) internal {
+    function _onCanvasCreated(uint _canvasId) internal {
         //we create a fee entrance on the moment canvas is created
         canvasToFeeHistory[_canvasId] = FeeHistory(new uint[](1), new uint[](1), 0);
     }
