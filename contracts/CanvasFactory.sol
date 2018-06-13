@@ -183,8 +183,12 @@ contract CanvasFactory is TimeAware, Withdrawable {
         emit CanvasCreated(id, _bookedFor);
         activeCanvasCount++;
 
+        _onCanvasCreated(id);
+
         return id;
     }
+
+    function _onCanvasCreated(uint /* _canvasId */) internal {}
 
     /**
     * Sets the pixel.
