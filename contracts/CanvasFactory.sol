@@ -58,7 +58,8 @@ contract CanvasFactory is TimeAware, Withdrawable {
     }
 
     /**
-    * @notice   Similar to createCanvas(). Additionally, books it for a caller.
+    * @notice   Similar to createCanvas(). Books it for given address. If address is 0x0 everybody will
+    *           be allowed to paint on a canvas.
     */
     function createAndBookCanvas(address _bookFor) external onlyOwner returns (uint canvasId) {
         return _createCanvasInternal(_bookFor);
