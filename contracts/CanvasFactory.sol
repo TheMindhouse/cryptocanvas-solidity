@@ -26,8 +26,6 @@ contract CanvasFactory is TimeAware, Withdrawable {
     uint8 public constant MAX_ACTIVE_CANVAS = 12;
     uint8 public constant MAX_CANVAS_NAME_LENGTH = 24;
 
-    uint public bookCanvasPrice = 0.1 ether;
-
     Canvas[] canvases;
     uint32 public activeCanvasCount = 0;
 
@@ -60,13 +58,11 @@ contract CanvasFactory is TimeAware, Withdrawable {
     }
 
     /**
-    * @notice   Similar to createCanvas(). Additionally, books it for a caller.
+    * @notice   Similar to createCanvas(). Books it for given address. If address is 0x0 everybody will
+    *           be allowed to paint on a canvas.
     */
-    function createAndBookCanvas() external payable returns (uint canvasId) {
-        require(msg.value >= bookCanvasPrice);
-
-        addPendingWithdrawal(owner, msg.value);
-        return _createCanvasInternal(msg.sender);
+    function createAndBookCanvas(address _bookFor) external onlyOwner returns (uint canvasId) {
+        return _createCanvasInternal(_bookFor);
     }
 
     /**
@@ -159,10 +155,6 @@ contract CanvasFactory is TimeAware, Withdrawable {
     function getPaintedPixelsCountByAddress(address _address, uint32 _canvasId) public view returns (uint32) {
         Canvas storage canvas = _getCanvas(_canvasId);
         return canvas.addressToCount[_address];
-    }
-
-    function setBookPrice(uint _price) external onlyOwner {
-        bookCanvasPrice = _price;
     }
 
     function _isCanvasFinished(Canvas canvas) internal pure returns (bool) {
