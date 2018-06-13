@@ -1,5 +1,11 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
-import {checkBalanceConsistency} from "./utility";
+import {
+    checkBalanceConsistency,
+    checkCommissionsIntegrity,
+    checkRewardsIntegrity,
+    splitBid,
+    splitTrade, verifyFees
+} from "./utility";
 
 const chai = require('chai');
 chai.use(require('chai-as-promised')).should();
@@ -16,9 +22,11 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const eth = new BigNumber("100000000000000000");
 
-const calculateFee = (amount) => {
-    return new BigNumber(amount).multipliedBy(39).dividedBy(1000); //3.9%
-};
+const winningBid = eth;
+const trades = [];
+
+const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
+// const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
 
 /**
  * All tests that involve trading will calculate expected fees. It has to verified
@@ -27,12 +35,20 @@ const calculateFee = (amount) => {
  */
 let expectedFees = new BigNumber(0);
 let owner = '0x0';
+let pixelCount = 0;
 
 contract('Canvas trading suite', async (accounts) => {
 
-    beforeEach(async () => {
+    before(async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        pixelCount = await instance.PIXEL_COUNT();
+    });
+
+    afterEach(async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await checkBalanceConsistency(instance, accounts);
+        await checkCommissionsIntegrity(instance);
+        await checkRewardsIntegrity(instance, accounts);
     });
 
     /**
@@ -104,11 +120,21 @@ contract('Canvas trading suite', async (accounts) => {
      */
     it('should fill the canvas', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        await instance.fillWholeCanvas(0); //we don't really care here who is painting
-        // await instance.fillCanvas(0, 0, 25);
+
+        const pixelIndices = [0];
+        ACCOUNT_PIXELS.reduce(function (a, b, i) {
+            return pixelIndices[i + 1] = a + b;
+        }, 0);
+
+        for (let i = 1; i < pixelIndices.length; i++) {
+            await instance.fillCanvas(0, pixelIndices[i - 1], pixelIndices[i], i, {from: accounts[i - 1]});
+        }
 
         const state = await instance.getCanvasState(0);
+        const bidding = await instance.getCanvasByState(1);
+
         state.should.be.eq(STATE_INITIAL_BIDDING);
+        bidding.should.be.equalTo([0]);
     });
 
     it("should not allow to buy when canvas is in initial bidding", async () => {
@@ -167,7 +193,7 @@ contract('Canvas trading suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
         owner = accounts[1];
-        await instance.makeBid(0, {from: owner, value: eth.toNumber()});
+        await instance.makeBid(0, {from: owner, value: winningBid.toNumber()});
         await instance.pushTimeForward(48);
 
         const state = await instance.getCanvasState(0);
@@ -175,6 +201,11 @@ contract('Canvas trading suite', async (accounts) => {
 
         const balance = await instance.balanceOf(owner);
         balance.should.be.eq(1);
+
+        const split = splitBid(eth, pixelCount);
+        expectedFees = expectedFees.plus(split.commission);
+
+        await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, eth, trades);
     });
 
     it('should not allow to buy canvas if it\'s not offered for sale', async () => {
@@ -258,11 +289,12 @@ contract('Canvas trading suite', async (accounts) => {
     it('should buy a canvas offered for sale', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const amount = eth.multipliedBy(2); //2 eth
-        const fee = calculateFee(amount);
+        const split = splitTrade(amount, pixelCount);
         const buyer = accounts[2];
 
         const buyerBalance = await instance.getBalance(buyer);
         const sellerPending = await instance.getPendingWithdrawal(owner);
+        const rewards = await instance.getTotalRewards(0);
 
         const result = await instance.acceptSellOffer(0, {
             from: buyer,
@@ -275,18 +307,23 @@ contract('Canvas trading suite', async (accounts) => {
         const sellOffer = await instance.getCurrentSellOffer(0);
         const newBuyerBalance = await instance.getBalance(buyer);
         const newSellerPending = await instance.getPendingWithdrawal(owner);
+        const newRewards = await instance.getTotalRewards(0);
 
         info.owner.should.be.eq(buyer);
         sellOffer.isForSale.should.be.false;
 
         buyerBalance.minus(gas).minus(amount).eq(newBuyerBalance).should.be.true;
-        sellerPending.plus(amount).minus(fee).eq(newSellerPending).should.be.true;
+        sellerPending.plus(split.sellerProfit).eq(newSellerPending).should.be.true;
+        rewards.plus(split.paintersRewards).eq(newRewards).should.be.true;
 
         (await instance.balanceOf(owner)).should.be.eq(0);
         (await instance.balanceOf(buyer)).should.be.eq(1);
 
         owner = buyer;
-        expectedFees = expectedFees.plus(fee);
+        expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(amount);
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     it('should not allow to offer a canvas for sale for an owner', async () => {
@@ -334,7 +371,7 @@ contract('Canvas trading suite', async (accounts) => {
     it('should buy canvas when specific address is specified', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const amount = eth.multipliedBy(1); //1 eth
-        const fee = calculateFee(amount);
+        const split = splitTrade(amount, pixelCount);
         const buyer = accounts[5];
 
         const buyerBalance = await instance.getBalance(buyer);
@@ -356,13 +393,16 @@ contract('Canvas trading suite', async (accounts) => {
         sellOffer.isForSale.should.be.false;
 
         buyerBalance.minus(gas).minus(amount).eq(newBuyerBalance).should.be.true;
-        sellerPending.plus(amount).minus(fee).eq(newSellerPending).should.be.true;
+        sellerPending.plus(split.sellerProfit).eq(newSellerPending).should.be.true;
 
         (await instance.balanceOf(owner)).should.be.eq(0);
         (await instance.balanceOf(buyer)).should.be.eq(1);
 
         owner = buyer;
-        expectedFees = expectedFees.plus(fee);
+        expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(amount);
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     /**
@@ -372,7 +412,7 @@ contract('Canvas trading suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const amount = eth.multipliedBy(3);
         const buyOffer = eth.multipliedBy(2);
-        const fee = calculateFee(amount);
+        const split = splitTrade(amount, pixelCount);
         const buyer = accounts[7];
 
         //Enter buy offer and sell offer.
@@ -395,7 +435,7 @@ contract('Canvas trading suite', async (accounts) => {
 
         //Buyer should have buy offer refunded
         buyerPending.plus(buyOffer).eq(newBuyerPending).should.be.true;
-        sellerPending.plus(amount).minus(fee).eq(newSellerPending).should.be.true;
+        sellerPending.plus(split.sellerProfit).eq(newSellerPending).should.be.true;
 
         (await instance.balanceOf(owner)).should.be.eq(0);
         (await instance.balanceOf(buyer)).should.be.eq(1);
@@ -404,7 +444,10 @@ contract('Canvas trading suite', async (accounts) => {
         (await instance.getCurrentBuyOffer(0)).hasOffer.should.be.false;
 
         owner = buyer;
-        expectedFees = expectedFees.plus(fee);
+        expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(amount);
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     it('should not allow to make a buy offer when called by owner', async () => {
@@ -503,6 +546,31 @@ contract('Canvas trading suite', async (accounts) => {
         return instance.acceptBuyOffer(0, eth.multipliedBy(10), {from: owner}).should.be.rejected;
     });
 
+    it('should withdraw rewards', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        for (let i = 0; i < accounts.length; i++) {
+            const account = accounts[i];
+            const toWithdraw = (await instance.calculateRewardToWithdraw(0, account)).reward;
+            const pending = await instance.getPendingWithdrawal(account);
+
+            if (toWithdraw.eq(0)) {
+                continue;
+            }
+
+            await instance.addRewardToPendingWithdrawals(0, {from: account});
+
+            const newPending = await instance.getPendingWithdrawal(account);
+            const newToWithdraw = (await instance.calculateRewardToWithdraw(0, account)).reward;
+            const withdrawn = (await instance.getRewardsWithdrawn(0, account));
+
+            withdrawn.eq(toWithdraw).should.be.true;
+            newToWithdraw.eq(0).should.be.true;
+            pending.plus(toWithdraw).eq(newPending).should.be.true;
+        }
+
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
+    });
+
     /**
      * Account 9 buys canvas.
      */
@@ -514,12 +582,12 @@ contract('Canvas trading suite', async (accounts) => {
         const ownerPending = await instance.getPendingWithdrawal(owner);
 
         const seller = owner;
-        const fee = calculateFee(buyOffer.amount);
+        const split = splitTrade(new BigNumber(buyOffer.amount), pixelCount);
 
         await instance.acceptBuyOffer(0, eth.multipliedBy(2).toNumber(), {from: seller});
         const newOwnerPending = await instance.getPendingWithdrawal(seller);
 
-        ownerPending.plus(buyOffer.amount).minus(fee).eq(newOwnerPending).should.be.true;
+        ownerPending.plus(split.sellerProfit).eq(newOwnerPending).should.be.true;
 
         //check ownership and balanceOf
         const info = await instance.getCanvasInfo(0);
@@ -531,7 +599,28 @@ contract('Canvas trading suite', async (accounts) => {
         balanceBuyer.should.be.eq(1);
 
         owner = buyOffer.buyer;
-        expectedFees = expectedFees.plus(fee);
+        expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(new BigNumber(buyOffer.amount));
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
+    });
+
+    it('should update rewards', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const lastTrade = trades[trades.length - 1];
+        const split = splitTrade(lastTrade, pixelCount);
+
+        for (let i = 0; i < accounts.length; i++) {
+            const account = accounts[i];
+            let pixels = ACCOUNT_PIXELS[i];
+            if (pixels === undefined) {
+                pixels = 0;
+            }
+            const expected = split.paintersRewards.dividedToIntegerBy(pixelCount).times(pixels);
+            const toWithdraw = (await instance.calculateRewardToWithdraw(0, account)).reward;
+
+            toWithdraw.eq(expected).should.be.true;
+        }
     });
 
     it('should not have any buy nor sell offers after accepting buy offer', async () => {
@@ -543,12 +632,29 @@ contract('Canvas trading suite', async (accounts) => {
         sellOffer.isForSale.should.be.false;
     });
 
-    it('should have fees on contract owner\'s pending withdrawals', async () => {
+    it('should calculate commission correctly', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const contractOwner = accounts[0];
+        const commission = await instance.getTotalCommission(0);
+        expectedFees.eq(commission).should.be.true;
+    });
 
-        const pendingWithdrawal = await instance.getPendingWithdrawal(contractOwner);
-        expectedFees.eq(pendingWithdrawal).should.be.true;
+    it('should withdraw commission', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const owner = accounts[0];
+
+        const pending = await instance.getPendingWithdrawal(owner);
+        const toWithdraw = await instance.calculateCommissionToWithdraw(0);
+        await instance.addCommissionToPendingWithdrawals(0, {from: owner});
+
+        const newPending = await instance.getPendingWithdrawal(owner);
+        const withdrawn = await instance.getCommissionWithdrawn(0);
+        const newToWithdraw = await instance.calculateCommissionToWithdraw(0);
+
+        pending.plus(toWithdraw).eq(newPending).should.be.true;
+        withdrawn.eq(toWithdraw).should.be.true;
+        newToWithdraw.eq(0).should.be.true;
+
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     //WITHDRAWABLE

@@ -23,32 +23,43 @@ export function generateArray(from, to) {
 }
 
 /**
- * Splits money. Calculates reward per pixel, total reward and a commission.
- * Note that total commission can be a bit higher that commission * amount,
- * because of integer division remainder when calculating pixel price.
- *
- * @param {BigNumber} amount - amount to split
- * @param {Number} commission - float number, greater than 0.0, smaller than 1.0
- * @param {Number} pixelCount - pixel count. Integer number
- *
- * @returns {{cut: BigNumber, pricePerPixel: BigNumber, rewards: BigNumber}}
+ * @param {BigNumber} amount
+ * @param {number} pixelCount
  */
-export function splitMoney(amount, commission, pixelCount) {
-    pixelCount = Math.floor(pixelCount);
-    amount = new BigNumber(amount);
+export function splitBid(amount, pixelCount) {
+    const fee = amount.times(39)
+        .dividedToIntegerBy(1000);
 
-    const rewardPercent = new BigNumber(1 - commission);
-    const pricePerPixel = amount.multipliedBy(rewardPercent)
-        .dividedBy(pixelCount)
-        .integerValue(BigNumber.BigNumber.ROUND_FLOOR);
+    const rewardPerPixel = amount.minus(fee)
+        .dividedToIntegerBy(pixelCount);
 
-    const rewardsSum = pricePerPixel.multipliedBy(pixelCount);
-    const cut = amount.minus(rewardsSum);
+    const rewards = rewardPerPixel.times(pixelCount);
 
     return {
-        cut: cut,
-        pricePerPixel: pricePerPixel,
-        rewards: rewardsSum
+        commission: amount.minus(rewards),
+        paintersRewards: rewards
+    }
+}
+
+/**
+ * @param {BigNumber} amount
+ * @param {number} pixelCount
+ */
+export function splitTrade(amount, pixelCount) {
+    const commission = amount.times(39)
+        .dividedToIntegerBy(1000);
+
+    const rewardPerPixel = amount.times(61)
+        .dividedToIntegerBy(1000)
+        .dividedToIntegerBy(pixelCount);
+
+    const rewards = rewardPerPixel.times(pixelCount);
+    const sellerProfit = amount.minus(rewards).minus(commission);
+
+    return {
+        commission: commission,
+        paintersRewards: rewards,
+        sellerProfit: sellerProfit
     }
 }
 
@@ -76,7 +87,175 @@ export async function checkBalanceConsistency(instance, accounts) {
             `Balance of the contract: ${balanceOfContract}\n` +
             `All withdrawals: ${toPay}`);
     }
+}
 
+/**
+ * @param {TestableArtWrapper} instance
+ */
+export async function checkCommissionsIntegrity(instance) {
+    const canvasCount = await instance.canvasCount();
+
+    for (let i = 0; i < canvasCount; i++) {
+        const state = await instance.getCanvasState(i);
+        if (state === STATE_OWNED) {
+            const toWithdraw = await instance.calculateCommissionToWithdraw(i);
+            const totalCommission = await instance.getTotalCommission(i);
+            const withdrawnCommission = await instance.getCommissionWithdrawn(i);
+
+            const sum = toWithdraw.plus(withdrawnCommission);
+            if (!sum.eq(totalCommission)) {
+                assert.fail(null, null, `Failed checking commission integrity for canvas ${i}.\n` +
+                    `\tCommission to withdraw: ${toWithdraw}\n` +
+                    `\tWithdrawn commission  : ${withdrawnCommission}\n` +
+                    `\tTotal commission      : ${totalCommission}\n`);
+            }
+        }
+    }
+}
+
+/**
+ * @param {TestableArtWrapper} instance
+ * @param {Array<string>} accounts
+ */
+export async function checkRewardsIntegrity(instance, accounts) {
+    const canvasCount = await instance.canvasCount();
+    const pixelCount = await instance.PIXEL_COUNT();
+
+    for (let i = 0; i < canvasCount; i++) {
+        const state = await instance.getCanvasState(i);
+        if (state !== STATE_OWNED) {
+            continue;
+        }
+
+        let paid = new BigNumber(0);
+        let toWithdraw = new BigNumber(0);
+        const totalRewards = await instance.getTotalRewards(i);
+
+        for (let j = 0; j < accounts.length; j++) {
+            const rewardPaid = await instance.getRewardsWithdrawn(i, accounts[j]);
+            const toReward = (await instance.calculateRewardToWithdraw(i, accounts[j])).reward;
+            const pixelsOwned = await instance.getPaintedPixelsCountByAddress(accounts[j], i);
+
+            paid = paid.plus(rewardPaid);
+            toWithdraw = toWithdraw.plus(toReward);
+
+            const expectedReward = totalRewards.dividedBy(pixelCount).times(pixelsOwned);
+            if (!rewardPaid.plus(toReward).eq(expectedReward)) {
+                assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}, account[${j}]: ${accounts[j]}\n` +
+                    `\tRewards paid     : ${rewardPaid}\n` +
+                    `\tTo reward        : ${toReward}\n` +
+                    `\tOwned pixels:    : ${pixelsOwned}\n` +
+                    `\tTotal rewards:   : ${totalRewards}\n` +
+                    `\tExpected reward  : ${expectedReward}\n`);
+            }
+        }
+
+        if (!paid.plus(toWithdraw).eq(totalRewards)) {
+            assert.fail(null, null, `Failed checking rewards integrity for canvas ${i}.\n` +
+                `\tTotal paid    : ${paid}\n` +
+                `\tTotal to pay  : ${toWithdraw}\n` +
+                `\tTotal rewards : ${totalRewards}\n`);
+        }
+    }
+}
+
+/**
+ * Checks if the sum of rewards and commissions are as they should be.
+ *
+ * @param {TestableArtWrapper} instance
+ * @param {Array<string>} accounts
+ * @param {number} canvasId
+ * @param {Array<number>} paintedPixels - pixels painted by the accounts
+ * @param {BigNumber} winningBid - bid that won
+ * @param {Array<BigNumber>} trades - all trades amounts that have been made, empty if none
+ * @returns {Promise<{withdrawnCommission: BigNumber, toWithdrawCommission: BigNumber, commission: BigNumber, accountsRewards: Array}>}
+ */
+export async function verifyFees(instance, accounts, canvasId, paintedPixels, winningBid, trades) {
+    //calculate expected outcome ====
+
+    let commissionExpected = new BigNumber(0);
+    let rewardsExpected = new BigNumber(0);
+    const pixelCount = paintedPixels.reduce((previousValue, currentValue) => {
+        return previousValue + currentValue
+    });
+
+    const bidSplit = splitBid(winningBid, pixelCount);
+    const tradesSplit = [];
+    trades.forEach(value => {
+        tradesSplit.push(splitTrade(value, pixelCount));
+    });
+
+    commissionExpected = commissionExpected.plus(bidSplit.commission);
+    rewardsExpected = rewardsExpected.plus(bidSplit.paintersRewards);
+    tradesSplit.forEach(value => {
+        commissionExpected = commissionExpected.plus(value.commission);
+        rewardsExpected = rewardsExpected.plus(value.paintersRewards);
+    });
+
+    const accountsRewardsExpected = [];
+    accounts.forEach((value, index) => {
+        const ownedPixels = paintedPixels[index];
+        if (ownedPixels === undefined) {
+            accountsRewardsExpected.push(new BigNumber(0));
+        } else {
+            const expectedReward = rewardsExpected.dividedToIntegerBy(new BigNumber(pixelCount)).times(ownedPixels);
+            accountsRewardsExpected.push(expectedReward);
+        }
+    });
+
+
+    //load data from the blockchain ========
+
+    const commission = await instance.getTotalCommission(0);
+    const withdrawnCommission = await instance.getCommissionWithdrawn(0);
+    const toWithdrawCommission = await instance.calculateCommissionToWithdraw(0);
+
+    withdrawnCommission.plus(toWithdrawCommission).eq(commission).should.be.true;
+
+    const allRewards = await instance.getTotalRewards(0);
+
+    const rewardSummary = [];
+    for (let i = 0; i < accounts.length; i++) {
+        const account = accounts[i];
+        const toWithdraw = (await instance.calculateRewardToWithdraw(canvasId, account)).reward;
+        const withdrawn = await instance.getRewardsWithdrawn(0, account);
+
+        const summary = {
+            account: account,
+            toWithdraw: toWithdraw,
+            withdrawn: withdrawn,
+            allRewards: toWithdraw.plus(withdrawn)
+        };
+        rewardSummary.push(summary);
+    }
+
+    //verification ===========
+    if (!commission.eq(commissionExpected)) {
+        assert.fail(null, null, `Expected commission is not equal to actual commission!\n` +
+            `\tExpected: ${commissionExpected}\n` +
+            `\tActual: ${commission}`);
+    }
+
+    if (!allRewards.eq(rewardsExpected)) {
+        assert.fail(null, null, `Expected rewards is not equal to actual rewards!\n` +
+            `\tExpected: ${rewardsExpected}\n` +
+            `\tActual: ${allRewards}`);
+    }
+
+    rewardSummary.forEach((value, index) => {
+        if (!value.allRewards.eq(accountsRewardsExpected[index])) {
+            assert.fail(null, null, `Expected reward for account[${index}] is not equal to actual rewards!\n` +
+                `\tExpected: ${value.allRewards}\n` +
+                `\tActual: ${accountsRewardsExpected[index]}`);
+        }
+    });
+
+    return {
+        withdrawnCommission: withdrawnCommission,
+        toWithdrawCommission: toWithdrawCommission,
+        commission: commission,
+        accountsRewards: rewardSummary
+    };
 }
 
 async function calculatePendingWithdrawals(instance, accounts) {
@@ -102,10 +281,8 @@ async function calculateRewards(instance, accounts) {
             const state = await instance.getCanvasState(j);
 
             if (state === STATE_OWNED) {
-                const reward = await instance.calculateReward(j, account);
-                if (!reward.isPaid) {
-                    rewards = rewards.plus(reward.reward);
-                }
+                const reward = (await instance.calculateRewardToWithdraw(j, account)).reward;
+                rewards = rewards.plus(reward);
             }
         }
     }
@@ -121,10 +298,8 @@ async function calculateCommissions(instance) {
         const state = await instance.getCanvasState(i);
 
         if (state === STATE_OWNED) {
-            const commission = await instance.calculateCommission(i);
-            if (!commission.isPaid) {
-                commissions = commissions.plus(commission.commission);
-            }
+            const commission = await instance.calculateCommissionToWithdraw(i);
+            commissions = commissions.plus(commission);
         }
     }
 

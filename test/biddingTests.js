@@ -1,5 +1,5 @@
 import {TestableArtWrapper} from "./TestableArtWrapper";
-import {checkBalanceConsistency, splitMoney} from "./utility";
+import {checkBalanceConsistency, checkCommissionsIntegrity, checkRewardsIntegrity, splitBid} from "./utility";
 
 const BigNumber = require('bignumber.js');
 
@@ -38,6 +38,8 @@ contract('Initial bidding suite', async (accounts) => {
     afterEach(async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         await checkBalanceConsistency(instance, accounts);
+        await checkCommissionsIntegrity(instance);
+        await checkRewardsIntegrity(instance, accounts);
     });
 
     it("should fail to return state of not existing canvas", async () => {
@@ -215,28 +217,27 @@ contract('Initial bidding suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const bid = await instance.getLastBidForCanvas(0);
 
-        const split = splitMoney(bid.amount, COMMISSION, pixelCount);
-        const commission = (await instance.calculateCommission(0));
+        const split = splitBid(bid.amount, pixelCount);
+        const commission = (await instance.calculateCommissionToWithdraw(0));
 
-        commission.commission.eq(split.cut).should.be.true;
-        commission.isPaid.should.be.false;
+        commission.eq(split.commission).should.be.true;
     });
 
     it('should calculate correct reward', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         const bid = await instance.getLastBidForCanvas(0);
-        const split = splitMoney(bid.amount, COMMISSION, pixelCount);
+        const split = splitBid(bid.amount, pixelCount);
 
         for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
             const account = accounts[i];
             const pixelsSet = ACCOUNT_PIXELS[i];
-            const desiredReward = split.pricePerPixel.multipliedBy(pixelsSet);
+            const desiredReward = split.paintersRewards
+                .dividedBy(pixelCount)
+                .times(pixelsSet);
 
-            const reward = await instance.calculateReward(0, account);
+            const reward = await instance.calculateRewardToWithdraw(0, account);
 
-            pixelsSet.should.be.eq(reward.pixelCount);
             desiredReward.eq(reward.reward).should.be.true;
-            reward.isPaid.should.be.false;
         }
     });
 
@@ -244,7 +245,7 @@ contract('Initial bidding suite', async (accounts) => {
     it('should not allow to withdraw reward when didn\'t paint any pixels', async () => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         let account = accounts[9];
-        const reward = await instance.calculateReward(0, account);
+        const reward = await instance.calculateRewardToWithdraw(0, account);
 
         reward.reward.eq(0).should.be.true;
         return instance.addRewardToPendingWithdrawals(0, {from: account}).should.be.rejected;
@@ -255,7 +256,7 @@ contract('Initial bidding suite', async (accounts) => {
 
         for (let i = 0; i < ACCOUNT_PIXELS.length; i++) {
             const account = accounts[i];
-            let reward = await instance.calculateReward(0, account);
+            let reward = (await instance.calculateRewardToWithdraw(0, account)).reward;
 
             const pending = await instance.getPendingWithdrawal(account);
 
@@ -265,10 +266,13 @@ contract('Initial bidding suite', async (accounts) => {
             });
             const newPending = await instance.getPendingWithdrawal(account);
 
-            pending.plus(reward.reward).eq(newPending).should.be.true;
+            pending.plus(reward).eq(newPending).should.be.true;
 
-            reward = await instance.calculateReward(0, account);
-            reward.isPaid.should.be.true;
+            const withdrawn = await instance.getRewardsWithdrawn(0, account);
+            withdrawn.eq(reward).should.be.true;
+
+            reward = (await instance.calculateRewardToWithdraw(0, account)).reward;
+            reward.eq(0).should.be.true;
         }
     });
 
@@ -288,7 +292,7 @@ contract('Initial bidding suite', async (accounts) => {
 
         let owner = accounts[0];
         const pending = await instance.getPendingWithdrawal(owner);
-        let commission = await instance.calculateCommission(0);
+        let commission = await instance.calculateCommissionToWithdraw(0);
 
         await instance.addCommissionToPendingWithdrawals(0, {
             from: owner
@@ -296,10 +300,13 @@ contract('Initial bidding suite', async (accounts) => {
 
         const newPending = await instance.getPendingWithdrawal(owner);
 
-        pending.plus(commission.commission).eq(newPending).should.be.true;
+        pending.plus(commission).eq(newPending).should.be.true;
 
-        commission = await instance.calculateCommission(0);
-        commission.isPaid.should.be.true;
+        const withdrawn = await instance.getCommissionWithdrawn(0);
+        withdrawn.eq(commission).should.be.true;
+
+        commission = await instance.calculateCommissionToWithdraw(0);
+        commission.eq(0).should.be.true;
     });
 
     it('should not allow to withdraw fee twice', async () => {
