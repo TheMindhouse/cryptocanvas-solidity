@@ -24,7 +24,7 @@ export class TestableArtWrapper {
 
     createCanvas = async () => await this.instance.createCanvas();
 
-    createAndBookCanvas = async (options = {}) => await this.instance.createAndBookCanvas(options);
+    createAndBookCanvas = async (address, options = {}) => await this.instance.createAndBookCanvas(address, options);
 
     setBookPrice = async (amount, options = {}) => await this.instance.setBookPrice(amount, options);
 

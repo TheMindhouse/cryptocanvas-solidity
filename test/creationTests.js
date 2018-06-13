@@ -71,18 +71,14 @@ contract('Simple canvas creation', async (accounts) => {
         active.should.be.equalTo([0, 1]);
     });
 
-    it('should disallow to book canvas for too small value', async function () {
+    it('should disallow to book canvas if not called by the owner', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const value = eth.multipliedBy(0.09).toNumber();
-
-        return instance.createAndBookCanvas({value}).should.be.rejected;
+        return instance.createAndBookCanvas(accounts[1], {from: accounts[1]}).should.be.rejected;
     });
 
     it('should allow to create and book canvas', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const value = eth.multipliedBy(0.1).toNumber();
-
-        await instance.createAndBookCanvas({from: accounts[1], value: value});
+        await instance.createAndBookCanvas(accounts[1], {from: accounts[0]});
         const info = await instance.getCanvasInfo(2);
 
         info.bookedFor.should.be.eq(accounts[1]);
@@ -104,27 +100,6 @@ contract('Simple canvas creation', async (accounts) => {
     it('should disallow to change booking price if not called by the owner', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         return instance.setBookPrice(eth.toNumber(), {from: accounts[1]}).should.be.rejected;
-    });
-
-    it('should change booking price', async function () {
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const oldValue = eth.multipliedBy(0.1).toNumber();
-        await instance.setBookPrice(eth.toNumber(), {from: accounts[0]});
-
-        const bookingPrice = await instance.bookCanvasPrice();
-        bookingPrice.eq(eth).should.be.true;
-
-        return instance.createAndBookCanvas({from: accounts[1], value: oldValue}).should.be.rejected;
-    });
-
-    it('should allow to create and book canvas after price change', async function () {
-        const instance = new TestableArtWrapper(await TestableArt.deployed());
-        const value = eth.toNumber();
-
-        await instance.createAndBookCanvas({from: accounts[5], value: value});
-        const info = await instance.getCanvasInfo(3);
-
-        info.bookedFor.should.be.eq(accounts[5]);
     });
 
     afterEach(async () => {
