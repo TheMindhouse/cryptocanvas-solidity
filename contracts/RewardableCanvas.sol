@@ -23,7 +23,7 @@ contract RewardableCanvas is CanvasState {
     event CommissionAddedToWithdrawals(uint32 indexed canvasId, uint amount);
     event FeesUpdated(uint32 indexed canvasId, uint totalCommissions, uint totalReward);
 
-    mapping(uint32 => FeeHistory) private canvasToFeeHistory;
+    mapping(uint => FeeHistory) private canvasToFeeHistory;
 
     /**
     * @notice   Adds all unpaid commission to the owner's pending withdrawals.
@@ -36,7 +36,7 @@ contract RewardableCanvas is CanvasState {
     onlyOwner
     stateOwned(_canvasId)
     forceOwned(_canvasId) {
-        FeeHistory storage _history = _getOrCreateFeeHistory(_canvasId);
+        FeeHistory storage _history = _getFeeHistory(_canvasId);
         uint _toWithdraw = calculateCommissionToWithdraw(_canvasId);
         uint _lastIndex = _history.commissionCumulative.length - 1;
         require(_toWithdraw > 0);
@@ -56,7 +56,7 @@ contract RewardableCanvas is CanvasState {
     public
     stateOwned(_canvasId)
     forceOwned(_canvasId) {
-        FeeHistory storage _history = _getOrCreateFeeHistory(_canvasId);
+        FeeHistory storage _history = _getFeeHistory(_canvasId);
         uint _toWithdraw;
         (_toWithdraw,) = calculateRewardToWithdraw(_canvasId, msg.sender);
         uint _lastIndex = _history.rewardsCumulative.length - 1;
@@ -77,8 +77,7 @@ contract RewardableCanvas is CanvasState {
     stateOwned(_canvasId)
     returns (uint)
     {
-        require(_canvasId < canvases.length);
-        FeeHistory storage _history = canvasToFeeHistory[_canvasId];
+        FeeHistory storage _history = _getFeeHistory(_canvasId);
         uint _lastIndex = _history.commissionCumulative.length - 1;
         uint _lastPaidIndex = _history.paidCommissionIndex;
 
@@ -109,8 +108,7 @@ contract RewardableCanvas is CanvasState {
         uint pixelsOwned
     )
     {
-        require(_canvasId < canvases.length);
-        FeeHistory storage _history = canvasToFeeHistory[_canvasId];
+        FeeHistory storage _history = _getFeeHistory(_canvasId);
         uint _lastIndex = _history.rewardsCumulative.length - 1;
         uint _lastPaidIndex = _history.addressToPaidRewardIndex[_address];
         uint _pixelsOwned = getPaintedPixelsCountByAddress(_address, _canvasId);
@@ -244,7 +242,7 @@ contract RewardableCanvas is CanvasState {
         uint _rewards;
         (_commission, _rewards) = splitBid(_amount);
 
-        FeeHistory storage _history = _getOrCreateFeeHistory(_canvasId);
+        FeeHistory storage _history = _getFeeHistory(_canvasId);
         // We have to save the difference between new bid and a previous one.
         // Because we save data as cumulative sum, it's enough to save
         // only the new value.
@@ -273,28 +271,26 @@ contract RewardableCanvas is CanvasState {
         uint _sellerProfit;
         (_commission, _rewards, _sellerProfit) = splitTrade(_amount);
 
-        FeeHistory storage _history = _getOrCreateFeeHistory(_canvasId);
+        FeeHistory storage _history = _getFeeHistory(_canvasId);
         _pushCumulative(_history.commissionCumulative, _commission);
         _pushCumulative(_history.rewardsCumulative, _rewards);
 
         return (_commission, _rewards, _sellerProfit);
     }
 
+    function _onCanvasCreated(uint _canvasId) internal {
+        //we create a fee entrance on the moment canvas is created
+        canvasToFeeHistory[_canvasId] = FeeHistory(new uint[](1), new uint[](1), 0);
+    }
+
     /**
-    * @notice   Gets a fee history of a canvas. Creates a new fee history
-    *           entry if necessary.
+    * @notice   Gets a fee history of a canvas.
     */
-    function _getOrCreateFeeHistory(uint32 _canvasId) private returns (FeeHistory storage) {
+    function _getFeeHistory(uint32 _canvasId) private view returns (FeeHistory storage) {
         require(_canvasId < canvases.length);
+        //fee history entry is created in onCanvasCreated() method.
+
         FeeHistory storage _history = canvasToFeeHistory[_canvasId];
-        if (_history.commissionCumulative.length == 0) {
-            //It means that there is no added entrance yet
-            //Init cumulative sums with 0, it will make our math easier
-            canvasToFeeHistory[_canvasId] = FeeHistory(new uint[](1), new uint[](1), 0);
-            _history = canvasToFeeHistory[_canvasId];
-
-        }
-
         return _history;
     }
 
