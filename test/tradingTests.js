@@ -4,7 +4,7 @@ import {
     checkCommissionsIntegrity,
     checkRewardsIntegrity,
     splitBid,
-    splitTrade
+    splitTrade, verifyFees
 } from "./utility";
 
 const chai = require('chai');
@@ -21,6 +21,9 @@ const GAS_PRICE = new BigNumber("2000000000");
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const eth = new BigNumber("100000000000000000");
+
+const winningBid = eth;
+const trades = [];
 
 const ACCOUNT_PIXELS = [200, 275, 225, 250, 175, 270, 250, 284, 375];
 // const ACCOUNT_PIXELS = [1, 2, 5, 2, 3, 4, 1, 2, 5];
@@ -190,7 +193,7 @@ contract('Canvas trading suite', async (accounts) => {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
 
         owner = accounts[1];
-        await instance.makeBid(0, {from: owner, value: eth.toNumber()});
+        await instance.makeBid(0, {from: owner, value: winningBid.toNumber()});
         await instance.pushTimeForward(48);
 
         const state = await instance.getCanvasState(0);
@@ -201,6 +204,8 @@ contract('Canvas trading suite', async (accounts) => {
 
         const split = splitBid(eth, pixelCount);
         expectedFees = expectedFees.plus(split.commission);
+
+        await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, eth, trades);
     });
 
     it('should not allow to buy canvas if it\'s not offered for sale', async () => {
@@ -316,6 +321,9 @@ contract('Canvas trading suite', async (accounts) => {
 
         owner = buyer;
         expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(amount);
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     it('should not allow to offer a canvas for sale for an owner', async () => {
@@ -392,6 +400,9 @@ contract('Canvas trading suite', async (accounts) => {
 
         owner = buyer;
         expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(amount);
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     /**
@@ -434,6 +445,9 @@ contract('Canvas trading suite', async (accounts) => {
 
         owner = buyer;
         expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(amount);
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     it('should not allow to make a buy offer when called by owner', async () => {
@@ -532,6 +546,31 @@ contract('Canvas trading suite', async (accounts) => {
         return instance.acceptBuyOffer(0, eth.multipliedBy(10), {from: owner}).should.be.rejected;
     });
 
+    it('should withdraw rewards', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        for (let i = 0; i < accounts.length; i++) {
+            const account = accounts[i];
+            const toWithdraw = (await instance.calculateRewardToWithdraw(0, account)).reward;
+            const pending = await instance.getPendingWithdrawal(account);
+
+            if (toWithdraw.eq(0)) {
+                continue;
+            }
+
+            await instance.addRewardToPendingWithdrawals(0, {from: account});
+
+            const newPending = await instance.getPendingWithdrawal(account);
+            const newToWithdraw = (await instance.calculateRewardToWithdraw(0, account)).reward;
+            const withdrawn = (await instance.getRewardsWithdrawn(0, account));
+
+            withdrawn.eq(toWithdraw).should.be.true;
+            newToWithdraw.eq(0).should.be.true;
+            pending.plus(toWithdraw).eq(newPending).should.be.true;
+        }
+
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
+    });
+
     /**
      * Account 9 buys canvas.
      */
@@ -561,6 +600,27 @@ contract('Canvas trading suite', async (accounts) => {
 
         owner = buyOffer.buyer;
         expectedFees = expectedFees.plus(split.commission);
+
+        trades.push(new BigNumber(buyOffer.amount));
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
+    });
+
+    it('should update rewards', async () => {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        const lastTrade = trades[trades.length - 1];
+        const split = splitTrade(lastTrade, pixelCount);
+
+        for (let i = 0; i < accounts.length; i++) {
+            const account = accounts[i];
+            let pixels = ACCOUNT_PIXELS[i];
+            if (pixels === undefined) {
+                pixels = 0;
+            }
+            const expected = split.paintersRewards.dividedToIntegerBy(pixelCount).times(pixels);
+            const toWithdraw = (await instance.calculateRewardToWithdraw(0, account)).reward;
+
+            toWithdraw.eq(expected).should.be.true;
+        }
     });
 
     it('should not have any buy nor sell offers after accepting buy offer', async () => {
@@ -593,6 +653,8 @@ contract('Canvas trading suite', async (accounts) => {
         pending.plus(toWithdraw).eq(newPending).should.be.true;
         withdrawn.eq(toWithdraw).should.be.true;
         newToWithdraw.eq(0).should.be.true;
+
+        const summary = await verifyFees(instance, accounts, 0, ACCOUNT_PIXELS, winningBid, trades);
     });
 
     //WITHDRAWABLE

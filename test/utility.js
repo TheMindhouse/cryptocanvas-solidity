@@ -159,6 +159,105 @@ export async function checkRewardsIntegrity(instance, accounts) {
     }
 }
 
+/**
+ * Checks if the sum of rewards and commissions are as they should be.
+ *
+ * @param {TestableArtWrapper} instance
+ * @param {Array<string>} accounts
+ * @param {number} canvasId
+ * @param {Array<number>} paintedPixels - pixels painted by the accounts
+ * @param {BigNumber} winningBid - bid that won
+ * @param {Array<BigNumber>} trades - all trades amounts that have been made, empty if none
+ * @returns {Promise<{withdrawnCommission: BigNumber, toWithdrawCommission: BigNumber, commission: BigNumber, accountsRewards: Array}>}
+ */
+export async function verifyFees(instance, accounts, canvasId, paintedPixels, winningBid, trades) {
+    //calculate expected outcome ====
+
+    let commissionExpected = new BigNumber(0);
+    let rewardsExpected = new BigNumber(0);
+    const pixelCount = paintedPixels.reduce((previousValue, currentValue) => {
+        return previousValue + currentValue
+    });
+
+    const bidSplit = splitBid(winningBid, pixelCount);
+    const tradesSplit = [];
+    trades.forEach(value => {
+        tradesSplit.push(splitTrade(value, pixelCount));
+    });
+
+    commissionExpected = commissionExpected.plus(bidSplit.commission);
+    rewardsExpected = rewardsExpected.plus(bidSplit.paintersRewards);
+    tradesSplit.forEach(value => {
+        commissionExpected = commissionExpected.plus(value.commission);
+        rewardsExpected = rewardsExpected.plus(value.paintersRewards);
+    });
+
+    const accountsRewardsExpected = [];
+    accounts.forEach((value, index) => {
+        const ownedPixels = paintedPixels[index];
+        if (ownedPixels === undefined) {
+            accountsRewardsExpected.push(new BigNumber(0));
+        } else {
+            const expectedReward = rewardsExpected.dividedToIntegerBy(new BigNumber(pixelCount)).times(ownedPixels);
+            accountsRewardsExpected.push(expectedReward);
+        }
+    });
+
+
+    //load data from the blockchain ========
+
+    const commission = await instance.getTotalCommission(0);
+    const withdrawnCommission = await instance.getCommissionWithdrawn(0);
+    const toWithdrawCommission = await instance.calculateCommissionToWithdraw(0);
+
+    withdrawnCommission.plus(toWithdrawCommission).eq(commission).should.be.true;
+
+    const allRewards = await instance.getTotalRewards(0);
+
+    const rewardSummary = [];
+    for (let i = 0; i < accounts.length; i++) {
+        const account = accounts[i];
+        const toWithdraw = (await instance.calculateRewardToWithdraw(canvasId, account)).reward;
+        const withdrawn = await instance.getRewardsWithdrawn(0, account);
+
+        const summary = {
+            account: account,
+            toWithdraw: toWithdraw,
+            withdrawn: withdrawn,
+            allRewards: toWithdraw.plus(withdrawn)
+        };
+        rewardSummary.push(summary);
+    }
+
+    //verification ===========
+    if (!commission.eq(commissionExpected)) {
+        assert.fail(null, null, `Expected commission is not equal to actual commission!\n` +
+            `\tExpected: ${commissionExpected}\n` +
+            `\tActual: ${commission}`);
+    }
+
+    if (!allRewards.eq(rewardsExpected)) {
+        assert.fail(null, null, `Expected rewards is not equal to actual rewards!\n` +
+            `\tExpected: ${rewardsExpected}\n` +
+            `\tActual: ${allRewards}`);
+    }
+
+    rewardSummary.forEach((value, index) => {
+        if (!value.allRewards.eq(accountsRewardsExpected[index])) {
+            assert.fail(null, null, `Expected reward for account[${index}] is not equal to actual rewards!\n` +
+                `\tExpected: ${value.allRewards}\n` +
+                `\tActual: ${accountsRewardsExpected[index]}`);
+        }
+    });
+
+    return {
+        withdrawnCommission: withdrawnCommission,
+        toWithdrawCommission: toWithdrawCommission,
+        commission: commission,
+        accountsRewards: rewardSummary
+    };
+}
+
 async function calculatePendingWithdrawals(instance, accounts) {
     let pending = new BigNumber(0);
 
