@@ -66,6 +66,14 @@ contract CanvasFactory is TimeAware, Withdrawable {
     }
 
     /**
+    * @notice   Changes canvas.bookFor variable. Only for the owner of the contract.
+    */
+    function bookCanvasFor(uint32 _canvasId, address _bookFor) external onlyOwner {
+        Canvas storage _canvas = _getCanvas(_canvasId);
+        _canvas.bookedFor = _bookFor;
+    }
+
+    /**
     * @notice   Sets pixel. Given canvas can't be yet finished.
     */
     function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) external {
