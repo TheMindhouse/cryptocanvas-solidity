@@ -61,7 +61,7 @@ contract CanvasMarket is BiddableCanvas {
         addressToCount[msg.sender]++;
 
         canvas.owner = msg.sender;
-        cancelSellOfferInternal(_canvasId, false);
+        _cancelSellOfferInternal(_canvasId, false);
 
         emit CanvasSold(_canvasId, msg.value, sellOffer.seller, msg.sender);
 
@@ -100,7 +100,7 @@ contract CanvasMarket is BiddableCanvas {
     *           for the canvas.
     */
     function cancelSellOffer(uint32 _canvasId) external {
-        cancelSellOfferInternal(_canvasId, true);
+        _cancelSellOfferInternal(_canvasId, true);
     }
 
     /**
