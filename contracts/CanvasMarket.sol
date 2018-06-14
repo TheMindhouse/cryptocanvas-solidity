@@ -208,7 +208,7 @@ contract CanvasMarket is BiddableCanvas {
         emit CanvasOfferedForSale(_canvasId, _minPrice, msg.sender, _receiver);
     }
 
-    function cancelSellOfferInternal(uint32 _canvasId, bool emitEvent)
+    function _cancelSellOfferInternal(uint32 _canvasId, bool emitEvent)
     private
     stateOwned(_canvasId)
     forceOwned(_canvasId) {
