@@ -21,7 +21,7 @@ import "./CanvasMarket.sol";
 *
 * “Canvas” means a collectible artwork created by the CryptoCanvas community with information about the color and author of each pixel of the Canvas, and proof of ownership stored in the Smart Contract. The Canvas is considered finished when all the pixels of the Canvas have their color set. Specifically, the Canvas is considered finished when its “state” field in the Smart Contract equals to STATE_INITIAL_BIDDING or STATE_OWNED constant.
 *
-* “Canvas Author” means the person who painted at least one final pixel of the finished Canvas by sending a transaction to the Smart Contract. A person whose pixel has been painted over by another person loses rights to that pixel. Specifically, Canvas Author means the person with the private key for at least one address in the “painter” field of the “pixels” field of the applicable Canvas in the Smart Contract.
+* “Canvas Author” means the person who painted at least one final pixel of the finished Canvas by sending a transaction to the Smart Contract. Specifically, Canvas Author means the person with the private key for at least one address in the “painter” field of the “pixels” field of the applicable Canvas in the Smart Contract.
 *
 * “Canvas Owner” means the person that can cryptographically prove ownership of the applicable Canvas. Specifically, Canvas Owner means the person with the private key for the address in the “owner” field of the applicable Canvas in the Smart Contract. The person is the Canvas Owner only after the Initial Bidding phase is finished, that is when the field “state” of the applicable Canvas equals to the STATE_OWNED constant.
 *
@@ -53,9 +53,16 @@ import "./CanvasMarket.sol";
 *
 * B. Ethereum requires the payment of a transaction fee (a “Gas Fee”) for every transaction that occurs on the Ethereum network. The Gas Fee funds the network of computers that run the decentralized Ethereum network. This means that you will need to pay a Gas Fee for each transaction that occurs via the App.
 *
-* C. In addition to the Gas Fee, each time you sell a Canvas to another user of the App, you authorize us to collect a commission of 3.9% of the total value of that transaction (a “Commission”). You acknowledge and agree that the Commission will be transferred to us through the Ethereum network as part of the payment.
+* C. In addition to the Gas Fee, each time you sell a Canvas to another user of the App, you authorize us to collect a fee of 10% of the total value of that transaction. That fee consists of:
+        1) 3.9% of the total value of that transaction (a “Commission”). You acknowledge and agree that the Commission will be transferred to us through the Ethereum network as a part of the payment.
+        2) 6.1% of the total value of that transaction (a “Reward”). You acknowledge and agree that the Reward will be transferred evenly to all painters of the sold canvas through the Ethereum network as a part of the payment.
+
 *
-* D. If you are the Canvas Author you are eligible to receive a reward for painting a Canvas (a “Reward”) after the Initial Bidding phase is completed. You acknowledge and agree that the Reward for the Canvas Author will be calculated by dividing the value of the highest Bid decreased by our commision of 3.9% of the total value of the Bid, by the total number of pixels of the Canvas and multiplied by the number of pixels of the Canvas that have been painted by the applicable Canvas Author. You acknowledge and agree that in order to withdraw the Reward you first need to add the Reward to your Account Balance by sending a transaction to the Smart Contract.
+* D. If you are the Canvas Author you are eligible to receive a reward for painting a Canvas (a “Reward”). A Reward is distributed in these scenarios:
+        1) After the Initial Bidding phase is completed. You acknowledge and agree that the Reward for the Canvas Author will be calculated by dividing the value of the winning Bid, decreased by our commission of 3.9% of the total value of the Bid, by the total number of pixels of the Canvas and multiplied by the number of pixels of the Canvas that have been painted by applicable Canvas Author.
+        2) Each time the Canvas is sold. You acknowledge and agree that the Reward for the Canvas Author will be calculated by dividing 6.1% of the total transaction value by the total number of pixels of the Canvas and multiplied by the number of pixels of the Canvas that have been painted by the applicable Canvas Author.
+You acknowledge and agree that in order to withdraw the Reward you first need to add the Reward to your Account Balance by sending a transaction to the Smart Contract.
+
 *
 * 5. Disclaimers
 *
