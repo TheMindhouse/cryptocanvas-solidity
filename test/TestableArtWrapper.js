@@ -20,11 +20,11 @@ export class TestableArtWrapper {
 
     minimumBidAmount = async () => parseInt(await this.instance.minimumBidAmount());
 
-    bookCanvasPrice = async () => await this.instance.bookCanvasPrice();
-
     createCanvas = async () => await this.instance.createCanvas();
 
     createAndBookCanvas = async (address, options = {}) => await this.instance.createAndBookCanvas(address, options);
+
+    bookCanvasFor = async (canvasId, address, options = {}) => await this.instance.bookCanvasFor(canvasId, address, options);
 
     setBookPrice = async (amount, options = {}) => await this.instance.setBookPrice(amount, options);
 

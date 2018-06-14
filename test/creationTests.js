@@ -97,6 +97,34 @@ contract('Simple canvas creation', async (accounts) => {
         pixelAuthor.should.be.eq(accounts[1]);
     });
 
+    it('should disallow change booking if not called by the owner', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        return instance.bookCanvasFor(2, ZERO_ADDRESS, {from: accounts[1]}).should.be.rejected;
+    });
+
+    it('should change booking', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        await instance.bookCanvasFor(2, accounts[9], {from: accounts[0]});
+        const info = await instance.getCanvasInfo(2);
+
+        info.bookedFor.should.be.eq(accounts[9]);
+
+        await instance.setPixel(2, 22, 10, {from: accounts[9]});
+        return instance.setPixel(2, 23, 10, {from: accounts[2]}).should.be.rejected;
+    });
+
+    it('should clear booking', async function () {
+        const instance = new TestableArtWrapper(await TestableArt.deployed());
+        await instance.bookCanvasFor(2, ZERO_ADDRESS, {from: accounts[0]});
+        const info = await instance.getCanvasInfo(2);
+
+        info.bookedFor.should.be.eq(ZERO_ADDRESS);
+
+        await instance.setPixel(2, 12, 10, {from: accounts[9]});
+        await instance.setPixel(2, 13, 10, {from: accounts[2]});
+    });
+
+
     it('should disallow to change booking price if not called by the owner', async function () {
         const instance = new TestableArtWrapper(await TestableArt.deployed());
         return instance.setBookPrice(eth.toNumber(), {from: accounts[1]}).should.be.rejected;
