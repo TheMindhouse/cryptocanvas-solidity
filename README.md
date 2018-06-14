@@ -3,9 +3,9 @@
 
 **Docs below are outdated. They will be updated soon**
 
-CryptoCanvas are distributed and collectible community artworks build on Ethereum blockchain. Visit our website [CryptoCanvas.art][homepage] if you want to become a crypto artist, buy crypto art created by the community, or just enjoy what have been already painted. 
+CryptoCanvas are distributed and collectible community artworks build on Ethereum blockchain. Visit [CryptoCanvas.art][homepage] if you want to become the blockchain picasso, buy crypto art created by the community, or just enjoy what have been already painted. 
 
-This repository hosts solidity code of Ethereum contract. Because of that, you can find here technical information about the contract itself. If you seek more information about the project visit our [website][homepage] or read [whitepapper](https://github.com/TheMindhouse/cryptocanvas-solidity/blob/master/whitepaper.pdf).
+This repository hosts solidity code of Ethereum contract and information about it. 
 
 ## Interacting with the contract
 
