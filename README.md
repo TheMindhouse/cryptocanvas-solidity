@@ -1,115 +1,45 @@
 # CryptoCanvas.art Ethereum contract
 [![Build Status](https://travis-ci.com/TheMindhouse/cryptocanvas-solidity.svg?branch=master)](https://travis-ci.com/TheMindhouse/cryptocanvas-solidity)
 
-**Docs below are outdated. They will be updated soon**
-
 CryptoCanvas are distributed and collectible community artworks build on Ethereum blockchain. Visit [CryptoCanvas.art][homepage] if you want to become the blockchain picasso, buy crypto art created by the community, or just enjoy what have been already painted. 
 
 This repository hosts solidity code of Ethereum contract and information about it. 
 
+## Using the contract on your local machine
+
+To start using a contract on your local machine you need [truffle](https://github.com/trufflesuite/truffle) and [ganache](https://github.com/trufflesuite/ganache-cli). If you have it installed and running on port _8545_ just use a command: 
+
+`truffle migrate --network dev --reset `
+
+It will put all contracts to a local test environment. 
+
+## Code organization
+
+The code is split into few contracts: 
+* `CanvasFactory` - handles creating and drawing on a canvas. Canvas struct is defined over here. 
+* `CanvasState` - manages canvases' state. 
+* `RewardableCanvas` - handles fees: commissions and rewards. 
+* `BiddableCanvas` - handles initial bidding phase: after a canvas is finished until it's bought by the first user. 
+* `CanvasMarket` - handles trading canvases.
+* `CryptoArt` - the main contract that is put on the main network. Has some util methods. 
+* `TimeAware`, `TestableArt` - contracts created for tests. Thanks to them, it's possible to manipulate time in truffle tests.
+* `Withdrawable` - handles withdrawals. 
+
 ## Interacting with the contract
 
-CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs. There are two types of interaction with the contract: calls and transactions. Calls are free, transactions require you to pay gas costs. Costs, if any, are specified in the description below. 
+CryptoCanvas contract is normal Ethereum thus you need to be aware of gas costs. There are two types of interaction with the contract: calls and transactions. Calls are free, transactions require you to pay gas costs. Precise cost may vary depending on the current contract state. You can find detailed cost in the newest build details on [Travis CI](https://travis-ci.com/TheMindhouse/cryptocanvas-solidity). 
 
-* `createCanvas()`, gas cost: xxx (TBD)
+### CanvasFactory 
 
-    Creates a new canvas. Anybody can call this function, but there are some limitations. First of all, count of canvases can't exceed `MAX_CANVAS_COUNT`. Secondly, it's not allowed to create new canvas when there is more than `MAX_ACTIVE_CANVAS` unfinished canvases. Returns id of created canvas. 
+### CanvasState
 
-* `function setPixel(uint32 _canvasId, uint32 _index, uint8 _color) returns (uint cooldownTime)`, gas cost: xxx
+### RewardableCanvas
 
-    Sets the color for specified canvas. Color has to be different than `0`. Address cooldown is defined by `ADDRESS_COOLDOWN`, which means you have to wait that time to set another pixel. It returns time after which address can set next pixel. Color mapping is described in [this](#color-palette) section.
+### BiddableCanvas
 
-* `getArtwork(uint32 _canvasId) returns (uint8[])`, free to call
+### CanvasMarket
 
-    Returns the bitmap of a canvas. `0` color means that pixel is not set. Color mapping is described in [this](#color-palette) section. 
-
-* `getArtworkPaintedPixels(uint32 _canvasId) returns (uint32)`, free to call
-
-    Returns number of pixels that have been already painted.
-
-* `getPixelCount() returns (uint)`, free to call
-
-    Returns total number of pixels in canvas. 
-
-* `getArtworksCount() returns (uint)`, free to call
-
-    Returns the total number of created canvases. 
-
-* `getActiveCanvases() returns (uint32[])`, free to call
-
-    Returns array of ids of active (not finished) canvases. 
-
-* `isArtworkFinished(uint32 _canvasId) returns (bool)`, free to call
-
-    Returns `true` if the canvas is finished, `false` otherwise. Canvas is finished when all of its pixels have been set.
-
-* `makeBid(uint32 _canvasId)`, gas cost: xxx
-
-    Use this function to participate in the initial bidding. It's only possible to call this function when the state of the canvas is equal to `STATE_INITIAL_BIDDING`. Amount of ethers has to be higher than greater than `MINIMUM_BID_AMOUNT` and last highest bid.
-
-    If you will be overbid, the contract will send you back money that you paid. 
-
-* `getLastBidForCanvas(uint32 _canvasId) returns (address bidder, uint amount, uint finishTime)`, free to call
-
-    Returns last bid made for canvas. If the state of the canvas is equal to `STATE_OWNED` that simply is the price that this canvas was sold. 
-
-* `getCanvasState(uint32 _canvasId) returns (uint8)`, free to call
-
-    Returns the current state of the canvas. There are 3 states possible: 
-    1. `STATE_NOT_FINISHED = 0` - state when canvas is not yet finished. 
-    2. `STATE_INITIAL_BIDDING = 1` - state when canvas has been already finished, but initial bidding is still in progress. It means everybody can bid right now. 
-    3. `STATE_OWNED = 2` - state after initial bidding is finished. Canvas has its owner who decides when to trade it. 
-
-* `withdrawReward(uint32 _canvasId)`, gas cost: xxx
-
-    Get paid for what you've painted. Only possible when the state is equal to `STATE_OWNED`. It's possible to get paid just once ;)
-
-* `balanceOf(address _owner) returns (uint)` 
-
-    Returns the amount of canvases assigned to the address. 
-
-* `buyArtwork(uint32 _canvasId)`, gas cost: xxx
-
-    Buy the canvas. There has to be sell offer for the artwork. Amount of transferred ethers has to be equal or greater than minimum price set in sell offer. 
-
-* `offerArtworkForSale(uint32 _canvasId, uint _minPrice)`, gas cost: xxx
-
-    Offer your canvas for sale. 
-
-* `function offerArtworkForSaleToAddress(uint32 _canvasId, uint _minPrice, address _receiver)`, gas cost: xxx
-
-    Offer your canvas for sale. Only specified address can buy the canvas. 
-
-* `artworkNoLongerForSale(uint32 _canvasId)`, gas cost: xxx
-
-    Cancels all sell offers. You have to be owner of the canvas. 
-
-* `enterBuyOffer(uint32 _canvasId)`, gas cost: xxx
-
-    Place buy offer for the canvas. Amount of transferred ethers has to be greater than highest buy offer. Owner of the canvas has to accept buy offer. 
-
-* `cancelBuyOffer(uint32 _canvasId)`, gas cost: xxx
-
-    Cancel buy offer that you've previously placed. 
-
-* `acceptBuyOffer(uint32 _canvasId, uint _minPrice)`, gas cost: xxx
-
-    Accept current buy offer for your canvas. To protect you from accidental calls, you have to specify minimum price. 
-
-* `getCanvasInfo(uint32 _canvasId) public view returns (uint32 id, uint32 paintedPixels, bool isFinished, uint8 canvasState, address owner)`, free to call 
-
-    Returns useful information about canvas, all packed in one handy function. 
-
-* `calculateReward(uint32 _canvasId, address _address) returns (uint32 pixelsCount, uint reward, bool isPaid)`, free to call
-
-    Calculates reward for an address. Returns: 
-    * number of pixels that given address painted 
-    * reward in weis
-    * information if reward has been already paid. 
-
-* `calculateCommission(uint32 _canvasId) public stateOwned(_canvasId) returns (uint commission, bool isPaid)`, free to call
-
-    Returns commision for given canvas and information if it has been already paid.
+### CryptoArt
 
 ## Color palette
 CryptoCanvas, due to technical and aesthetic reasons, uses a custom color palette. Each number corresponds to a fixed color. Here is the full-color palette. 
